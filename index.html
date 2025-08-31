@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OBS Remote Control</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app">
+      <div class="header">
+        <div class="title">
+          <div class="dot"></div>
+          <div>o B essee  Remote control</div>
+        </div>
+        <div class="badges">
+          <span id="connBadge" class="badge badge-off">Disconnected</span>
+          <span id="sceneBadge" class="badge">Scene: -</span>
+        </div>
+      </div>
+
+      <div class="content">
+        <!-- Left: Controls panel -->
+        <section class="panel">
+          <h2>Controls</h2>
+          <div class="controls">
+            <button id="connect" class="btn-accent btn-indicator is-red">Connect to OBS</button>
+            <button id="disconnect" class="btn-danger">Disconnect</button>
+
+            <button id="start" class="btn-success">Start Streaming</button>
+            <button id="stop" class="btn-danger">Stop Streaming</button>
+
+            <div class="select-row">
+              <label for="sceneSelect" class="input-label">Scene</label>
+              <div class="select-with-refresh">
+                <select id="sceneSelect" disabled>
+                  <option value="">Select a scene...</option>
+                </select>
+                <button id="refreshScenes" class="icon-btn" title="Refresh scenes" aria-label="Refresh scenes">⟳</button>
+              </div>
+            </div>
+
+            <!-- Placeholders for future controls -->
+            <button class="placeholder" disabled>Placeholder</button>
+            <button class="placeholder" disabled>Placeholder</button>
+            <button class="placeholder" disabled>Placeholder</button>
+            <button class="placeholder" disabled>Placeholder</button>
+          </div>
+        </section>
+
+        <!-- Right: Main area / future preview / stats -->
+        <section class="panel main">
+          <h2 style="margin-bottom: 8px;">Dashboard</h2>
+          <div id="dashboardItems" class="dash-list placeholder">
+            Select a scene to load its items...
+          </div>
+        </section>
+      </div>
+
+      <!-- Console area -->
+      <section class="console">
+        <div class="console-header">
+          <div>Console</div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <small>Live logs</small>
+          </div>
+        </div>
+        <pre id="log"></pre>
+      </section>
+    </div>
+
+    <script src="renderer/ui-logic.js"></script>
+    <script src="renderer/ui-bindings.js"></script>
+  </body>
+</html>

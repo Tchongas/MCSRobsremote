@@ -1,0 +1,19 @@
+{
+  "name": "mcsrobsremote",
+  "version": "1.0.0",
+  "main": "main/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^37.2.1"
+  },
+  "dependencies": {
+    "obs-websocket-js": "^5.0.6"
+  },
+  "keywords": [],
+  "description": ""
+}
