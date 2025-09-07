@@ -11,11 +11,12 @@
       <div class="header">
         <div class="title">
           <div class="dot"></div>
-          <div>o B essee  Remote control</div>
+          <div>rOBSon</div>
         </div>
         <div class="badges">
           <span id="connBadge" class="badge badge-off">Disconnected</span>
           <span id="sceneBadge" class="badge">Scene: -</span>
+          <button id="settingsBtn" class="icon-btn" title="Settings" aria-label="Settings">⚙️</button>
         </div>
       </div>
 
@@ -45,6 +46,7 @@
             <button class="placeholder" disabled>Placeholder</button>
             <button class="placeholder" disabled>Placeholder</button>
             <button class="placeholder" disabled>Placeholder</button>
+
           </div>
         </section>
 
@@ -69,7 +71,103 @@
       </section>
     </div>
 
-    <script src="renderer/ui-logic.js"></script>
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>OBS Connection Settings</h3>
+          <button id="closeSettings" class="icon-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="obsUrl" class="input-label">OBS WebSocket URL</label>
+            <input type="text" id="obsUrl" class="input-grow" placeholder="ws://localhost:4455" value="ws://localhost:4455">
+            <small class="help-text">Default: ws://localhost:4455</small>
+          </div>
+          <div class="form-group">
+            <label for="obsPassword" class="input-label">WebSocket Password</label>
+            <input type="password" id="obsPassword" class="input-grow" placeholder="Enter password">
+            <small class="help-text">Set in OBS: Tools → WebSocket Server Settings</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="resetSettings" class="btn-ghost">Reset to Default</button>
+          <button id="saveSettings" class="btn-accent">Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden Debug Page -->
+    <div id="debugPage" class="debug-page hidden">
+      <div class="debug-header">
+        <h2>🔧 Debug Console</h2>
+        <button id="closeDebug" class="btn-ghost">✕ Close</button>
+      </div>
+      
+      <div class="debug-content">
+        <div class="debug-controls">
+          <h3>OBS Protocol Requests</h3>
+          
+          <div class="debug-section">
+            <h4>Scenes</h4>
+            <button class="debug-btn" data-request="GetSceneList">Get Scene List</button>
+            <button class="debug-btn" data-request="GetCurrentProgramScene">Get Current Scene</button>
+          </div>
+          
+          <div class="debug-section">
+            <h4>Sources</h4>
+            <button class="debug-btn" data-request="GetSourcesList">Get Sources List</button>
+            <button class="debug-btn" data-request="GetInputList">Get Input List</button>
+            <div class="debug-input-group">
+              <input type="text" id="sceneNameInput" placeholder="Scene name" class="debug-input">
+              <button class="debug-btn" data-request="GetSceneItemList" data-param="sceneName">Get Scene Items</button>
+            </div>
+          </div>
+          
+          <div class="debug-section">
+            <h4>Streaming</h4>
+            <button class="debug-btn" data-request="GetStreamStatus">Get Stream Status</button>
+            <button class="debug-btn" data-request="GetRecordStatus">Get Record Status</button>
+          </div>
+          
+          <div class="debug-section">
+            <h4>Custom Request</h4>
+            <div class="debug-input-group">
+              <input type="text" id="customRequest" placeholder="Request name (e.g. GetVersion)" class="debug-input">
+              <textarea id="customParams" placeholder='Parameters as JSON (e.g. {"sceneName": "Scene 1"})' class="debug-textarea"></textarea>
+              <button id="sendCustomRequest" class="debug-btn">Send Request</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="debug-output">
+          <div class="debug-output-header">
+            <h4>Response</h4>
+            <button id="clearOutput" class="btn-ghost">Clear</button>
+          </div>
+          <pre id="debugResponse" class="debug-response">Click a button to see the response...</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load modular logic files -->
+    <script src="renderer/logic/ui.js"></script>
+    <script src="renderer/logic/config.js"></script>
+    <script src="renderer/logic/scenes.js"></script>
+    <script src="renderer/logic/sourceTypes.js"></script>
+    <!-- Handler Registry System -->
+    <script src="renderer/logic/handlers/HandlerRegistry.js"></script>
+    <script src="renderer/logic/handlers/BrowserSourceHandler.js"></script>
+    <script src="renderer/logic/handlers/MicrophoneHandler.js"></script>
+    <script src="renderer/logic/handlers/TextSourceHandler.js"></script>
+    <!-- Shared plugin utilities (must load before CustomHandler.js) -->
+    <script src="renderer/logic/handlers/PluginUtils.js"></script>
+    <!-- Custom Handler Plugin System -->
+    <script src="renderer/logic/handlers/CustomHandler.js"></script>
+    <script src="renderer/logic/handlers/plugins/TwitchPlugin.js"></script>
+    <script src="renderer/logic/dashboard.js"></script>
+    <script src="renderer/logic/index.js"></script>
     <script src="renderer/ui-bindings.js"></script>
+    <script src="renderer/logic/debug.js"></script>
   </body>
 </html>

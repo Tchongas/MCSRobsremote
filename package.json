@@ -12,7 +12,8 @@
     "electron": "^37.2.1"
   },
   "dependencies": {
-    "obs-websocket-js": "^5.0.6"
+    "obs-websocket-js": "^5.0.6",
+    "chokidar": "^3.5.3"
   },
   "keywords": [],
   "description": ""
