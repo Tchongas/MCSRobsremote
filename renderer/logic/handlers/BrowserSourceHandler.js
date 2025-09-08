@@ -17,8 +17,8 @@
         const currentUrl = await window.obsAPI.browser.getUrl(sourceName);
         if (currentUrl === null || currentUrl === undefined) return;
         
-        await this._createUrlControls(options, sourceName, displayName, currentUrl);
-        await this._createParametersSection(options, currentUrl, sourceName, displayName);
+        const urlInput = await this._createUrlControls(options, sourceName, displayName, currentUrl);
+        await this._createParametersSection(options, currentUrl, sourceName, displayName, urlInput);
       } catch (err) {
         console.warn(`BrowserSourceHandler error for ${sourceName}:`, err);
       }
@@ -79,11 +79,11 @@
       urlRow.appendChild(hardBtn);
       options.appendChild(urlRow);
       
-      // Store reference for parameter section
-      this._urlInput = urlInput;
+      // Return the urlInput reference for parameter section
+      return urlInput;
     },
     
-    async _createParametersSection(options, currentUrl, sourceName, displayName) {
+    async _createParametersSection(options, currentUrl, sourceName, displayName, urlInput) {
       const paramsWrap = document.createElement('div');
       paramsWrap.className = 'params-section';
 
@@ -130,9 +130,9 @@
       
       saveParamsBtn.addEventListener('click', async () => {
         try {
-          const final = this._rebuildUrlWithParams(this._urlInput.value.trim(), paramRows);
+          const final = this._rebuildUrlWithParams(urlInput.value.trim(), paramRows);
           await window.obsAPI.browser.setUrl(sourceName, final);
-          this._urlInput.value = final;
+          urlInput.value = final;
           window.uiHelpers.log(`✅ Updated parameters for ${displayName}`);
         } catch (err) {
           window.uiHelpers.log('❌ Failed to save parameters: ' + (err?.message || err));
@@ -140,7 +140,7 @@
       });
 
       resetParamsBtn.addEventListener('click', () => {
-        this._resetParams(paramsBody, paramRows, this._urlInput.value || '');
+        this._resetParams(paramsBody, paramRows, urlInput.value || '');
       });
 
       // Press Enter in any input to apply immediately
