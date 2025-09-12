@@ -11,18 +11,22 @@ const sceneItems = require('../actions/sceneItems');
 
 function createWindow() {
   const win = new BrowserWindow({
-    fullscreen: true,
+    fullscreen: false,
+    width: 1280,
+    height: 720,
+    frame: false, // This removes the default title bar
+    titleBarStyle: 'hidden',
     autoHideMenuBar: true,
     backgroundColor: '#0f1221',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false, // stay safe
+      nodeIntegration: false,
+      enableRemoteModule: true
     }
   });
 
   win.loadFile(path.join(__dirname, '../index.html'));
-  win.webContents.openDevTools(); // Open DevTools for debugging
 
   // Set up real-time event forwarding to renderer
   setupEventForwarding(win);
@@ -31,8 +35,25 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  createWindow();
+  const win = createWindow();
   setupIpcHandlers();
+  
+  // Window control handlers
+  ipcMain.on('window-minimize', () => {
+    win.minimize();
+  });
+
+  ipcMain.on('window-maximize', () => {
+    if (win.isMaximized()) {
+      win.unmaximize();
+    } else {
+      win.maximize();
+    }
+  });
+
+  ipcMain.on('window-close', () => {
+    win.close();
+  });
 });
 
 function setupIpcHandlers() {

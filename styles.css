@@ -14,6 +14,8 @@
   html, body {
     height: 100%;
     margin: 0;
+    padding: 0;
+    overflow: hidden;
     background: var(--bg);
     color: var(--text);
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu,
@@ -23,10 +25,10 @@
   }
 
   .app {
-    height: 100%;
+    height: 100vh;
     display: grid;
     grid-template-rows: auto 1fr minmax(160px, 28%);
-    overflow: hidden; /* prevent whole-app scroll; inner areas manage their own overflow */
+    overflow: hidden;
   }
 
   .header {

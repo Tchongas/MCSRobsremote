@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>OBS Remote Control</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="renderer/titlebar.css">
   </head>
   <body>
     <div class="app">
-      <div class="header">
+      <!-- Custom title bar will be inserted here by titlebar.js -->
+      <div class="header" style="padding-top: 30px;">
         <div class="title">
           <div class="dot"></div>
           <div>rOBSon</div>
@@ -160,10 +162,13 @@
     <!-- Shared plugin utilities (must load before CustomHandler.js) -->
     <script src="renderer/logic/handlers/PluginUtils.js"></script>
     <!-- Custom Handler Plugin System -->
-    <script src="renderer/logic/handlers/CustomHandler.js"></script>
-    <script src="renderer/logic/handlers/plugins/TwitchPlugin.js"></script>
-    <script src="renderer/logic/dashboard.js"></script>
+    <!-- Custom titlebar scripts -->
+    <script src="renderer/titlebar.js"></script>
+    <script src="renderer/ui-bindings.js"></script>
     <script src="renderer/logic/index.js"></script>
+    <script src="renderer/logic/handlers/plugins/TwitchPlugin.js"></script>
+    <script src="renderer/logic/handlers/CustomHandler.js"></script>
+    <script src="renderer/main.js"></script>
     <script src="renderer/ui-bindings.js"></script>
     <script src="renderer/logic/debug.js"></script>
   </body>

@@ -42,6 +42,14 @@ contextBridge.exposeInMainWorld('obsAPI', {
 });
 
 // Plugin System API
+// Window controls
+contextBridge.exposeInMainWorld('windowControls', {
+  minimize: () => ipcRenderer.send('window-minimize'),
+  maximize: () => ipcRenderer.send('window-maximize'),
+  close: () => ipcRenderer.send('window-close')
+});
+
+// Plugin API
 contextBridge.exposeInMainWorld('pluginAPI', {
   loadExternalPlugins: () => ipcRenderer.invoke('plugins-load-external'),
   getPluginDirectory: () => ipcRenderer.invoke('plugins-get-directory'),
