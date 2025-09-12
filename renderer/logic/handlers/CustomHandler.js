@@ -1,4 +1,4 @@
-// CustomHandler - Extensible plugin system for additional source enhancements
+// CustomHandler - Extensible plugin system for additional source functionality
 (function() {
   const plugins = new Map();
   const externalPlugins = new Map();
@@ -10,7 +10,7 @@
     name: 'UnknownPlugin',
     version: '1.0.0',
     canHandle: (sourceKind, sourceName, context) => false,
-    enhance: async (element, sourceName, displayName, context) => {},
+    execute: async (element, sourceName, displayName, context) => {},
     
     // Optional methods
     priority: () => 0, // Higher priority plugins run first
@@ -30,8 +30,8 @@
       return false;
     }
     
-    if (!plugin.enhance || typeof plugin.enhance !== 'function') {
-      console.warn(`Plugin ${plugin.name}: missing enhance method`);
+    if (!plugin.execute || typeof plugin.execute !== 'function') {
+      console.warn(`Plugin ${plugin.name}: missing execute method`);
       return false;
     }
 
@@ -210,9 +210,9 @@
       // Execute plugins in priority order
       for (const plugin of applicablePlugins) {
         try {
-          await plugin.enhance(options, sourceName, displayName, context);
+          await plugin.execute(options, sourceName, displayName, context);
           const pluginType = plugin.isExternal ? 'external' : 'built-in';
-          console.debug(`✅ Plugin ${plugin.name} (${pluginType}) enhanced ${sourceName}`);
+          console.debug(`✅ Plugin ${plugin.name} (${pluginType}) executed for ${sourceName}`);
         } catch (e) {
           console.error(`❌ Plugin ${plugin.name} failed for ${sourceName}:`, e);
         }

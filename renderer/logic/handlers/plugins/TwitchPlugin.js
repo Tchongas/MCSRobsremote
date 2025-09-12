@@ -11,7 +11,7 @@
       return true;
     },
 
-    async enhance(options, sourceName, displayName, context) {
+    async execute(options, sourceName, displayName, context) {
       try {
         const url = await window.obsAPI.browser.getUrl(sourceName);
         

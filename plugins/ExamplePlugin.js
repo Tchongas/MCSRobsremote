@@ -13,8 +13,8 @@
       return sourceKind === 'ffmpeg_source';
     },
 
-    // Enhance the source with custom UI elements
-    async enhance(options, sourceName, displayName, context) {
+    // Execute the plugin functionality for the source
+    async execute(options, sourceName, displayName, context) {
       // Create a custom section
       const section = document.createElement('div');
       section.className = 'example-plugin-section';

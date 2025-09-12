@@ -221,7 +221,7 @@ function notifyPluginChange(action, filePath) {
 async function validateAndLoadPlugin(content, filename) {
   try {
     // Basic validation - check for required plugin structure
-    if (!content.includes('name:') || !content.includes('canHandle') || !content.includes('enhance')) {
+    if (!content.includes('name:') || !content.includes('canHandle') || !content.includes('execute')) {
       console.warn(`Plugin ${filename} missing required properties`);
       return null;
     }
