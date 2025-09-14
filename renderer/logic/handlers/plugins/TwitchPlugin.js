@@ -32,11 +32,9 @@
         if (window.PluginUtils?.applyRowBackground) {
           window.PluginUtils.applyRowBackground(options, '#4f258a', '#291259', false);
         }
-
-        window.uiHelpers?.log(`📺 Twitch plugin changed: ${displayName}`);
-        
       } catch (error) {
         window.uiHelpers?.log(`❌ TwitchPlugin error: ${error.message}`);
+        console.error('TwitchPlugin detailed error:', error);
       }
     },
 
@@ -46,11 +44,15 @@
   };
 
   // Autoregister plugin
+  window.uiHelpers?.log('🔌 TwitchPlugin attempting registration...');
   if (window.CustomHandlerPlugins) {
     window.CustomHandlerPlugins.register(TwitchPlugin);
+    window.uiHelpers?.log('✅ TwitchPlugin registered immediately');
   } else {
+    window.uiHelpers?.log('⏳ CustomHandlerPlugins not ready, waiting for event...');
     window.addEventListener('customHandlerReady', () => {
       window.CustomHandlerPlugins.register(TwitchPlugin);
+      window.uiHelpers?.log('✅ TwitchPlugin registered after event');
     });
   }
 

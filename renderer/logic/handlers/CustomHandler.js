@@ -256,23 +256,18 @@
   window.CustomHandlerPlugins = {
     register: registerPlugin,
     unregister: unregisterPlugin,
-    loadExternalPlugins,
-    getRegisteredPlugins: () => {
-      const allPlugins = getAllPlugins();
-      return Array.from(allPlugins.entries()).map(([name, plugin]) => ({
-        name,
-        version: plugin.version,
-        priority: plugin.priority(),
-        isExternal: plugin.isExternal || false
-      }));
-    },
-    getPluginDirectory: () => window.pluginAPI?.getPluginDirectory(),
+    list: () => Array.from(getAllPlugins().keys()),
+    get: (name) => getAllPlugins().get(name),
     
     // For debugging
     _builtInPlugins: plugins,
     _externalPlugins: externalPlugins,
     _allPlugins: getAllPlugins
   };
+
+  // Fire event to notify plugins that CustomHandler is ready
+  window.dispatchEvent(new CustomEvent('customHandlerReady'));
+  console.log('🔌 CustomHandler plugin system initialized and ready event fired');
 
   // Auto-register CustomHandler when loaded
   if (window.HandlerRegistry) {
@@ -283,6 +278,4 @@
       window.HandlerRegistry.register(CustomHandler);
     });
   }
-
-  console.log('🔌 CustomHandler plugin system initialized');
 })();
