@@ -30,6 +30,7 @@ function createWindow() {
 
   // Set up real-time event forwarding to renderer
   setupEventForwarding(win);
+  win.webContents.openDevTools();
   
   return win;
 }
