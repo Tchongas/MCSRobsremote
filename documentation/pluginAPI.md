@@ -10,7 +10,7 @@
     - [applyRowBackground](#applyrowbackground)
     - [applySourceIcon](#applysourceicon)
     - [log](#log)
-- [Plugin Management](#pluginmanagement)
+- [Plugin Management](#plugin-management)
     - [register](#register)
     - [unregister](#unregister)
     - [getRegisteredPlugins](#getregisteredplugins)
@@ -23,4 +23,4 @@
 
 ## UI
 
-## Plugin Management
+## Plugin-Management
