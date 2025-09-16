@@ -70,7 +70,7 @@ Note: Plugins run in a restricted environment with access to the app’s UI and 
 - Is OBS running and its WebSocket enabled?
 - Is the URL/password correct? Local default: `ws://localhost:4455`.
 - Any firewall blocking the port?
-- If you are using it remotly, make sure to forward the port, or use something like RadminVPN.
+- If you are using it remotely, make sure to forward the port, or use something like RadminVPN.
 Check the Console for the exact error.
 
 
