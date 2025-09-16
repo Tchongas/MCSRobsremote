@@ -27,7 +27,7 @@
   - [`RefreshBrowserNoCache()`](#refreshbrowsernocache)
   - [`ChangeScene()`](#changescene)
 
-## 🎨 Dashboard API
+# 🎨 Dashboard API
 
 The Dashboard API provides functions to customize the appearance and functionality of sources in the OBS Remote dashboard interface.
 
@@ -118,7 +118,7 @@ window.uiHelpers?.log(message)
 window.uiHelpers?.log('🔌 Plugin attempting registration...');
 ```
 
-## 🔌 Plugin Management
+# 🔌 Plugin Management
 
 The Plugin Management API handles plugin lifecycle operations including registration, removal, and discovery.
 
@@ -214,7 +214,7 @@ const plugins = window.CustomHandlerPlugins.getRegisteredPlugins();
 console.log(`Found ${plugins.length} registered plugins`);
 ```
 
-## 🐛 Debug API
+# 🐛 Debug API
 
 The Debug API provides utilities for plugin development, testing, and system introspection.
 
@@ -364,7 +364,7 @@ window.CustomHandlerPlugins.LoadExternalPlugins();
 console.log('External plugins reloaded');
 ```
 
-## 📺 OBS API
+# 📺 OBS API
 
 The OBS API provides direct integration with OBS Studio functionality, allowing plugins to control scenes, sources, and settings.
 
