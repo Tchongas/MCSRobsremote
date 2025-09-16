@@ -1,8 +1,10 @@
 // PluginUtils - Shared helpers for handler plugins (built-in and external)
 (function() {
-  const applyRowBackground = (optionsEl, rowBg, parentBg, alsoOptionsBg = false) => {
+/*----------------------------------------------------------------------------------------
+  applyRowBackground
+  ---------------------------------------------------------------------------------------- */
+  const applyRowBackground = (optionsEl, rowBg) => {
     if (!optionsEl) return false;
-
     const applyRowBg = () => {
       const parent = optionsEl.parentElement;
       const row = parent ? parent.querySelector(':scope > .dash-row') : null;
@@ -26,6 +28,9 @@
 
     return applied;
   };
+/*----------------------------------------------------------------------------------------
+  applySourceIcon
+  ---------------------------------------------------------------------------------------- */
 
   const applySourceIcon = (optionsEl, icon) => {
     if (!optionsEl) return false;
@@ -51,8 +56,9 @@
   
     return applied;
   };
-
-  // Expose globally
+/*----------------------------------------------------------------------------------------
+  Expose globally
+  ---------------------------------------------------------------------------------------- */
   window.PluginUtils = {
     applyRowBackground,
     applySourceIcon

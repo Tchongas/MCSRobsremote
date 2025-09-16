@@ -30,7 +30,7 @@
           window.PluginUtils.applySourceIcon(options, '📺');
         }
         if (window.PluginUtils?.applyRowBackground) {
-          window.PluginUtils.applyRowBackground(options, '#4f258a', '#291259', false);
+          window.PluginUtils.applyRowBackground(options, '#b39544');
         } 
       } catch (error) {
         window.uiHelpers?.log(`❌ TwitchPlugin error: ${error.message}`);
