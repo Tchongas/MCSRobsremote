@@ -1,386 +1,484 @@
-# Plugin API
+# Plugin API Reference
 
-# Table of contents
+[![OBS Remote](https://img.shields.io/badge/OBS-Remote-blue.svg)](https://github.com/Tchongas/MCSRobsremote)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Plugin System](https://img.shields.io/badge/Plugin-System-green.svg)](#plugin-management)
 
-- [Dashboard](#dashboard)
-  - [applyRowBackground](#applyrowbackground)
-  - [applySourceIcon](#applysourceicon)
-  - [log](#log)
-- [Plugin Management](#plugin-management)
-  - [register](#register)
-  - [unregister](#unregister)
-  - [getRegisteredPlugins](#getregisteredplugins)
-- [Debug](#debug)
-  - [GetBuiltInPlugins](#getbuiltinplugins)
-  - [GetExternalPlugins](#getexternalplugins)
-  - [GetAllPlugins](#getallplugins)
-  - [GetPluginDirectory](#getplugindirectory)
-- [OBS API](#obs-api)
-  - [SetSettings](#setsettings)
-  - [RefreshBrowserNoCache](#refreshbrowsernocache)
-  - [ChangeScene](#changescene)
+> **Comprehensive API reference for developing plugins for the OBS Remote application.**
 
-## Dashboard
+## Table of Contents
 
-Functions to change the appearance and functionality of a source in the Dashboard.
+- [🎨 Dashboard API](#dashboard-api)
+  - [`applyRowBackground()`](#applyrowbackground)
+  - [`applySourceIcon()`](#applysourceicon)
+  - [`log()`](#log)
+- [🔌 Plugin Management](#plugin-management)
+  - [`register()`](#register)
+  - [`unregister()`](#unregister)
+  - [`getRegisteredPlugins()`](#getregisteredplugins)
+- [🐛 Debug API](#debug-api)
+  - [`GetBuiltInPlugins()`](#getbuiltinplugins)
+  - [`GetExternalPlugins()`](#getexternalplugins)
+  - [`GetAllPlugins()`](#getallplugins)
+  - [`GetPluginDirectory()`](#getplugindirectory)
+  - [`LoadExternalPlugins()`](#loadexternalplugins)
+- [📺 OBS API](#obs-api)
+  - [`SetSettings()`](#setsettings)
+  - [`RefreshBrowserNoCache()`](#refreshbrowsernocache)
+  - [`ChangeScene()`](#changescene)
 
-<a id="applyrowbackground"></a>
-## 🎨 applyRowBackground(optionsEl, rowBg)
+## 🎨 Dashboard API
 
-Applies a background color to the row of a source in the Dashboard.
+The Dashboard API provides functions to customize the appearance and functionality of sources in the OBS Remote dashboard interface.
 
-### Signature
+### `applyRowBackground()`
 
-`applyRowBackground(optionsEl, rowBg)`
+Applies a custom background color to a source row in the dashboard.
 
-| Parameter        | Description                                      |
-|------------------|--------------------------------------------------|
-| `optionsEl`      | The options element for the source.              |
-| `rowBg`          | The color to apply as the background (e.g., `#b39544`). |
+#### Syntax
 
-### Returns
+```javascript
+window.PluginUtils.applyRowBackground(optionsEl, rowBg)
+```
 
-| Type   | Description |
-|--------|-------------|
-| `void` | Nothing.    |
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|--------------|
+| `optionsEl` | `HTMLElement` | The options element for the source |
+| `rowBg` | `string` | The color to apply as background (e.g., `#b39544`) |
+
+#### Returns
+
+`void`
 
 #### Example
 
 ```javascript
+// Apply a golden background to a source row
 window.PluginUtils.applyRowBackground(options, '#b39544');
 ```
 
 ---
 
-<a id="applysourceicon"></a>
-## 🖼️ applySourceIcon(optionsEl, icon)
+### `applySourceIcon()`
 
-Changes the icon of a source in the Dashboard.
+Changes the icon displayed for a source in the dashboard.
 
-### Signature
+#### Syntax
 
-`applySourceIcon(optionsEl, icon)`
+```javascript
+window.PluginUtils.applySourceIcon(optionsEl, icon)
+```
 
-| Parameter        | Description                                      |
-|------------------|--------------------------------------------------|
-| `optionsEl`      | The options element for the source.              |
-| `icon`           | The icon to apply (e.g., `📺`).                  |
+#### Parameters
 
-### Returns
+| Parameter | Type | Description |
+|-----------|------|--------------|
+| `optionsEl` | `HTMLElement` | The options element for the source |
+| `icon` | `string` | The icon to apply (emoji or text) |
 
-| Type   | Description |
-|--------|-------------|
-| `void` | Nothing.    |
+#### Returns
+
+`void`
 
 #### Example
 
 ```javascript
+// Set a TV emoji as the source icon
 window.PluginUtils.applySourceIcon(options, '📺');
 ```
 
 ---
 
-<a id="log"></a>
-## 📝 log(message)
+### `log()`
 
-Logs a message to the app console via UI helpers.
+Logs a message to the application console with plugin context.
 
-### Signature
+#### Syntax
 
-`log(message)`
+```javascript
+window.uiHelpers?.log(message)
+```
 
-| Parameter        | Description                                      |
-|------------------|--------------------------------------------------|
-| `message`        | The message to log in the app console.           |
+#### Parameters
 
-### Returns
+| Parameter | Type | Description |
+|-----------|------|--------------|
+| `message` | `string` | The message to log to the console |
 
-| Type   | Description |
-|--------|-------------|
-| `void` | Nothing.    |
+#### Returns
+
+`void`
 
 #### Example
 
 ```javascript
+// Log a plugin registration message
 window.uiHelpers?.log('🔌 Plugin attempting registration...');
 ```
 
----
+## 🔌 Plugin Management
 
-## Plugin Management
+The Plugin Management API handles plugin lifecycle operations including registration, removal, and discovery.
 
-Used to manage everything related to plugins, registering, removing etc.
+### `register()`
 
-<a id="register"></a>
-## 🔌 register(plugin)
+Registers a plugin with the system. This is a required step for plugin activation and should be called at the end of your plugin file.
 
-Necessary step to make a plugin. You can add this at the end of your plugin file.
+#### Syntax
 
-### Signature
+```javascript
+window.CustomHandlerPlugins.register(plugin)
+```
 
-`register(plugin)`
+#### Parameters
 
-| Parameter        | Description                                      |
-|------------------|--------------------------------------------------|
-| `plugin`         | The plugin to register.                          |
+| Parameter | Type | Description |
+|-----------|------|--------------|
+| `plugin` | `Object` | The plugin object to register |
 
-### Returns
+#### Returns
 
-| Type   | Description |
-|--------|-------------|
-| `void` | Nothing.    |
+`void`
 
 #### Example
 
 ```javascript
-window.CustomHandlerPlugins.register(plugin);
+// Register your plugin
+const myPlugin = {
+  name: 'MyAwesomePlugin',
+  version: '1.0.0',
+  // ... plugin implementation
+};
+
+window.CustomHandlerPlugins.register(myPlugin);
 ```
 
 ---
 
-<a id="unregister"></a>
-## 🧹 unregister(plugin)
+### `unregister()`
 
-Removes a plugin from the registry.
+Removes a plugin from the active registry.
 
-### Signature
+#### Syntax
 
-`unregister(plugin)`
+```javascript
+window.CustomHandlerPlugins.unregister(plugin)
+```
 
-| Parameter        | Description                                      |
-|------------------|--------------------------------------------------|
-| `plugin`         | The plugin to unregister.                        |
+#### Parameters
 
-### Returns
+| Parameter | Type | Description |
+|-----------|------|--------------|
+| `plugin` | `Object` | The plugin object to unregister |
 
-| Type   | Description |
-|--------|-------------|
-| `void` | Nothing.    |
+#### Returns
+
+`void`
 
 #### Example
 
 ```javascript
-window.CustomHandlerPlugins.unregister(plugin);
+// Unregister a plugin
+window.CustomHandlerPlugins.unregister(myPlugin);
 ```
 
 ---
 
-<a id="getregisteredplugins"></a>
-## 📋 getRegisteredPlugins()
+### `getRegisteredPlugins()`
 
-Returns an array of all registered plugins.
+Retrieves an array of all currently registered plugins.
 
-### Signature
+#### Syntax
 
-`getRegisteredPlugins()`
+```javascript
+window.CustomHandlerPlugins.getRegisteredPlugins()
+```
 
-### Returns
+#### Parameters
 
-| Type           | Description                                      |
-|----------------|--------------------------------------------------|
-| `Array`        | An array of all registered plugins.                |
+None
+
+#### Returns
+
+| Type | Description |
+|------|--------------|
+| `Array<Object>` | Array of all registered plugin objects |
 
 #### Example
 
 ```javascript
-window.CustomHandlerPlugins.getRegisteredPlugins();
+// Get all registered plugins
+const plugins = window.CustomHandlerPlugins.getRegisteredPlugins();
+console.log(`Found ${plugins.length} registered plugins`);
+```
+
+## 🐛 Debug API
+
+The Debug API provides utilities for plugin development, testing, and system introspection.
+
+### `GetBuiltInPlugins()`
+
+Retrieves all built-in plugins that come with the application.
+
+#### Syntax
+
+```javascript
+window.CustomHandlerPlugins.GetBuiltInPlugins()
+```
+
+#### Parameters
+
+None
+
+#### Returns
+
+| Type | Description |
+|------|--------------|
+| `Array<Object>` | Array of built-in plugin objects |
+
+#### Example
+
+```javascript
+// Get all built-in plugins
+const builtInPlugins = window.CustomHandlerPlugins.GetBuiltInPlugins();
+console.log('Built-in plugins:', builtInPlugins);
 ```
 
 ---
 
-## Debug
+### `GetExternalPlugins()`
 
-## GetBuiltInPlugins
+Retrieves all external plugins loaded from the plugins directory.
 
-Returns an array of all built-in plugins.
+#### Syntax
 
-### Signature
+```javascript
+window.CustomHandlerPlugins.GetExternalPlugins()
+```
 
-`GetBuiltInPlugins()`
+#### Parameters
 
-### Returns
+None
 
-| Type           | Description                                      |
-|----------------|--------------------------------------------------|
-| `Array`        | An array of all built-in plugins.                  |
+#### Returns
+
+| Type | Description |
+|------|--------------|
+| `Array<Object>` | Array of external plugin objects |
 
 #### Example
 
 ```javascript
-window.CustomHandlerPlugins.GetBuiltInPlugins();
+// Get all external plugins
+const externalPlugins = window.CustomHandlerPlugins.GetExternalPlugins();
+console.log('External plugins:', externalPlugins);
 ```
 
 ---
 
-<a id="getexternalplugins"></a>
-## 📦 GetExternalPlugins()
+### `GetAllPlugins()`
 
-Returns an array of all external plugins.
+Retrieves all plugins (both built-in and external) available in the system.
 
-### Signature
+#### Syntax
 
-`GetExternalPlugins()`
+```javascript
+window.CustomHandlerPlugins.GetAllPlugins()
+```
 
-### Returns
+#### Parameters
 
-| Type           | Description                                      |
-|----------------|--------------------------------------------------|
-| `Array`        | An array of all external plugins.                  |
+None
+
+#### Returns
+
+| Type | Description |
+|------|--------------|
+| `Array<Object>` | Array of all plugin objects |
 
 #### Example
 
 ```javascript
-window.CustomHandlerPlugins.GetExternalPlugins();
+// Get all plugins
+const allPlugins = window.CustomHandlerPlugins.GetAllPlugins();
+console.log(`Total plugins: ${allPlugins.length}`);
 ```
 
 ---
 
-<a id="getallplugins"></a>
-## 🧰 GetAllPlugins()
+### `GetPluginDirectory()`
 
-Returns an array of all plugins (both built-in and external).
+Retrieves the file system path where external plugins are stored.
 
-### Signature
+#### Syntax
 
-`GetAllPlugins()`
+```javascript
+window.CustomHandlerPlugins.GetPluginDirectory()
+```
 
-### Returns
+#### Parameters
 
-| Type           | Description                                      |
-|----------------|--------------------------------------------------|
-| `Array`        | An array of all plugins.                         |
+None
+
+#### Returns
+
+| Type | Description |
+|------|--------------|
+| `string` | Absolute path to the plugins directory |
 
 #### Example
 
 ```javascript
-window.CustomHandlerPlugins.GetAllPlugins();
+// Get plugin directory path
+const pluginDir = window.CustomHandlerPlugins.GetPluginDirectory();
+console.log('Plugins are stored in:', pluginDir);
 ```
 
 ---
 
-<a id="getplugindirectory"></a>
-## 📁 GetPluginDirectory()
+### `LoadExternalPlugins()`
 
-Returns the directory where plugins are stored.
+Reloads all external plugins from the plugins directory. Useful for development and hot-reloading.
 
-### Signature
-
-`GetPluginDirectory()`
-
-### Returns
-
-| Type           | Description                                      |
-|----------------|--------------------------------------------------|
-| `String`       | The directory where plugins are stored.            |
-
-#### Example
+#### Syntax
 
 ```javascript
-window.CustomHandlerPlugins.GetPluginDirectory();
+window.CustomHandlerPlugins.LoadExternalPlugins()
 ```
 
----
+#### Parameters
 
-<a id="loadexternalplugins"></a>
-## ♻️ LoadExternalPlugins()
+None
 
-Reloads all external plugins.
+#### Returns
 
-### Signature
-
-`LoadExternalPlugins()`
-
-### Returns
-
-| Type           | Description                                      |
-|----------------|--------------------------------------------------|
-| `void`         | Nothing.                                         |
+`void`
 
 #### Example
 
 ```javascript
+// Reload all external plugins
 window.CustomHandlerPlugins.LoadExternalPlugins();
+console.log('External plugins reloaded');
 ```
 
----
+## 📺 OBS API
 
-## OBS API
+The OBS API provides direct integration with OBS Studio functionality, allowing plugins to control scenes, sources, and settings.
 
-## SetSettings
+### `SetSettings()`
 
-Sets the settings for a source.
+Updates the settings for a specific OBS source.
 
-### Signature
+#### Syntax
 
-`SetSettings(sourceName, settings)`
+```javascript
+window.obsAPI.SetSettings(sourceName, settings)
+```
 
-| Parameter        | Description                                      |
-|------------------|--------------------------------------------------|
-| `sourceName`     | The name of the source.                          |
-| `settings`       | The settings to apply.                           |
+#### Parameters
 
-### Returns
+| Parameter | Type | Description |
+|-----------|------|--------------|
+| `sourceName` | `string` | The name of the OBS source |
+| `settings` | `Object` | Settings object to apply to the source |
 
-| Type   | Description |
-|--------|-------------|
-| `void` | Nothing.    |
+#### Returns
+
+`void`
 
 #### Example
 
 ```javascript
-window.obsAPI.SetSettings('my-source', { key: 'value' });
+// Update browser source settings
+window.obsAPI.SetSettings('my-browser-source', {
+  url: 'https://example.com',
+  width: 1920,
+  height: 1080
+});
+
+// Update text source settings
+window.obsAPI.SetSettings('my-text-source', {
+  text: 'Hello World!',
+  color: 0xFFFFFF
+});
 ```
 
 ---
 
-<a id="refreshbrowsernocache"></a>
-## RefreshBrowserNoCache(sourceName)
+### `RefreshBrowserNoCache()`
 
-Refreshes a browser source without cache.
+Refreshes a browser source, bypassing the cache to ensure fresh content.
 
-### Signature
+#### Syntax
 
-`RefreshBrowserNoCache(sourceName)`
+```javascript
+window.obsAPI.RefreshBrowserNoCache(sourceName)
+```
 
-| Parameter        | Description                                      |
-|------------------|--------------------------------------------------|
-| `sourceName`     | The name of the source.                          |
+#### Parameters
 
-### Returns
+| Parameter | Type | Description |
+|-----------|------|--------------|
+| `sourceName` | `string` | The name of the browser source to refresh |
 
-| Type   | Description |
-|--------|-------------|
-| `void` | Nothing.    |
+#### Returns
+
+`void`
 
 #### Example
 
 ```javascript
+// Refresh a browser source without cache
 window.obsAPI.RefreshBrowserNoCache('my-browser-source');
 ```
 
 ---
 
-<a id="changescene"></a>
-## ChangeScene(sceneName)
+### `ChangeScene()`
 
-Changes the current scene.
+Switches the current active scene in OBS Studio.
 
-### Signature
+#### Syntax
 
-`ChangeScene(sceneName)`
+```javascript
+window.obsAPI.ChangeScene(sceneName)
+```
 
-| Parameter        | Description                                      |
-|------------------|--------------------------------------------------|
-| `sceneName`      | The name of the scene to change to.              |
+#### Parameters
 
-### Returns
+| Parameter | Type | Description |
+|-----------|------|--------------|
+| `sceneName` | `string` | The name of the scene to switch to |
 
-| Type   | Description |
-|--------|-------------|
-| `void` | Nothing.    |
+#### Returns
+
+`void`
 
 #### Example
 
 ```javascript
-window.obsAPI.ChangeScene('my-scene');
+// Switch to a specific scene
+window.obsAPI.ChangeScene('Gaming Scene');
+
+// Switch to break scene
+window.obsAPI.ChangeScene('BRB Screen');
 ```
+
+---
+
+## 📚 Additional Resources
+
+- [Plugin Development Guide](./pluginoverview.md)
+- [Example Plugin](../plugins/ExamplePlugin.js)
+- [OBS WebSocket Documentation](https://github.com/obsproject/obs-websocket/blob/master/docs/generated/protocol.md)
+
+## 🤝 Contributing
+
+Found an issue with this documentation? Please [open an issue](https://github.com/your-repo/obs-remote/issues) or submit a pull request.
+
+---
+
+*This documentation is part of the OBS Remote Plugin System. For more information, see the [main documentation](../README.md).*
