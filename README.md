@@ -5,8 +5,8 @@ rOBSon lets you control OBS Studio remotely from a simple electron app. Connect 
 # How to use
 
 ## IMPORTANT
-### Only sources whose names start with an underscore appear in the Dashboard. Example: `_Scoreboard`, `_Timer`, `_LowerThird`. so you can control what to see.
-### It IS NOT a security feature, it is just a way to organize your sources, DO NOT, give access to your OBS to people who you dont trust, since they can just plug the password in other apps to control your OBS, not putting a `_` will not stop them from controlling your OBS.
+### Only sources whose names start with an underscore appear in the Dashboard. Example: `_Scoreboard`, `_Timer`, `_LowerThird`, so you can control what to see in the dashboard.
+### This IS NOT a security feature, it is just a way to organize your sources, DO NOT, give access to your OBS to people who you dont trust, since they can just plug the password in other apps to control your OBS, not putting a `_` will not stop them from controlling your OBS.
 ### DO NOT download plugins from unknown sources, they can be malicious.
 
 ## Quick overview
