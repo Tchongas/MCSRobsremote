@@ -31,7 +31,7 @@
         }
         if (window.PluginUtils?.applyRowBackground) {
           window.PluginUtils.applyRowBackground(options, '#4f258a', '#291259', false);
-        }
+        } 
       } catch (error) {
         window.uiHelpers?.log(`❌ TwitchPlugin error: ${error.message}`);
         console.error('TwitchPlugin detailed error:', error);
