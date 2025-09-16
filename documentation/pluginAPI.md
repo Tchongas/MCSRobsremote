@@ -4,7 +4,7 @@
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![Plugin System](https://img.shields.io/badge/Plugin-System-green.svg)](#plugin-management)
 
-> **Comprehensive API reference for developing plugins for the OBS Remote application.**
+> **The Plugin Api for rOBSon.**
 
 ## Table of Contents
 
@@ -477,8 +477,6 @@ window.obsAPI.ChangeScene('BRB Screen');
 
 ## 🤝 Contributing
 
-Found an issue with this documentation? Please [open an issue](https://github.com/your-repo/obs-remote/issues) or submit a pull request.
+Found an issue with this documentation? Please [open an issue](https://github.com/Tchongas/MCSRobsremote/issues) or submit a pull request.
 
 ---
-
-*This documentation is part of the OBS Remote Plugin System. For more information, see the [main documentation](../README.md).*
