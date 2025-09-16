@@ -21,11 +21,11 @@
     - [RefreshBrowserNoCache](#refresh)
     - [ChangeScene](#changescene)
 
-## Dashboard
+# Dashboard
 
 Functions to change the appearance and functionality of a source in the Dashboard.
 
-### applyRowBackground
+## applyRowBackground
 
 Applies a background color to the row of a source in the Dashboard.
 
@@ -39,7 +39,7 @@ Applies a background color to the row of a source in the Dashboard.
 window.PluginUtils.applyRowBackground(options, '#b39544');
 ```
 
-### applySourceIcon
+## applySourceIcon
 Changes the icon of a source in the Dashboard.
 
 | Parameter        | Description                                      |
@@ -52,7 +52,7 @@ Changes the icon of a source in the Dashboard.
 window.PluginUtils.applySourceIcon(options, '📺');
 ```
 
-### log
+## log
 
 | Parameter        | Description                                      |
 |------------------|--------------------------------------------------|
@@ -63,10 +63,10 @@ window.PluginUtils.applySourceIcon(options, '📺');
 window.uiHelpers?.log('🔌 Plugin attempting registration...');
 ```
 
-## Plugin-Management
+# Plugin-Management
 Used to manage everything related to plugins, registering, removing etc.
 
-### register
+## register
 Necessary step to make a plugin. you can add this at the end of your plugin file.
 
 | Parameter        | Description                                      |
@@ -78,7 +78,7 @@ Necessary step to make a plugin. you can add this at the end of your plugin file
 window.CustomHandlerPlugins.register(plugin);
 ```
 
-### unregister
+## unregister
 Removes a plugin from the registry.
 
 | Parameter        | Description                                      |
@@ -90,7 +90,7 @@ Removes a plugin from the registry.
 window.CustomHandlerPlugins.unregister(plugin);
 ```
 
-### getRegisteredPlugins
+## getRegisteredPlugins
 Returns an array of all registered plugins.
 
 **returns**
@@ -103,9 +103,9 @@ Returns an array of all registered plugins.
 window.CustomHandlerPlugins.getRegisteredPlugins();
 ```
 
-## Debug
+# Debug
 
-### GetBuiltInPlugins
+## GetBuiltInPlugins
 Returns an array of all built-in plugins.
 
 **returns**
@@ -118,7 +118,7 @@ Returns an array of all built-in plugins.
 window.CustomHandlerPlugins.GetBuiltInPlugins();
 ```
 
-### GetExternalPlugins
+## GetExternalPlugins
 Returns an array of all external plugins.
 
 **returns**
@@ -131,7 +131,7 @@ Returns an array of all external plugins.
 window.CustomHandlerPlugins.GetExternalPlugins();
 ```
 
-### GetAllPlugins
+## GetAllPlugins
 Returns an array of all plugins (both built-in and external).
 
 **returns**
@@ -144,7 +144,7 @@ Returns an array of all plugins (both built-in and external).
 window.CustomHandlerPlugins.GetAllPlugins();
 ```
 
-### GetPluginDirectory
+## GetPluginDirectory
 Returns the directory where plugins are stored.
 
 **returns**
@@ -157,7 +157,7 @@ Returns the directory where plugins are stored.
 window.CustomHandlerPlugins.GetPluginDirectory();
 ```
 
-### LoadExternalPlugins
+## LoadExternalPlugins
 Reloads all external plugins.
 
 **returns**
@@ -170,9 +170,9 @@ Reloads all external plugins.
 window.CustomHandlerPlugins.LoadExternalPlugins();
 ```
 
-## OBS-API
+# OBS-API
 
-### SetSettings
+## SetSettings
 Sets the settings for a source.
 
 | Parameter        | Description                                      |
@@ -185,7 +185,7 @@ Sets the settings for a source.
 window.obsAPI.SetSettings('my-source', { key: 'value' });
 ```
 
-### RefreshBrowserNoCache
+## RefreshBrowserNoCache
 Refreshes a browser source without cache.
 
 | Parameter        | Description                                      |
@@ -197,7 +197,7 @@ Refreshes a browser source without cache.
 window.obsAPI.RefreshBrowserNoCache('my-browser-source');
 ```
 
-### ChangeScene
+## ChangeScene
 Changes the current scene.
 
 | Parameter        | Description                                      |
