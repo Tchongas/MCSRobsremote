@@ -17,13 +17,14 @@
   - [GetPluginDirectory](#getplugindirectory)
 - [OBS API](#obs-api)
   - [SetSettings](#setsettings)
-  - [🔄 RefreshBrowserNoCache(sourceName)](#refreshbrowsernocache)
-  - [🎬 ChangeScene(sceneName)](#changescene)
+  - [RefreshBrowserNoCache](#refreshbrowsernocache)
+  - [ChangeScene](#changescene)
 
 ## Dashboard
 
 Functions to change the appearance and functionality of a source in the Dashboard.
 
+<a id="applyrowbackground"></a>
 ## 🎨 applyRowBackground(optionsEl, rowBg)
 
 Applies a background color to the row of a source in the Dashboard.
@@ -51,6 +52,7 @@ window.PluginUtils.applyRowBackground(options, '#b39544');
 
 ---
 
+<a id="applysourceicon"></a>
 ## 🖼️ applySourceIcon(optionsEl, icon)
 
 Changes the icon of a source in the Dashboard.
@@ -78,6 +80,7 @@ window.PluginUtils.applySourceIcon(options, '📺');
 
 ---
 
+<a id="log"></a>
 ## 📝 log(message)
 
 Logs a message to the app console via UI helpers.
@@ -108,6 +111,7 @@ window.uiHelpers?.log('🔌 Plugin attempting registration...');
 
 Used to manage everything related to plugins, registering, removing etc.
 
+<a id="register"></a>
 ## 🔌 register(plugin)
 
 Necessary step to make a plugin. You can add this at the end of your plugin file.
@@ -134,6 +138,7 @@ window.CustomHandlerPlugins.register(plugin);
 
 ---
 
+<a id="unregister"></a>
 ## 🧹 unregister(plugin)
 
 Removes a plugin from the registry.
@@ -160,6 +165,7 @@ window.CustomHandlerPlugins.unregister(plugin);
 
 ---
 
+<a id="getregisteredplugins"></a>
 ## 📋 getRegisteredPlugins()
 
 Returns an array of all registered plugins.
@@ -206,6 +212,7 @@ window.CustomHandlerPlugins.GetBuiltInPlugins();
 
 ---
 
+<a id="getexternalplugins"></a>
 ## 📦 GetExternalPlugins()
 
 Returns an array of all external plugins.
@@ -228,6 +235,7 @@ window.CustomHandlerPlugins.GetExternalPlugins();
 
 ---
 
+<a id="getallplugins"></a>
 ## 🧰 GetAllPlugins()
 
 Returns an array of all plugins (both built-in and external).
@@ -250,6 +258,7 @@ window.CustomHandlerPlugins.GetAllPlugins();
 
 ---
 
+<a id="getplugindirectory"></a>
 ## 📁 GetPluginDirectory()
 
 Returns the directory where plugins are stored.
@@ -272,6 +281,7 @@ window.CustomHandlerPlugins.GetPluginDirectory();
 
 ---
 
+<a id="loadexternalplugins"></a>
 ## ♻️ LoadExternalPlugins()
 
 Reloads all external plugins.
@@ -323,7 +333,8 @@ window.obsAPI.SetSettings('my-source', { key: 'value' });
 
 ---
 
-## 🔄 RefreshBrowserNoCache(sourceName)
+<a id="refreshbrowsernocache"></a>
+## RefreshBrowserNoCache(sourceName)
 
 Refreshes a browser source without cache.
 
@@ -349,7 +360,8 @@ window.obsAPI.RefreshBrowserNoCache('my-browser-source');
 
 ---
 
-## 🎬 ChangeScene(sceneName)
+<a id="changescene"></a>
+## ChangeScene(sceneName)
 
 Changes the current scene.
 
