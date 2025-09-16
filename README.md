@@ -1,6 +1,6 @@
 # rOBSon – OBS Remote Control
 
-rOBSon lets you control OBS Studio from a simple, modern desktop app. Connect to your OBS over WebSocket, change scenes instantly, toggle scene item visibility, start/stop streaming, and extend the dashboard with plugins – all with real‑time updates shared across multiple clients.
+rOBSon lets you control OBS Studio remotely from a simple electron app. Connect to your OBS over WebSocket, change scenes instantly, toggle scene item visibility, start/stop streaming, and extend the dashboard with plugins – all with real‑time updates shared across multiple clients.
 
 # How to use
 
