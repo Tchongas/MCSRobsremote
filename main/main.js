@@ -8,6 +8,7 @@ const sources = require('../actions/sources');
 const browserActions = require('../actions/browser');
 const streaming = require('../actions/streaming');
 const sceneItems = require('../actions/sceneItems');
+const media = require('../actions/media');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -139,6 +140,20 @@ function setupIpcHandlers() {
 
   ipcMain.handle('streaming-status', async () => {
     return await streaming.status();
+  });
+
+  // Media
+  ipcMain.handle('media-play', async (event, inputName) => {
+    return await media.playMedia(inputName);
+  });
+  ipcMain.handle('media-stop', async (event, inputName) => {
+    return await media.stopMedia(inputName);
+  });
+  ipcMain.handle('media-toggle', async (event, inputName) => {
+    return await media.toggleMedia(inputName);
+  });
+  ipcMain.handle('media-restart', async (event, inputName) => {
+    return await media.restartMedia(inputName);
   });
 
   // Debug raw request handler
@@ -284,6 +299,7 @@ function setupEventForwarding(win) {
   onEvent('input-mute-changed', (data) => {
     win.webContents.send('obs-event', { type: 'input-mute-changed', data });
   });
+  
 }
 
 app.on('window-all-closed', () => {

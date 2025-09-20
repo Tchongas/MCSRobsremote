@@ -32,6 +32,16 @@ contextBridge.exposeInMainWorld('obsAPI', {
     stop: () => ipcRenderer.invoke('streaming-stop'),
     status: () => ipcRenderer.invoke('streaming-status')
   },
+  media: {
+    // Backward-compatible methods
+    playMedia: (inputName) => ipcRenderer.invoke('media-play', inputName),
+    stopMedia: (inputName) => ipcRenderer.invoke('media-stop', inputName),
+    // Preferred concise aliases used by plugins
+    play: (inputName) => ipcRenderer.invoke('media-play', inputName),
+    stop: (inputName) => ipcRenderer.invoke('media-stop', inputName),
+    restart: (inputName) => ipcRenderer.invoke('media-restart', inputName),
+    toggle: (inputName) => ipcRenderer.invoke('media-toggle', inputName)
+  },
   // Event system for real-time updates
   onEvent: (callback) => {
     ipcRenderer.on('obs-event', (event, data) => callback(data));

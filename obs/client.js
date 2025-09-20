@@ -8,7 +8,7 @@ async function connect(url, password) {
   
   // Use provided parameters or fall back to defaults
   const connectionUrl = url || 'ws://:4455';
-  const connectionPassword = password || 'UQXZK2ZO2hnB8Und';
+  const connectionPassword = password || '';
   
   console.log(`Attempting to connect to OBS at ${connectionUrl}...`);
   

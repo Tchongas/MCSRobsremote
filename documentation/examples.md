@@ -1,3 +1,9 @@
+# Examples of plugins
+
+## Twitch row color
+Changes the row background color of a browser source if it is a twitch URL, and change its icon to a TV emoji.
+
+```javascript
 // TwitchPlugin - Simple Twitch source detector with background color and icon
 (function() {
   const TwitchPlugin = {
@@ -30,7 +36,7 @@
           window.PluginUtils.applySourceIcon(options, '📺');
         }
         if (window.PluginUtils?.applyRowBackground) {
-          window.PluginUtils.applyRowBackground(options, '#7e1cd4');
+          window.PluginUtils.applyRowBackground(options, '#b39544');
         } 
       } catch (error) {
         window.uiHelpers?.log(`❌ TwitchPlugin error: ${error.message}`);
@@ -58,3 +64,5 @@
 
   window.uiHelpers?.log('📺 TwitchPlugin loaded');
 })();
+```
+

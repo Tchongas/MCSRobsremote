@@ -4,16 +4,29 @@
   "main": "main/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "com.mcsrobsremote",
+    "productName": "MCSROBSRemote",
+    "directories": {
+      "output": "dist"
+    },
+    "asar": true,
+    "win": {
+      "target": "portable"
+    }
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^37.2.1"
+    "electron": "^37.2.1",
+    "electron-builder": "^26.0.12"
   },
   "dependencies": {
-    "obs-websocket-js": "^5.0.6",
-    "chokidar": "^3.5.3"
+    "chokidar": "^3.5.3",
+    "obs-websocket-js": "^5.0.6"
   },
   "keywords": [],
   "description": ""
