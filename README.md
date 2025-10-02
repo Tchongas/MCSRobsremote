@@ -57,9 +57,9 @@ If another person changes scenes or toggles items from a different rOBSon instan
 ## Plugins
 
 ### Documentation
-([PLUGIN-SYSTEM.md](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/pluginoverview.md))
-([PLUGIN-API.md](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/pluginAPI.md))
-([PLUGIN-EXAMPLE.md](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/examples.md))
+([PLUGIN-SYSTEM](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/pluginoverview.md))
+([PLUGIN-API](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/pluginAPI.md))
+([EXAMPLE](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/examples.md))
 
 
 Plugins can enhance the controls for certain sources. For example, a plugin can add a “Refresh” button or special controls for browser overlays.
