@@ -9,19 +9,6 @@ ROBSon lets you control OBS Studio remotely from a simple electron app. Connect 
 ### This IS NOT a security feature, it is just a way to organize your sources, DO NOT, give access to your OBS to people who you dont trust, since they can just plug the password in other apps to control your OBS, not putting a `_` will not stop them from controlling your OBS.
 ### DO NOT download plugins from unknown sources, they can be malicious.
 
-## Quick overview
-
-- Connect to your OBS Studio using the OBS WebSocket.
-- See and switch between scenes quickly.
-- Control scene items in a clean “Dashboard” view.
-- Toggle item visibility with a single click.
-- Expand items to reveal extra options when available.
-- Start and stop streaming.
-- Get live status and logs directly in the app.
-- Enjoy real‑time synchronization if multiple people use the app against the same OBS.
-- Add optional plugins to enhance certain sources (e.g., browser overlays).
-
-
 ## Requirements
 
 - OBS Studio 28+ with OBS WebSocket enabled.
@@ -30,7 +17,6 @@ ROBSon lets you control OBS Studio remotely from a simple electron app. Connect 
 ## First‑time setup in OBS
 
 Tools → WebSocket Server Settings → enable the server. Default local URL is `ws://localhost:4455`. Set a password if you use one.
-
 
 ## Connect the app to OBS
 
@@ -48,11 +34,14 @@ Open Settings (⚙️), set the WebSocket URL and optional password, Save, then 
   - If available, use ▸ to expand extra controls (e.g., browser source tools).
 - Bottom Console shows logs.
 
-
-## Real‑time updates
-
 If another person changes scenes or toggles items from a different ROBSon instance (or directly in OBS), your app will update automatically. You’ll see “(remote)” in the console next to those actions.
 
+## Connection hiccups (quick checks)
+
+- Is OBS running and its WebSocket enabled?
+- Is the URL/password correct? Local default: `ws://localhost:4455`.
+- Any firewall blocking the port?
+- If you are using it remotely, make sure to forward the port, or use something like RadminVPN.
 
 # Plugins
 
@@ -67,22 +56,6 @@ Plugins can enhance the controls for certain sources. For example, a plugin can 
 - Built‑in plugins are included with the app and work automatically.
 - You can add your own plugins by placing `.js` files in the `plugins/` folder next to the app executable.
 - When you add or edit a plugin file, the app detects the change and reloads automatically.
-
-
-## Connection hiccups (quick checks)
-
-- Is OBS running and its WebSocket enabled?
-- Is the URL/password correct? Local default: `ws://localhost:4455`.
-- Any firewall blocking the port?
-- If you are using it remotely, make sure to forward the port, or use something like RadminVPN.
-
-
-## Security
-
-- ROBSon connects only to the OBS WebSocket you specify.
-- External plugins are sandboxed with limited access.
-- ONLY GIVE ACCESS TO PEOPLE YOU TRUST, since they can just plug the password in other apps to control your OBS, not putting a `_` will not stop them from controlling your OBS. PLEASE
-
 
 ## Getting updates or help
 
