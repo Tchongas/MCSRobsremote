@@ -54,7 +54,7 @@ Open Settings (⚙️), set the WebSocket URL and optional password, Save, then 
 If another person changes scenes or toggles items from a different ROBSon instance (or directly in OBS), your app will update automatically. You’ll see “(remote)” in the console next to those actions.
 
 
-## Plugins
+# Plugins
 
 ### Documentation
 ([PLUGIN-SYSTEM](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/pluginoverview.md))
