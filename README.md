@@ -46,7 +46,7 @@ Open Settings (⚙️), set the WebSocket URL and optional password, Save, then 
   - You will only see items whose source names start with `_`.
   - Toggle visibility via the switch.
   - If available, use ▸ to expand extra controls (e.g., browser source tools).
-- Bottom Console shows live logs.
+- Bottom Console shows logs.
 
 
 ## Real‑time updates
@@ -54,15 +54,19 @@ Open Settings (⚙️), set the WebSocket URL and optional password, Save, then 
 If another person changes scenes or toggles items from a different rOBSon instance (or directly in OBS), your app will update automatically. You’ll see “(remote)” in the console next to those actions.
 
 
-## Plugins (optional)
+## Plugins
 
-Plugins can enhance the controls for certain sources. For example, a plugin can add a “Refresh” button or special controls for browser‑based overlays.
+### Documentation
+([PLUGIN-SYSTEM.md](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/pluginoverview.md))
+([PLUGIN-API.md](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/pluginAPI.md))
+([PLUGIN-EXAMPLE.md](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/examples.md))
+
+
+Plugins can enhance the controls for certain sources. For example, a plugin can add a “Refresh” button or special controls for browser overlays.
 
 - Built‑in plugins are included with the app and work automatically.
 - You can add your own plugins by placing `.js` files in the `plugins/` folder next to the app executable.
 - When you add or edit a plugin file, the app detects the change and reloads automatically.
-
-Note: Plugins run in a restricted environment with access to the app’s UI and OBS actions only. This helps protect your system and keep the app stable.
 
 
 ## Connection hiccups (quick checks)
@@ -71,16 +75,15 @@ Note: Plugins run in a restricted environment with access to the app’s UI and 
 - Is the URL/password correct? Local default: `ws://localhost:4455`.
 - Any firewall blocking the port?
 - If you are using it remotely, make sure to forward the port, or use something like RadminVPN.
-Check the Console for the exact error.
 
 
-## Privacy and security
+## Security
 
 - rOBSon connects only to the OBS WebSocket you specify.
-- No cloud account is required.
 - External plugins are sandboxed with limited access.
+- ONLY GIVE ACCESS TO PEOPLE YOU TRUST, since they can just plug the password in other apps to control your OBS, not putting a `_` will not stop them from controlling your OBS. PLEASE
 
 
 ## Getting updates or help
 
-You can open a issue here on github, or message me in discord: @limifaooooos
+You can open a issue here on github, or message me in discord: @limifaooooo
