@@ -32,6 +32,7 @@
     if (k === 'dshow_input' || k === 'av_capture_input' || k === 'video_capture_device') return '🎥';
     if (k === 'scene') return '🎬';
     if (k === 'group') return '🗂️';
+    if (k === 'wasapi_output_capture') return '🔊';
     return '📦';
   }
 
