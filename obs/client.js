@@ -71,6 +71,13 @@ function setupEventListeners() {
     console.log('Input mute state changed:', data.inputName, data.inputMuted);
     notifyRenderer('input-mute-changed', data);
   });
+
+  // Input volume changes
+  obs.on('InputVolumeChanged', (data) => {
+    // data: { inputName, inputVolumeMul, inputVolumeDb }
+    console.log('Input volume changed:', data.inputName, data.inputVolumeMul);
+    notifyRenderer('input-volume-changed', data);
+  });
 }
 
 function notifyRenderer(eventType, data) {

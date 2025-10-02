@@ -84,10 +84,9 @@
   }
 
   function handleRemoteUpdate(sourceName, eventType, data) {
-    const sourceKind = data.inputKind || '';
-    
+    // Broadcast to all handlers; let each handler decide if it cares
     handlers.forEach(handler => {
-      if (handler.onRemoteUpdate && handler.canHandle(sourceKind, sourceName, { inputKindMap: new Map([[sourceName, sourceKind]]) })) {
+      if (handler.onRemoteUpdate) {
         try {
           handler.onRemoteUpdate(sourceName, eventType, data);
         } catch (e) {

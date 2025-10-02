@@ -35,6 +35,7 @@
       volInput.max = '100';
       volInput.value = '100';
       volInput.className = 'mic-volume';
+      volInput.dataset.inputName = sourceName;
 
       row.appendChild(muteBtn);
       row.appendChild(volLabel);
@@ -80,6 +81,9 @@
     onRemoteUpdate(sourceName, eventType, data) {
       if (eventType === 'input-mute-changed') {
         this._updateMuteState(sourceName, data.inputMuted);
+      } else if (eventType === 'input-volume-changed' && data.inputName === sourceName) {
+        const mul = typeof data.inputVolumeMul === 'number' ? data.inputVolumeMul : undefined;
+        if (mul !== undefined) this._updateVolumeSlider(sourceName, mul);
       }
     },
     
@@ -95,6 +99,14 @@
         const selector = `.dash-options .btn-ghost[data-input-name="${CSS.escape(inputName)}"]`;
         const btn = document.querySelector(selector);
         if (btn) this._applyMuteState(btn, muted);
+      } catch (_) { /* ignore */ }
+    },
+
+    _updateVolumeSlider(inputName, mul) {
+      try {
+        const selector = `.dash-options input.mic-volume[data-input-name="${CSS.escape(inputName)}"]`;
+        const slider = document.querySelector(selector);
+        if (slider) slider.value = String(Math.round(Math.max(0, Math.min(1, mul)) * 100));
       } catch (_) { /* ignore */ }
     }
   };

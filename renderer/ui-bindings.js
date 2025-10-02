@@ -166,6 +166,13 @@
           }
           log(`🔄 Input ${data.inputName} ${data.inputMuted ? 'muted' : 'unmuted'} (remote)`);
           break;
+        case 'input-volume-changed':
+          // Broadcast to handlers to update any volume sliders
+          if (window.HandlerRegistry) {
+            window.HandlerRegistry.handleRemoteUpdate(data.inputName, 'input-volume-changed', data);
+          }
+          log(`🔄 Volume changed for ${data.inputName} to ${Math.round((data.inputVolumeMul ?? 0) * 100)}% (remote)`);
+          break;
       }
     });
 

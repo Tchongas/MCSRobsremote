@@ -19,11 +19,12 @@
         
         const urlInput = await this._createUrlControls(options, sourceName, displayName, currentUrl);
         await this._createParametersSection(options, currentUrl, sourceName, displayName, urlInput);
+        // Add audio controls (mute + volume)
+        await this._createAudioControls(options, sourceName, displayName);
       } catch (err) {
         console.warn(`BrowserSourceHandler error for ${sourceName}:`, err);
       }
     },
-    
     async _createUrlControls(options, sourceName, displayName, currentUrl) {
       const urlRow = document.createElement('div');
       urlRow.className = 'dash-option-row';
@@ -82,11 +83,105 @@
       // Return the urlInput reference for parameter section
       return urlInput;
     },
+
+    async _createAudioControls(options, sourceName, displayName) {
+      const row = document.createElement('div');
+      row.className = 'dash-option-row';
+
+      const muteBtn = document.createElement('button');
+      muteBtn.className = 'btn-ghost';
+      muteBtn.textContent = 'Mute';
+      muteBtn.dataset.inputName = sourceName;
+
+      const volLabel = document.createElement('label');
+      volLabel.className = 'input-label';
+      volLabel.textContent = 'Volume';
+
+      const volInput = document.createElement('input');
+      volInput.type = 'range';
+      volInput.min = '0';
+      volInput.max = '100';
+      volInput.value = '100';
+      volInput.className = 'mic-volume';
+      volInput.dataset.inputName = sourceName;
+
+      row.appendChild(muteBtn);
+      row.appendChild(volLabel);
+      row.appendChild(volInput);
+      options.appendChild(row);
+
+      // Initial states
+      try {
+        const [muteState, volState] = await Promise.all([
+          window.obsAPI.sources.getMute(sourceName),
+          window.obsAPI.sources.getVolume(sourceName)
+        ]);
+        const isMuted = !!(muteState && (muteState.inputMuted ?? muteState.muted));
+        this._applyMuteState(muteBtn, isMuted);
+        const mul = volState && typeof volState.inputVolumeMul === 'number' ? volState.inputVolumeMul : 1.0;
+        volInput.value = String(Math.round(mul * 100));
+      } catch (_) { /* ignore */ }
+
+      // Listeners
+      muteBtn.addEventListener('click', async () => {
+        try {
+          const current = await window.obsAPI.sources.getMute(sourceName);
+          const isMuted = !!(current && (current.inputMuted ?? current.muted));
+          await window.obsAPI.sources.setMute(sourceName, !isMuted);
+          this._applyMuteState(muteBtn, !isMuted);
+          window.uiHelpers.log(`🌐 ${displayName} ${!isMuted ? 'muted' : 'unmuted'}`);
+        } catch (e) {
+          window.uiHelpers.log('❌ Error toggling mute: ' + e.message);
+        }
+      });
+
+      volInput.addEventListener('input', async (e) => {
+        const value = Number(e.target.value);
+        const mul = Math.max(0, Math.min(1, value / 100));
+        try {
+          await window.obsAPI.sources.setVolume(sourceName, mul);
+        } catch (err) {
+          window.uiHelpers.log('❌ Error setting volume: ' + err.message);
+        }
+      });
+    },
+
+    onRemoteUpdate(sourceName, eventType, data) {
+      if (eventType === 'input-mute-changed') {
+        this._updateMuteState(sourceName, data.inputMuted);
+      } else if (eventType === 'input-volume-changed' && data.inputName === sourceName) {
+        const mul = typeof data.inputVolumeMul === 'number' ? data.inputVolumeMul : undefined;
+        if (mul !== undefined) this._updateVolumeSlider(sourceName, mul);
+      }
+    },
+
+    _applyMuteState(btn, muted) {
+      if (!btn) return;
+      btn.textContent = muted ? 'Unmute' : 'Mute';
+      btn.classList.toggle('btn-danger', !muted);
+      btn.classList.toggle('btn-success', muted);
+    },
+
+    _updateMuteState(inputName, muted) {
+      try {
+        const selector = `.dash-options .btn-ghost[data-input-name="${CSS.escape(inputName)}"]`;
+        const btn = document.querySelector(selector);
+        if (btn) this._applyMuteState(btn, muted);
+      } catch (_) { /* ignore */ }
+    },
+
+    _updateVolumeSlider(inputName, mul) {
+      try {
+        const selector = `.dash-options input.mic-volume[data-input-name="${CSS.escape(inputName)}"]`;
+        const slider = document.querySelector(selector);
+        if (slider) slider.value = String(Math.round(Math.max(0, Math.min(1, mul)) * 100));
+      } catch (_) { /* ignore */ }
+    },
+
     
     async _createParametersSection(options, currentUrl, sourceName, displayName, urlInput) {
       const paramsWrap = document.createElement('div');
       paramsWrap.className = 'params-section';
-
       const paramsTitleRow = document.createElement('div');
       paramsTitleRow.className = 'dash-option-row';
       const paramsTitle = document.createElement('div');

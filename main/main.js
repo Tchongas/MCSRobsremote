@@ -300,6 +300,10 @@ function setupEventForwarding(win) {
     win.webContents.send('obs-event', { type: 'input-mute-changed', data });
   });
   
+  onEvent('input-volume-changed', (data) => {
+    win.webContents.send('obs-event', { type: 'input-volume-changed', data });
+  });
+  
 }
 
 app.on('window-all-closed', () => {
