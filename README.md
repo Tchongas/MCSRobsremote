@@ -1,6 +1,6 @@
-# rOBSon – OBS Remote Control
+# ROBSon – OBS Remote Control
 
-rOBSon lets you control OBS Studio remotely from a simple electron app. Connect to your OBS over WebSocket, change scenes instantly, toggle scene item visibility, start/stop streaming, and extend the dashboard with plugins – all with real‑time updates shared across multiple clients.
+ROBSon lets you control OBS Studio remotely from a simple electron app. Connect to your OBS over WebSocket, change scenes instantly, toggle scene item visibility, start/stop streaming, and extend the dashboard with plugins, with real‑time updates that can be shared across multiple clients.
 
 # How to use
 
@@ -51,7 +51,7 @@ Open Settings (⚙️), set the WebSocket URL and optional password, Save, then 
 
 ## Real‑time updates
 
-If another person changes scenes or toggles items from a different rOBSon instance (or directly in OBS), your app will update automatically. You’ll see “(remote)” in the console next to those actions.
+If another person changes scenes or toggles items from a different ROBSon instance (or directly in OBS), your app will update automatically. You’ll see “(remote)” in the console next to those actions.
 
 
 ## Plugins
@@ -79,7 +79,7 @@ Plugins can enhance the controls for certain sources. For example, a plugin can 
 
 ## Security
 
-- rOBSon connects only to the OBS WebSocket you specify.
+- ROBSon connects only to the OBS WebSocket you specify.
 - External plugins are sandboxed with limited access.
 - ONLY GIVE ACCESS TO PEOPLE YOU TRUST, since they can just plug the password in other apps to control your OBS, not putting a `_` will not stop them from controlling your OBS. PLEASE
 
