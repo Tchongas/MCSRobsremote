@@ -17,6 +17,10 @@
     "asar": true,
     "win": {
       "target": "portable"
+    },
+    "linux": {
+      "category": "Utility",
+      "target": ["pacman", "AppImage"]
     }
   },
   "author": "",
@@ -30,5 +34,5 @@
     "obs-websocket-js": "^5.0.6"
   },
   "keywords": [],
-  "description": ""
+  "description": "Remote OBS Studio controller with real-time scene and audio controls"
 }

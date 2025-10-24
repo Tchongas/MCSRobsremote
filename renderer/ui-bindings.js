@@ -4,6 +4,21 @@
   function initializeBindings() {
     const { log, setConnBadge, setSceneBadge, setIndicator, refreshScenes, loadDashboardItems, getStoredConfig, showSettingsModal, hideSettingsModal, saveSettings, resetSettings } = window.uiLogic;
 
+    const sourceSearch = document.getElementById('sourceSearch');
+    const applySourceFilter = () => {
+      const q = (sourceSearch && sourceSearch.value || '').trim().toLowerCase();
+      const items = document.querySelectorAll('#dashboardItems .dash-item');
+      items.forEach(el => {
+        const name = el.dataset?.name || el.querySelector('.name')?.textContent?.toLowerCase() || '';
+        const raw = el.dataset?.rawName || '';
+        const match = !q || name.includes(q) || raw.includes(q);
+        el.classList.toggle('is-hidden', !match);
+      });
+    };
+    if (sourceSearch) {
+      sourceSearch.addEventListener('input', applySourceFilter);
+    }
+
     const connectBtn = document.getElementById('connect');
     const disconnectBtn = document.getElementById('disconnect');
 
@@ -96,6 +111,7 @@
         log('🔁 Switched scene to: ' + sceneName);
         setSceneBadge(sceneName);
         await loadDashboardItems(sceneName);
+        applySourceFilter();
       } catch (err) {
         log('❌ Error switching scene: ' + err.message);
       }
@@ -133,7 +149,12 @@
           if (sceneSelect && sceneSelect.value !== data.sceneName) {
             sceneSelect.value = data.sceneName;
             // Load dashboard items for the new scene
-            loadDashboardItems(data.sceneName);
+            loadDashboardItems(data.sceneName).then(() => {
+              const el = document.getElementById('sourceSearch');
+              if (el) {
+                el.dispatchEvent(new Event('input'));
+              }
+            });
           }
           log(`🔄 Scene changed to: ${data.sceneName} (remote)`);
           break;

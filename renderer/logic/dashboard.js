@@ -68,6 +68,8 @@
     const displayName = typeof rawName === 'string' && rawName.length > 0 ? rawName.slice(1) : rawName;
     name.textContent = displayName;
     name.title = rawName; // tooltip shows full original name
+    itemWrap.dataset.name = String(displayName || '').toLowerCase();
+    itemWrap.dataset.rawName = String(rawName || '').toLowerCase();
 
     const nameWrap = document.createElement('div');
     nameWrap.className = 'name-wrap';
