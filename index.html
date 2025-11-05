@@ -21,7 +21,7 @@
         <div class="badges">
           <span id="connBadge" class="badge badge-off">Disconnected</span>
           <span id="sceneBadge" class="badge">Scene: -</span>
-          <button id="settingsBtn" class="icon-btn" title="Settings" aria-label="Settings">⚙️</button>
+          <button id="settingsBtn" class="icon-btn" title="Settings" aria-label="Settings" tabindex="-1">⚙️</button>
         </div>
       </div>
 
@@ -30,19 +30,19 @@
         <section class="panel">
           <h2>Controls</h2>
           <div class="controls">
-            <button id="connect" class="btn-accent btn-indicator is-red">Connect to OBS</button>
-            <button id="disconnect" class="btn-danger">Disconnect</button>
+            <button id="connect" class="btn-accent btn-indicator is-red" tabindex="-1">Connect to OBS</button>
+            <button id="disconnect" class="btn-danger" tabindex="-1">Disconnect</button>
 
-            <button id="start" class="btn-success">Start Streaming</button>
-            <button id="stop" class="btn-danger">Stop Streaming</button>
+            <button id="start" class="btn-success" tabindex="-1">Start Streaming</button>
+            <button id="stop" class="btn-danger" tabindex="-1">Stop Streaming</button>
 
             <div class="select-row">
               <label for="sceneSelect" class="input-label">Scene</label>
               <div class="select-with-refresh">
-                <select id="sceneSelect" disabled>
+                <select id="sceneSelect" disabled tabindex="-1">
                   <option value="">Select a scene...</option>
                 </select>
-                <button id="refreshScenes" class="icon-btn" title="Refresh scenes" aria-label="Refresh scenes">⟳</button>
+                <button id="refreshScenes" class="icon-btn" title="Refresh scenes" aria-label="Refresh scenes" tabindex="-1">⟳</button>
               </div>
             </div>
 
@@ -81,6 +81,22 @@
           <button id="closeSettings" class="icon-btn">&times;</button>
         </div>
         <div class="modal-body">
+          <div class="form-group">
+            <label for="profileSelect" class="input-label">Connection Profile</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <select id="profileSelect" class="input-grow" style="flex: 1;">
+                <option value="Default">Default</option>
+              </select>
+              <button id="newProfile" class="btn-ghost" title="Create new profile">+ New</button>
+              <button id="deleteProfile" class="btn-ghost" title="Delete current profile">🗑️</button>
+            </div>
+            <small class="help-text">Save multiple OBS connection setups</small>
+          </div>
+          <div class="form-group" id="profileNameGroup" style="display: none;">
+            <label for="profileName" class="input-label">Profile Name</label>
+            <input type="text" id="profileName" class="input-grow" placeholder="Enter profile name">
+            <small class="help-text">Name for this connection profile</small>
+          </div>
           <div class="form-group">
             <label for="obsUrl" class="input-label">OBS WebSocket URL</label>
             <input type="text" id="obsUrl" class="input-grow" placeholder="ws://localhost:4455" value="ws://localhost:4455">

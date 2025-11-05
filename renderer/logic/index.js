@@ -37,6 +37,17 @@
       hideSettingsModal: window.configLogic.hideSettingsModal,
       saveSettings: window.configLogic.saveSettings,
       resetSettings: window.configLogic.resetSettings,
+      
+      // Profile management
+      getProfiles: window.configLogic.getProfiles,
+      getActiveProfileName: window.configLogic.getActiveProfileName,
+      createProfile: window.configLogic.createProfile,
+      deleteProfile: window.configLogic.deleteProfile,
+      switchProfile: window.configLogic.switchProfile,
+      updateProfileList: window.configLogic.updateProfileList,
+      handleProfileChange: window.configLogic.handleProfileChange,
+      showNewProfileDialog: window.configLogic.showNewProfileDialog,
+      handleDeleteProfile: window.configLogic.handleDeleteProfile,
 
       // Audio/microphone updates (embedded in dashboard items)
       updateMicrophoneMuteState: window.dashboardLogic.updateMicrophoneMuteState

@@ -94,6 +94,7 @@
     chk.checked = !!item.sceneItemEnabled;
     chk.title = 'Toggle visibility';
     chk.dataset.sceneItemId = item.sceneItemId;
+    chk.tabIndex = -1; // keep tab order on the row only
 
     chk.addEventListener('change', async (ev) => {
       const desired = ev.target.checked;
@@ -123,6 +124,9 @@
         console.error('Handler registry error:', err);
       }
     }
+
+    // Make every focusable element inside options non-tabbable so only the row enters tab order
+    disableTabInside(options);
 
     // Create arrow now that we know options exist
     if (hasOptions) {
@@ -154,10 +158,26 @@
       expandBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
       options.setAttribute('aria-hidden', expanded ? 'false' : 'true');
       setArrow();
+      if (!expanded) {
+        disableTabInside(options);
+      }
     };
     applyExpanded();
 
-    // Toggle via arrow button
+    // Allow exiting edit mode with Escape anywhere inside options
+    options.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        expanded = false;
+        applyExpanded();
+        disableTabInside(options);
+        nameWrap.focus();
+      }
+    });
+
+    // Make arrow non-tabbable; row handles focus
+    expandBtn.tabIndex = -1;
+    // Toggle via arrow button (mouse)
     expandBtn.addEventListener('click', () => {
       expanded = !expanded;
       applyExpanded();
@@ -175,11 +195,62 @@
     };
     nameWrap.addEventListener('click', safeToggle);
     nameWrap.addEventListener('keydown', (e) => {
+      // Expand/collapse
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         safeToggle(e);
+        return;
+      }
+      // Enter edit mode with 'e': open options, enable tabbing inside, focus first control
+      if (e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        if (!expanded) {
+          expanded = true;
+          applyExpanded();
+        }
+        enableTabInside(options);
+        focusFirstFocusable(options) || options.focus();
+        return;
+      }
+      // Toggle visibility with 'v'
+      if (e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        chk.checked = !chk.checked;
+        chk.dispatchEvent(new Event('change', { bubbles: true }));
+        return;
+      }
+      // Navigate across items
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const items = Array.from(document.querySelectorAll('#dashboardItems .dash-item:not(.is-hidden) .name-wrap'));
+        const idx = items.indexOf(nameWrap);
+        const next = e.key === 'ArrowDown' ? items[idx + 1] : items[idx - 1];
+        if (next) next.focus();
       }
     });
+  }
+
+  // Ensure no element inside the options panel is tabbable
+  function disableTabInside(rootEl) {
+    if (!rootEl) return;
+    const focusables = rootEl.querySelectorAll('a, button, input, select, textarea, [tabindex]');
+    focusables.forEach(n => { try { n.tabIndex = -1; } catch(_){} });
+  }
+
+  function enableTabInside(rootEl) {
+    if (!rootEl) return;
+    const focusables = rootEl.querySelectorAll('a, button, input, select, textarea, [tabindex]');
+    focusables.forEach(n => { try { n.tabIndex = 0; } catch(_){} });
+  }
+
+  function focusFirstFocusable(rootEl) {
+    const focusables = rootEl.querySelectorAll('button, input, select, textarea, a, [tabindex]:not([tabindex="-1"])');
+    for (const el of focusables) {
+      if (!el.disabled && el.offsetParent !== null) {
+        try { el.focus(); return true; } catch(_) { /* no-op */ }
+      }
+    }
+    return false;
   }
 
   // Public: update microphone mute state via handler registry

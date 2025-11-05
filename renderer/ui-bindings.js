@@ -2,7 +2,21 @@
 (function() {
   // Wait for uiLogic to be ready before setting up bindings
   function initializeBindings() {
-    const { log, setConnBadge, setSceneBadge, setIndicator, refreshScenes, loadDashboardItems, getStoredConfig, showSettingsModal, hideSettingsModal, saveSettings, resetSettings } = window.uiLogic;
+    const { log,
+            setConnBadge, 
+            setSceneBadge, 
+            setIndicator, 
+            refreshScenes, 
+            loadDashboardItems, 
+            getStoredConfig, 
+            showSettingsModal, 
+            hideSettingsModal, 
+            saveSettings, 
+            resetSettings, 
+            handleProfileChange, 
+            showNewProfileDialog, 
+            handleDeleteProfile 
+          } = window.uiLogic;
 
     const sourceSearch = document.getElementById('sourceSearch');
     const applySourceFilter = () => {
@@ -111,17 +125,54 @@
         log('🔁 Switched scene to: ' + sceneName);
         setSceneBadge(sceneName);
         await loadDashboardItems(sceneName);
-        applySourceFilter();
-      } catch (err) {
-        log('❌ Error switching scene: ' + err.message);
+      } catch (e) {
+        log('❌ Error switching scene: ' + e.message);
       }
     });
 
     // Settings modal event handlers
-    document.getElementById('settingsBtn').addEventListener('click', showSettingsModal);
-    document.getElementById('closeSettings').addEventListener('click', hideSettingsModal);
-    document.getElementById('saveSettings').addEventListener('click', saveSettings);
-    document.getElementById('resetSettings').addEventListener('click', resetSettings);
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (settingsBtn) {
+      settingsBtn.addEventListener('click', showSettingsModal);
+    } else {
+      console.error('settings button not found');
+    }
+
+    const closeSettings = document.getElementById('closeSettings');
+    if (closeSettings) {
+      closeSettings.addEventListener('click', hideSettingsModal);
+    } else {
+      console.error('close settings button not found');
+    }
+
+    const saveSettingsBtn = document.getElementById('saveSettings');
+    if (saveSettingsBtn) {
+      saveSettingsBtn.addEventListener('click', saveSettings);
+    } else {
+      console.error('save settings button not found');
+    }
+
+    const resetSettingsBtn = document.getElementById('resetSettings');
+    if (resetSettingsBtn) {
+      resetSettingsBtn.addEventListener('click', resetSettings);
+    } else {
+      console.error('reset settings button not found');
+    }
+    
+    // Profile management event handlers
+    const profileSelect = document.getElementById('profileSelect');
+    const newProfileBtn = document.getElementById('newProfile');
+    const deleteProfileBtn = document.getElementById('deleteProfile');
+    
+    if (profileSelect) {
+      profileSelect.addEventListener('change', handleProfileChange);
+    }
+    if (newProfileBtn) {
+      newProfileBtn.addEventListener('click', showNewProfileDialog);
+    }
+    if (deleteProfileBtn) {
+      deleteProfileBtn.addEventListener('click', handleDeleteProfile);
+    }
 
     // Close modal when clicking outside
     document.getElementById('settingsModal').addEventListener('click', (e) => {
