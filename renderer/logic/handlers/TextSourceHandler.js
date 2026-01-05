@@ -34,7 +34,7 @@
           await window.obsAPI.sources.setSettings(sourceName, { text: e.target.value });
         } catch (err) {
           console.error('Failed to update text:', err);
-          window.uiHelpers?.log('❌ Failed to update text: ' + err.message);
+          window.uiHelpers?.logError('Failed to update text: ' + err.message, 'text');
         }
       });
       

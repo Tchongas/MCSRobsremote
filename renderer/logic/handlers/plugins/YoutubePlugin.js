@@ -33,7 +33,7 @@
             window.PluginUtils.applyRowBackground(options, '#ff0000');
           } 
         } catch (error) {
-          window.uiHelpers?.log(`❌ YoutubePlugin error: ${error.message}`);
+          window.uiHelpers?.logError(`YoutubePlugin error: ${error.message}`, 'plugin');
           console.error('YoutubePlugin detailed error:', error);
         }
       },
@@ -44,18 +44,18 @@
     };
   
     // Autoregister plugin
-    window.uiHelpers?.log('🔌 YoutubePlugin attempting registration...');
+    window.uiHelpers?.logInfo('YoutubePlugin attempting registration...', 'plugin');
     if (window.CustomHandlerPlugins) {
       window.CustomHandlerPlugins.register(YoutubePlugin);
-      window.uiHelpers?.log('✅ YoutubePlugin registered immediately');
+      window.uiHelpers?.logSuccess('YoutubePlugin registered', 'plugin');
     } else {
-      window.uiHelpers?.log('⏳ CustomHandlerPlugins not ready, waiting for event...');
+      window.uiHelpers?.logWarn('CustomHandlerPlugins not ready, waiting for event...', 'plugin');
       window.addEventListener('customHandlerReady', () => {
         window.CustomHandlerPlugins.register(YoutubePlugin);
-        window.uiHelpers?.log('✅ YoutubePlugin registered after event');
+        window.uiHelpers?.logSuccess('YoutubePlugin registered (after event)', 'plugin');
       });
     }
   
-    window.uiHelpers?.log('📺 YoutubePlugin loaded');
+    window.uiHelpers?.logInfo('YoutubePlugin loaded', 'plugin');
   })();
   

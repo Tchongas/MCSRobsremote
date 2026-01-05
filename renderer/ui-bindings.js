@@ -38,39 +38,38 @@
 
     // Connect to OBS
     connectBtn.addEventListener('click', async () => {
-      log('Attempting to connect to OBS...');
+      window.uiHelpers.logInfo('Connecting to OBS…', 'conn');
       try {
         const config = getStoredConfig();
         const result = await window.obsAPI.connect(config.url, config.password);
-        log('✅ Connected to OBS successfully!');
-        log('Connection details: ' + JSON.stringify(result, null, 2));
+        window.uiHelpers.logSuccess('Connected to OBS', 'conn');
+        window.uiHelpers.logInfo('Connection details: ' + JSON.stringify(result, null, 2), 'conn');
         setConnBadge(true);
         setIndicator(connectBtn, 'green');
 
         // Auto-refresh scenes after successful connection
-        log('Loading available scenes...');
+        window.uiHelpers.logInfo('Loading available scenes…', 'scenes');
         await refreshScenes();
 
       } catch (e) {
-        log('❌ Connection failed: ' + e.message);
+        window.uiHelpers.logError('Connection failed: ' + e.message, 'conn');
         setConnBadge(false);
         setIndicator(connectBtn, 'red');
 
         if (e.message.includes('ETIMEDOUT') || e.message.includes('connect ECONNREFUSED')) {
-          log('');
-          log('Troubleshooting steps:');
-          log('1. Make sure OBS Studio is running');
-          log('2. In OBS: Tools → WebSocket Server Settings');
-          log('3. Enable "WebSocket server"');
-          log('4. Check connection settings in Settings (⚙️)');
-          log('5. Verify network connectivity');
+          window.uiHelpers.logInfo('Troubleshooting:', 'conn');
+          window.uiHelpers.logInfo('1. Make sure OBS Studio is running', 'conn');
+          window.uiHelpers.logInfo('2. In OBS: Tools → WebSocket Server Settings', 'conn');
+          window.uiHelpers.logInfo('3. Enable "WebSocket server"', 'conn');
+          window.uiHelpers.logInfo('4. Check connection settings in Settings (⚙️)', 'conn');
+          window.uiHelpers.logInfo('5. Verify network connectivity', 'conn');
         }
       }
     });
 
     // Disconnect from OBS
     disconnectBtn.addEventListener('click', async () => {
-      log('Disconnecting from OBS...');
+      window.uiHelpers.logInfo('Disconnecting from OBS…', 'conn');
       try {
         await window.obsAPI.disconnect();
         setConnBadge(false);
@@ -88,9 +87,9 @@
           container.classList.add('placeholder');
           container.textContent = 'Disconnected. Connect to load items...';
         }
-        log('✅ Disconnected from OBS');
+        window.uiHelpers.logSuccess('Disconnected from OBS', 'conn');
       } catch (e) {
-        log('❌ Failed to disconnect: ' + e.message);
+        window.uiHelpers.logError('Failed to disconnect: ' + e.message, 'conn');
       }
     });
 
@@ -98,18 +97,18 @@
     document.getElementById('start').addEventListener('click', async () => {
       try {
         await window.obsAPI.streaming.start();
-        log('Started streaming!');
+        window.uiHelpers.logSuccess('Streaming started', 'stream');
       } catch (e) {
-        log('Error starting streaming: ' + e.message);
+        window.uiHelpers.logError('Failed to start streaming: ' + e.message, 'stream');
       }
     });
 
     document.getElementById('stop').addEventListener('click', async () => {
       try {
         await window.obsAPI.streaming.stop();
-        log('Stopped streaming!');
+        window.uiHelpers.logSuccess('Streaming stopped', 'stream');
       } catch (e) {
-        log('Error stopping streaming: ' + e.message);
+        window.uiHelpers.logError('Failed to stop streaming: ' + e.message, 'stream');
       }
     });
 
@@ -122,11 +121,11 @@
       if (!sceneName) return;
       try {
         await window.obsAPI.scenes.change(sceneName);
-        log('🔁 Switched scene to: ' + sceneName);
+        window.uiHelpers.logSuccess('Switched scene to: ' + sceneName, 'scenes');
         setSceneBadge(sceneName);
         await loadDashboardItems(sceneName);
       } catch (e) {
-        log('❌ Error switching scene: ' + e.message);
+        window.uiHelpers.logError('Failed to switch scene: ' + e.message, 'scenes');
       }
     });
 
@@ -207,19 +206,19 @@
               }
             });
           }
-          log(`🔄 Scene changed to: ${data.sceneName} (remote)`);
+          window.uiHelpers.logInfo(`Scene changed to: ${data.sceneName} (remote)`, 'scenes');
           break;
 
         case 'scene-item-changed':
           // Update scene item visibility in dashboard
           updateSceneItemVisibility(data.sceneName, data.sceneItemId, data.sceneItemEnabled);
-          log(`🔄 Item ${data.sceneItemId} ${data.sceneItemEnabled ? 'shown' : 'hidden'} (remote)`);
+          window.uiHelpers.logInfo(`Item ${data.sceneItemId} ${data.sceneItemEnabled ? 'shown' : 'hidden'} (remote)`, 'dashboard');
           break;
 
         case 'scene-list-changed':
           // Refresh the scene list
           refreshScenes();
-          log('🔄 Scene list updated (remote)');
+          window.uiHelpers.logInfo('Scene list updated (remote)', 'scenes');
           break;
 
         case 'scene-items-reordered':
@@ -228,7 +227,7 @@
           if (currentScene === data.sceneName) {
             loadDashboardItems(data.sceneName);
           }
-          log(`🔄 Scene items reordered in: ${data.sceneName} (remote)`);
+          window.uiHelpers.logInfo(`Scene items reordered in: ${data.sceneName} (remote)`, 'dashboard');
           break;
 
         case 'input-mute-changed':
@@ -236,14 +235,14 @@
           if (window.uiLogic.updateMicrophoneMuteState) {
             window.uiLogic.updateMicrophoneMuteState(data.inputName, data.inputMuted);
           }
-          log(`🔄 Input ${data.inputName} ${data.inputMuted ? 'muted' : 'unmuted'} (remote)`);
+          window.uiHelpers.logInfo(`Input ${data.inputName} ${data.inputMuted ? 'muted' : 'unmuted'} (remote)`, 'audio');
           break;
         case 'input-volume-changed':
           // Broadcast to handlers to update any volume sliders
           if (window.HandlerRegistry) {
             window.HandlerRegistry.handleRemoteUpdate(data.inputName, 'input-volume-changed', data);
           }
-          log(`🔄 Volume changed for ${data.inputName} to ${Math.round((data.inputVolumeMul ?? 0) * 100)}% (remote)`);
+          window.uiHelpers.logInfo(`Volume changed for ${data.inputName} to ${Math.round((data.inputVolumeMul ?? 0) * 100)}% (remote)`, 'audio');
           break;
       }
     });

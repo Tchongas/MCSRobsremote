@@ -57,9 +57,9 @@
             const isMuted = !!(current && (current.inputMuted ?? current.muted));
             await window.obsAPI.sources.setMute(sourceName, !isMuted);
             this._applyMuteState(muteBtn, !isMuted);
-            window.uiHelpers.log(`🎤 ${displayName} ${!isMuted ? 'muted' : 'unmuted'}`);
+            window.uiHelpers.logInfo(`${displayName} ${!isMuted ? 'muted' : 'unmuted'}`, 'audio');
           } catch (e) {
-            window.uiHelpers.log('❌ Error toggling Audio: ' + e.message);
+            window.uiHelpers.logError('Error toggling audio: ' + e.message, 'audio');
           }
         });
   
@@ -69,7 +69,7 @@
           try {
             await window.obsAPI.sources.setVolume(sourceName, mul);
           } catch (err) {
-            window.uiHelpers.log('❌ Error setting volume: ' + err.message);
+            window.uiHelpers.logError('Error setting volume: ' + err.message, 'audio');
           }
         });
       },

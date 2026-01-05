@@ -22,8 +22,8 @@
         // Enable the dropdown
         select.disabled = false;
 
-        window.uiHelpers.log(`✅ Loaded ${sceneList.scenes.length} scenes`);
-        window.uiHelpers.log(`Current scene: ${sceneList.currentProgramSceneName}`);
+        window.uiHelpers.logSuccess(`Loaded ${sceneList.scenes.length} scenes`, 'scenes');
+        window.uiHelpers.logInfo(`Current scene: ${sceneList.currentProgramSceneName || '-'}`, 'scenes');
 
         // Update current scene badge and selection
         window.uiHelpers.setSceneBadge(sceneList.currentProgramSceneName);
@@ -35,7 +35,7 @@
         }
       }
     } catch (e) {
-      window.uiHelpers.log('❌ Error loading scenes: ' + e.message);
+      window.uiHelpers.logError('Error loading scenes: ' + e.message, 'scenes');
     }
   }
 

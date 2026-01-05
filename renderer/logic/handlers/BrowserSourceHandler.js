@@ -25,6 +25,7 @@
         console.warn(`BrowserSourceHandler error for ${sourceName}:`, err);
       }
     },
+    
     async _createUrlControls(options, sourceName, displayName, currentUrl) {
       const urlRow = document.createElement('div');
       urlRow.className = 'dash-option-row';
@@ -33,28 +34,71 @@
       urlLabel.textContent = 'Link';
       urlLabel.className = 'input-label';
 
+      const urlInputId = `browser-url-${String(sourceName || '').replace(/[^a-z0-9_-]/gi, '_')}`;
+
       const urlInput = document.createElement('input');
       urlInput.type = 'url';
       urlInput.placeholder = 'https://';
       urlInput.value = currentUrl || '';
       urlInput.className = 'input-grow';
+      urlInput.id = urlInputId;
+      urlInput.setAttribute('aria-label', `URL for ${displayName}`);
+      urlLabel.setAttribute('for', urlInputId);
+
+      const statusEl = document.createElement('span');
+      statusEl.className = 'save-status';
+      statusEl.setAttribute('role', 'status');
+      statusEl.setAttribute('aria-live', 'polite');
+      statusEl.setAttribute('aria-atomic', 'true');
+
+      const setStatus = (state, message) => {
+        statusEl.classList.remove('is-saving', 'is-saved', 'is-error');
+        if (state) statusEl.classList.add(state);
+        statusEl.textContent = message || '';
+        if (state === 'is-saved') {
+          window.clearTimeout(statusEl._t);
+          statusEl._t = window.setTimeout(() => {
+            statusEl.classList.remove('is-saved');
+            statusEl.textContent = '';
+          }, 1500);
+        }
+      };
+
+      const doSaveUrl = async () => {
+        try {
+          const newUrl = urlInput.value.trim();
+          if (!newUrl) {
+            setStatus('is-error', 'URL is empty');
+            return;
+          }
+          setStatus('is-saving', 'Saving…');
+          await window.obsAPI.browser.setUrl(sourceName, newUrl);
+          setStatus('is-saved', 'Saved');
+          window.uiHelpers.logSuccess(`Updated URL: ${displayName}`, 'browser');
+        } catch (err) {
+          setStatus('is-error', 'Save failed');
+          window.uiHelpers.logError('Failed to set URL: ' + (err?.message || err), 'browser');
+        }
+      };
 
       const saveBtn = document.createElement('button');
       saveBtn.className = 'btn-accent';
       saveBtn.textContent = 'Save';
-      saveBtn.addEventListener('click', async () => {
-        try {
-          const newUrl = urlInput.value.trim();
-          if (!newUrl) return;
-          await window.obsAPI.browser.setUrl(sourceName, newUrl);
-          window.uiHelpers.log(`🔗 Updated URL for ${displayName}`);
-        } catch (err) {
-          window.uiHelpers.log('❌ Failed to set URL: ' + (err?.message || err));
+      saveBtn.type = 'button';
+      saveBtn.setAttribute('aria-label', `Save URL for ${displayName}`);
+      saveBtn.addEventListener('click', doSaveUrl);
+
+      urlInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          doSaveUrl();
         }
       });
 
       const openBtn = document.createElement('button');
       openBtn.textContent = 'Open';
+      openBtn.type = 'button';
+      openBtn.setAttribute('aria-label', `Open URL for ${displayName}`);
       openBtn.addEventListener('click', () => {
         const u = (urlInput.value || '').trim();
         if (!u) return;
@@ -64,12 +108,17 @@
       const hardBtn = document.createElement('button');
       hardBtn.textContent = 'Hard Refresh';
       hardBtn.title = 'Refresh cache (no cache)';
+      hardBtn.type = 'button';
+      hardBtn.setAttribute('aria-label', `Hard refresh ${displayName}`);
       hardBtn.addEventListener('click', async () => {
         try {
+          setStatus('is-saving', 'Refreshing…');
           await window.obsAPI.browser.refreshNoCache(sourceName);
-          window.uiHelpers.log(`🧹 Hard refreshed (no cache) ${displayName}`);
+          setStatus('is-saved', 'Refreshed');
+          window.uiHelpers.logSuccess(`Hard refreshed (no cache): ${displayName}`, 'browser');
         } catch (err) {
-          window.uiHelpers.log('❌ Failed hard refresh: ' + (err?.message || err));
+          setStatus('is-error', 'Refresh failed');
+          window.uiHelpers.logError('Failed hard refresh: ' + (err?.message || err), 'browser');
         }
       });
 
@@ -78,9 +127,13 @@
       urlRow.appendChild(saveBtn);
       urlRow.appendChild(openBtn);
       urlRow.appendChild(hardBtn);
+      urlRow.appendChild(statusEl);
       options.appendChild(urlRow);
       
       // Return the urlInput reference for parameter section
+      urlInput._statusEl = statusEl;
+      urlInput._setStatus = setStatus;
+      urlInput._doSaveUrl = doSaveUrl;
       return urlInput;
     },
 
@@ -129,9 +182,9 @@
           const isMuted = !!(current && (current.inputMuted ?? current.muted));
           await window.obsAPI.sources.setMute(sourceName, !isMuted);
           this._applyMuteState(muteBtn, !isMuted);
-          window.uiHelpers.log(`🌐 ${displayName} ${!isMuted ? 'muted' : 'unmuted'}`);
+          window.uiHelpers.logInfo(`${displayName} ${!isMuted ? 'muted' : 'unmuted'}`, 'browser');
         } catch (e) {
-          window.uiHelpers.log('❌ Error toggling mute: ' + e.message);
+          window.uiHelpers.logError('Error toggling mute: ' + e.message, 'browser');
         }
       });
 
@@ -141,7 +194,7 @@
         try {
           await window.obsAPI.sources.setVolume(sourceName, mul);
         } catch (err) {
-          window.uiHelpers.log('❌ Error setting volume: ' + err.message);
+          window.uiHelpers.logError('Error setting volume: ' + err.message, 'browser');
         }
       });
     },
@@ -189,6 +242,26 @@
       paramsTitle.textContent = 'Parameters';
       paramsTitleRow.appendChild(paramsTitle);
 
+      const paramsStatus = document.createElement('span');
+      paramsStatus.className = 'save-status';
+      paramsStatus.setAttribute('role', 'status');
+      paramsStatus.setAttribute('aria-live', 'polite');
+      paramsStatus.setAttribute('aria-atomic', 'true');
+      paramsTitleRow.appendChild(paramsStatus);
+
+      const setParamsStatus = (state, message) => {
+        paramsStatus.classList.remove('is-saving', 'is-saved', 'is-error');
+        if (state) paramsStatus.classList.add(state);
+        paramsStatus.textContent = message || '';
+        if (state === 'is-saved') {
+          window.clearTimeout(paramsStatus._t);
+          paramsStatus._t = window.setTimeout(() => {
+            paramsStatus.classList.remove('is-saved');
+            paramsStatus.textContent = '';
+          }, 1500);
+        }
+      };
+
       const paramsBody = document.createElement('div');
       paramsBody.className = 'params-grid';
 
@@ -200,13 +273,21 @@
       for (const [key, value] of entries) {
         const cell = document.createElement('div');
         cell.className = 'param-cell';
+
+        const inputId = `browser-param-${String(sourceName || '').replace(/[^a-z0-9_-]/gi, '_')}-${String(key || '').replace(/[^a-z0-9_-]/gi, '_')}`;
+
         const keyLabel = document.createElement('label');
         keyLabel.textContent = key;
         keyLabel.className = 'param-label';
+
         const valInput = document.createElement('input');
         valInput.type = 'text';
         valInput.value = value;
         valInput.className = 'param-input';
+        valInput.id = inputId;
+        valInput.setAttribute('aria-label', `${displayName} parameter ${key}`);
+        keyLabel.setAttribute('for', inputId);
+
         cell.appendChild(keyLabel);
         cell.appendChild(valInput);
         paramsBody.appendChild(cell);
@@ -219,23 +300,37 @@
       const resetParamsBtn = document.createElement('button');
       resetParamsBtn.className = 'btn-ghost';
       resetParamsBtn.textContent = 'Reset';
+      resetParamsBtn.type = 'button';
+      resetParamsBtn.setAttribute('aria-label', `Reset parameters for ${displayName}`);
       const saveParamsBtn = document.createElement('button');
       saveParamsBtn.className = 'btn-accent';
       saveParamsBtn.textContent = 'Apply';
+      saveParamsBtn.type = 'button';
+      saveParamsBtn.setAttribute('aria-label', `Apply parameters for ${displayName}`);
       
       saveParamsBtn.addEventListener('click', async () => {
         try {
+          setParamsStatus('is-saving', 'Saving…');
           const final = this._rebuildUrlWithParams(urlInput.value.trim(), paramRows);
           await window.obsAPI.browser.setUrl(sourceName, final);
           urlInput.value = final;
-          window.uiHelpers.log(`✅ Updated parameters for ${displayName}`);
+          if (typeof urlInput._setStatus === 'function') {
+            urlInput._setStatus('is-saved', 'Saved');
+          }
+          setParamsStatus('is-saved', 'Saved');
+          window.uiHelpers.logSuccess(`Updated parameters: ${displayName}`, 'browser');
         } catch (err) {
-          window.uiHelpers.log('❌ Failed to save parameters: ' + (err?.message || err));
+          setParamsStatus('is-error', 'Save failed');
+          if (typeof urlInput._setStatus === 'function') {
+            urlInput._setStatus('is-error', 'Save failed');
+          }
+          window.uiHelpers.logError('Failed to save parameters: ' + (err?.message || err), 'browser');
         }
       });
 
       resetParamsBtn.addEventListener('click', () => {
         this._resetParams(paramsBody, paramRows, urlInput.value || '');
+        setParamsStatus(null, '');
       });
 
       // Press Enter in any input to apply immediately

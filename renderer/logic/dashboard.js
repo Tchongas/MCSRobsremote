@@ -33,7 +33,7 @@
       }
     } catch (e) {
       container.textContent = 'Failed to load items: ' + e.message;
-      window.uiHelpers.log('❌ Failed to load dashboard items: ' + e.message);
+      window.uiHelpers.logError('Failed to load dashboard items: ' + e.message, 'dashboard');
     }
   }
 
@@ -100,10 +100,10 @@
       const desired = ev.target.checked;
       try {
         await window.obsAPI.sceneItems.setEnabled(sceneName, item.sceneItemId, desired);
-        window.uiHelpers.log(`${desired ? '✅ Shown' : '🚫 Hidden'}: ${name.textContent}`);
+        window.uiHelpers.logSuccess(`${desired ? 'Shown' : 'Hidden'}: ${name.textContent}`, 'dashboard');
       } catch (err) {
         ev.target.checked = !desired; // revert on failure
-        window.uiHelpers.log('❌ Error toggling item: ' + err.message);
+        window.uiHelpers.logError('Failed to toggle visibility: ' + err.message, 'dashboard');
       }
     });
 
@@ -113,6 +113,10 @@
     // Options panel (hidden by default)
     const options = document.createElement('div');
     options.className = 'dash-options';
+    const optionsId = `dash-options-${String(item.sceneItemId)}`;
+    options.id = optionsId;
+    options.setAttribute('role', 'region');
+    options.setAttribute('aria-label', `${displayName} options`);
     options.setAttribute('aria-hidden', 'true');
 
     // Use handler registry to process source controls
@@ -130,7 +134,7 @@
 
     // Create arrow now that we know options exist
     if (hasOptions) {
-      createExpandButton(nameWrap, options);
+      createExpandButton(nameWrap, options, chk, optionsId);
     }
 
     row.appendChild(nameWrap);
@@ -144,11 +148,12 @@
 
 
 
-  function createExpandButton(nameWrap, options) {
+  function createExpandButton(nameWrap, options, chk, optionsId) {
     const expandBtn = document.createElement('button');
     expandBtn.className = 'icon-btn expand-btn';
     expandBtn.title = 'Show source options';
     expandBtn.textContent = '▸';
+    if (optionsId) expandBtn.setAttribute('aria-controls', optionsId);
     nameWrap.insertBefore(expandBtn, nameWrap.firstChild);
 
     let expanded = false; // default closed; user can expand via arrow or name click
@@ -158,9 +163,8 @@
       expandBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
       options.setAttribute('aria-hidden', expanded ? 'false' : 'true');
       setArrow();
-      if (!expanded) {
-        disableTabInside(options);
-      }
+      if (expanded) enableTabInside(options);
+      else disableTabInside(options);
     };
     applyExpanded();
 
@@ -215,8 +219,10 @@
       // Toggle visibility with 'v'
       if (e.key.toLowerCase() === 'v') {
         e.preventDefault();
-        chk.checked = !chk.checked;
-        chk.dispatchEvent(new Event('change', { bubbles: true }));
+        if (chk) {
+          chk.checked = !chk.checked;
+          chk.dispatchEvent(new Event('change', { bubbles: true }));
+        }
         return;
       }
       // Navigate across items

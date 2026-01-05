@@ -44,21 +44,21 @@
                 case 'toggle':
                   // Toggle media playback (would need custom OBS request)
                   await window.obsAPI.media.toggle(sourceName);
-                  window.uiHelpers?.log(`⏯️ Toggled ${displayName}`);
+                  window.uiHelpers?.logInfo(`Toggled: ${displayName}`, 'media');
                   break;
                 case 'stop':
                   // Stop media playback
                   await window.obsAPI.media.stop(sourceName);
-                  window.uiHelpers?.log(`⏹️ Stopped ${displayName}`);
+                  window.uiHelpers?.logInfo(`Stopped: ${displayName}`, 'media');
                   break;
                 case 'restart':
                   // Restart media from beginning
                   await window.obsAPI.media.restart(sourceName);
-                  window.uiHelpers?.log(`⏮️ Restarted ${displayName}`);
+                  window.uiHelpers?.logInfo(`Restarted: ${displayName}`, 'media');
                   break;
               }
             } catch (err) {
-              window.uiHelpers?.log(`❌ Media control failed: ${err.message}`);
+              window.uiHelpers?.logError(`Media control failed: ${err.message}`, 'media');
             }
           });
           
@@ -89,17 +89,17 @@
     };
   
     // Autoregister plugin
-    window.uiHelpers?.log('🔌 MediaControllerPlugin attempting registration...');
+    window.uiHelpers?.logInfo('MediaControllerPlugin attempting registration...', 'plugin');
     if (window.CustomHandlerPlugins) {
         window.CustomHandlerPlugins.register(MediaControllerPlugin);
-        window.uiHelpers?.log('✅ MediaControllerPlugin registered immediately');
+        window.uiHelpers?.logSuccess('MediaControllerPlugin registered', 'plugin');
     } else {
-        window.uiHelpers?.log('⏳ CustomHandlerPlugins not ready, waiting for event...');
+        window.uiHelpers?.logWarn('CustomHandlerPlugins not ready, waiting for event...', 'plugin');
         window.addEventListener('customHandlerReady', () => {
         window.CustomHandlerPlugins.register(MediaControllerPlugin);
-        window.uiHelpers?.log('✅ MediaControllerPlugin registered after event');
+        window.uiHelpers?.logSuccess('MediaControllerPlugin registered (after event)', 'plugin');
         });
     }
 
-    window.uiHelpers?.log('📺 MediaControllerPlugin loaded');
+    window.uiHelpers?.logInfo('MediaControllerPlugin loaded', 'plugin');
   })();

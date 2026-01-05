@@ -2,7 +2,9 @@
 (function() {
   // Safe logging helper
   function safeLog(message) {
-    if (window.uiHelpers && window.uiHelpers.log) {
+    if (window.uiHelpers && window.uiHelpers.logInfo) {
+      window.uiHelpers.logInfo(message, 'config');
+    } else if (window.uiHelpers && window.uiHelpers.log) {
       window.uiHelpers.log(message);
     } else {
       console.log(message);
