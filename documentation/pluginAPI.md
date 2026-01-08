@@ -11,11 +11,15 @@
 - [🎨 Dashboard API](#dashboard-api)
   - [`applyRowBackground()`](#applyrowbackground)
   - [`applySourceIcon()`](#applysourceicon)
+  - [`fetchJson()`](#fetchjson)
+  - [`setTextSource()`](#settextsource)
   - [`log()`](#log)
 - [🔌 Plugin Management](#plugin-management)
   - [`register()`](#register)
   - [`unregister()`](#unregister)
   - [`getRegisteredPlugins()`](#getregisteredplugins)
+- [📁 Plugin Files](#plugin-files)
+  - [`readFile()`](#readfile)
 - [🐛 Debug API](#debug-api)
   - [`GetBuiltInPlugins()`](#getbuiltinplugins)
   - [`GetExternalPlugins()`](#getexternalplugins)
@@ -91,6 +95,64 @@ window.PluginUtils.applySourceIcon(options, '📺');
 
 ---
 
+### `fetchJson()`
+
+Fetches a URL and returns parsed JSON. Throws on non-2xx status.
+
+#### Syntax
+
+```javascript
+window.PluginUtils.fetchJson(url, opts)
+```
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|--------------|
+| `url` | `string` | URL to fetch |
+| `opts` | `object` | Optional fetch options (merged into defaults) |
+
+#### Returns
+
+`Promise<any>`
+
+#### Example
+
+```javascript
+const data = await window.PluginUtils.fetchJson('https://example.com/data.json');
+```
+
+---
+
+### `setTextSource()`
+
+Updates an OBS Text source by setting its `text` setting via `obsAPI.sources.setSettings`.
+
+#### Syntax
+
+```javascript
+await window.PluginUtils.setTextSource(sourceName, text)
+```
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|--------------|
+| `sourceName` | `string` | OBS source name (e.g. `_elo1`) |
+| `text` | `string` | Text content to write |
+
+#### Returns
+
+`Promise<void>`
+
+#### Example
+
+```javascript
+await window.PluginUtils.setTextSource('_elo1', '1500');
+```
+
+---
+
 ### `log()`
 
 Logs a message to the application console with plugin context.
@@ -116,6 +178,39 @@ window.uiHelpers?.log(message)
 ```javascript
 // Log a plugin registration message
 window.uiHelpers?.log('🔌 Plugin attempting registration...');
+```
+
+# 📁 Plugin Files
+
+Plugins can ship a `*.json` config file alongside the plugin `.js` file inside the `plugins/` folder.
+
+### `readFile()`
+
+Reads a file from the `plugins/` directory.
+
+This is **restricted** to the plugins directory; paths containing `..` are rejected.
+
+#### Syntax
+
+```javascript
+const raw = await window.pluginAPI.readFile('MyPluginConfig.json')
+```
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|--------------|
+| `relativeFile` | `string` | File path relative to the `plugins/` directory |
+
+#### Returns
+
+`Promise<string>`
+
+#### Example
+
+```javascript
+const raw = await window.pluginAPI.readFile('PlayerSyncPlugin.json');
+const cfg = JSON.parse(raw);
 ```
 
 # 🔌 Plugin Management

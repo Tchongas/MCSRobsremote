@@ -3,6 +3,42 @@
   const plugins = new Map();
   const externalPlugins = new Map();
   let pluginLoadPromise = null;
+  let pluginWatcherBound = false;
+  let reloadTimer = null;
+
+  // DEBUG: in-app plugin system status line (disabled)
+  //
+  // const PLUGIN_STATUS_ID = 'pluginSystemStatus';
+  //
+  // function ensurePluginStatusEl() {
+  //   const container = document.getElementById('pluginButtons');
+  //   if (!container) return null;
+  //
+  //   let el = document.getElementById(PLUGIN_STATUS_ID);
+  //   if (!el) {
+  //     el = document.createElement('div');
+  //     el.id = PLUGIN_STATUS_ID;
+  //     el.style.cssText = 'margin-top:6px;font-size:11px;line-height:1.2;color:#9aa3b2;opacity:0.95;';
+  //     container.appendChild(el);
+  //   }
+  //   return el;
+  // }
+  //
+  // async function updatePluginStatus() {
+  //   const el = ensurePluginStatusEl();
+  //   if (!el) return;
+  //
+  //   let pluginDir = '(pluginAPI unavailable)';
+  //   if (window.pluginAPI?.getPluginDirectory) {
+  //     try {
+  //       pluginDir = await window.pluginAPI.getPluginDirectory();
+  //     } catch (e) {
+  //       pluginDir = `(error: ${e?.message || e})`;
+  //     }
+  //   }
+  //
+  //   el.textContent = `Plugins: built-in ${plugins.size}, external ${externalPlugins.size} | Dir: ${pluginDir}`;
+  // }
   
   // Plugin interface specification
   const PluginInterface = {
@@ -124,6 +160,7 @@
     return {
       window: {
         obsAPI: window.obsAPI,
+        pluginAPI: window.pluginAPI,
         uiHelpers: window.uiHelpers,
         PluginUtils: window.PluginUtils,
         CustomHandlerPlugins: {
@@ -149,20 +186,20 @@
 
   function setupPluginWatcher() {
     if (!window.pluginAPI) return;
+
+    if (pluginWatcherBound) return;
+    pluginWatcherBound = true;
     
     window.pluginAPI.watchPluginDirectory((changeData) => {
       console.log(`Plugin ${changeData.action}: ${changeData.file}`);
-      
-      if (changeData.action === 'changed' || changeData.action === 'added') {
-        // Reload the plugin
-        setTimeout(() => {
-          window.location.reload(); // Simple hot-reload for now
-        }, 500);
-      } else if (changeData.action === 'removed') {
-        // Unregister the plugin
-        const pluginName = changeData.file.replace('.js', '');
-        unregisterPlugin(pluginName);
+
+      if (reloadTimer) {
+        clearTimeout(reloadTimer);
       }
+      reloadTimer = setTimeout(() => {
+        window.location.reload();
+      }, 400);
+      
     });
   }
 
@@ -268,6 +305,14 @@
   // Fire event to notify plugins that CustomHandler is ready
   window.dispatchEvent(new CustomEvent('customHandlerReady'));
   console.log('🔌 CustomHandler plugin system initialized and ready event fired');
+
+  // Load external plugins as early as possible so they can register sidebar buttons
+  // without waiting for any dashboard item to render.
+  setTimeout(() => {
+    loadExternalPlugins().catch((err) => {
+      console.error('Failed to preload external plugins:', err);
+    });
+  }, 0);
 
   // Auto-register CustomHandler when loaded
   if (window.HandlerRegistry) {

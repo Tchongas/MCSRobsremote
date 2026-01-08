@@ -58,7 +58,7 @@ Changes the row background color of a browser source if it is a twitch URL, and 
     window.uiHelpers?.log('⏳ CustomHandlerPlugins not ready, waiting for event...');
     window.addEventListener('customHandlerReady', () => {
       window.CustomHandlerPlugins.register(TwitchPlugin);
-      window.uiHelpers?.log('✅ TwitchPlugin registered after event');
+      window.uiHelpers?.log('✅ TwitchPlugin registered Test');
     });
   }
 

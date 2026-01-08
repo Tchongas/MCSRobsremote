@@ -3,10 +3,11 @@
 ## TL;DR
 
 - Put your plugin `.js` in the `plugins/` folder next to the app executable.
+- (Optional) Put a plugin config `.json` next to it.
 - Save a file → the app auto‑reloads (hot reload).
 - Plugins enhance Dashboard items (right panel). Only sources starting with `_` show up there.
 - A plugin runs for a source if `canHandle(sourceKind, sourceName, context)` returns true.
-- Plugins run in a sandbox with access to `obsAPI`, `uiHelpers`, `PluginUtils`, and `CustomHandlerPlugins.register(...)`.
+- Plugins run in a sandbox with access to `obsAPI`, `pluginAPI`, `uiHelpers`, `PluginUtils`, and `CustomHandlerPlugins.register(...)`.
 
 ## Where plugins live
 
@@ -17,7 +18,7 @@
 
 - On startup, rOBSon scans `plugins/` for `.js` files and loads them into a sandbox.
 - The folder is watched:
-  - Add/change → app reloads to apply changes.
+  - Add/change (`.js` or `.json`) → app reloads to apply changes.
   - Remove → plugin is unregistered.
 - No restart needed—just save.
 
@@ -33,6 +34,7 @@
 - Add controls inside a source’s Options panel (revealed by ▸).
 - Use `obsAPI` to read/change settings (e.g., browser URL, refresh, mute/volume).
 - Use `PluginUtils` to style the row or set an icon.
+- Read plugin config files using `pluginAPI.readFile('YourPlugin.json')`.
 
 ## Context you receive
 

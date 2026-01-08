@@ -63,6 +63,7 @@ contextBridge.exposeInMainWorld('windowControls', {
 contextBridge.exposeInMainWorld('pluginAPI', {
   loadExternalPlugins: () => ipcRenderer.invoke('plugins-load-external'),
   getPluginDirectory: () => ipcRenderer.invoke('plugins-get-directory'),
+  readFile: (relativeFile) => ipcRenderer.invoke('plugins-read-file', relativeFile),
   watchPluginDirectory: (callback) => {
     ipcRenderer.on('plugins-directory-changed', (event, data) => callback(data));
   },

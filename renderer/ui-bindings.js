@@ -36,38 +36,6 @@
     const connectBtn = document.getElementById('connect');
     const disconnectBtn = document.getElementById('disconnect');
 
-    const player1Btn = document.getElementById('set_player1');
-    const player2Btn = document.getElementById('set_player2');
-
-    async function runPlayerSync(playerIndex) {
-      try {
-        if (!window.playerSyncLogic) {
-          window.uiHelpers.logError('Player Sync module not loaded', 'playersync');
-          return;
-        }
-
-        const current = window.playerSyncLogic.getIdentifier(playerIndex);
-        let identifier = current;
-        if (!identifier) {
-          identifier = window.prompt(`Enter identifier for Player ${playerIndex}:`, '') || '';
-          identifier = String(identifier).trim();
-          if (!identifier) return;
-          window.playerSyncLogic.setIdentifier(playerIndex, identifier);
-        }
-
-        await window.playerSyncLogic.syncPlayer(playerIndex);
-      } catch (e) {
-        window.uiHelpers.logError(`Player ${playerIndex} sync failed: ${e.message || e}`, 'playersync');
-      }
-    }
-
-    if (player1Btn) {
-      player1Btn.addEventListener('click', () => runPlayerSync(1));
-    }
-    if (player2Btn) {
-      player2Btn.addEventListener('click', () => runPlayerSync(2));
-    }
-
     // Connect to OBS
     connectBtn.addEventListener('click', async () => {
       window.uiHelpers.logInfo('Connecting to OBS…', 'conn');

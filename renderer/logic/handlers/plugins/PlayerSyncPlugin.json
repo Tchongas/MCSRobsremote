@@ -1,0 +1,18 @@
+{
+  "attachToSource": "_elo1",
+  "apiBase": "https://mcsrranked.com/api/users/",
+  "player1": {
+    "identifier": "",
+    "targets": {
+      "elo": "_elo1",
+      "bestTime": "_besttime1"
+    }
+  },
+  "player2": {
+    "identifier": "",
+    "targets": {
+      "elo": "_elo2",
+      "bestTime": "_besttime2"
+    }
+  }
+}

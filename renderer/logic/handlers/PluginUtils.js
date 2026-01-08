@@ -75,6 +75,67 @@
     if (!window.obsAPI?.sources?.setSettings) throw new Error('OBS API not available');
     await window.obsAPI.sources.setSettings(name, { text: String(text ?? '') });
   };
+
+  const _sidebarRegistry = new Map();
+
+  const addControlButton = (id, label, onClick, className) => {
+    const host = document.getElementById('pluginButtons');
+    if (!host) return null;
+
+    const safeId = String(id || '').trim();
+    if (!safeId) return null;
+
+    const existing = host.querySelector(`#${CSS.escape(safeId)}`);
+    if (existing) return existing;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = safeId;
+    btn.textContent = String(label || safeId);
+    btn.className = className || 'btn-plugin';
+    btn.title = btn.textContent;
+    if (typeof onClick === 'function') {
+      btn.addEventListener('click', onClick);
+    }
+    host.appendChild(btn);
+    return btn;
+  };
+
+  const removeControlButton = (id) => {
+    const host = document.getElementById('pluginButtons');
+    if (!host) return false;
+    const safeId = String(id || '').trim();
+    if (!safeId) return false;
+    const el = host.querySelector(`#${CSS.escape(safeId)}`);
+    if (!el) return false;
+    el.remove();
+    return true;
+  };
+
+  const registerSidebarButton = (pluginName, id, label, onClick, className) => {
+    const btn = addControlButton(id, label, onClick, className);
+    if (!btn) return null;
+
+    const p = String(pluginName || '').trim() || 'unknown';
+    if (!_sidebarRegistry.has(p)) {
+      _sidebarRegistry.set(p, new Set());
+    }
+    _sidebarRegistry.get(p).add(btn.id);
+    return btn;
+  };
+
+  const unregisterSidebarButtons = (pluginName) => {
+    const p = String(pluginName || '').trim() || 'unknown';
+    const ids = _sidebarRegistry.get(p);
+    if (!ids) return 0;
+
+    let removed = 0;
+    ids.forEach((id) => {
+      if (removeControlButton(id)) removed += 1;
+    });
+    _sidebarRegistry.delete(p);
+    return removed;
+  };
 /*----------------------------------------------------------------------------------------
   Expose globally
   ---------------------------------------------------------------------------------------- */
@@ -82,6 +143,10 @@
     applyRowBackground,
     applySourceIcon,
     fetchJson,
-    setTextSource
+    setTextSource,
+    addControlButton,
+    removeControlButton,
+    registerSidebarButton,
+    unregisterSidebarButtons
   };
 })();

@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const fsSync = require('fs');
 const fs = require('fs').promises;
 const chokidar = require('chokidar');
 const { obs, connect, disconnect, onEvent, offEvent } = require('../obs/client');
@@ -9,6 +10,35 @@ const browserActions = require('../actions/browser');
 const streaming = require('../actions/streaming');
 const sceneItems = require('../actions/sceneItems');
 const media = require('../actions/media');
+
+function pluginLogLine(message) {
+  // DEBUG: plugin-system file logging (disabled)
+  //
+  // Uncomment to write plugin-system debug logs to disk.
+  // try {
+  //   const ts = new Date().toISOString();
+  //   const userData = app?.getPath ? app.getPath('userData') : null;
+  //   if (!userData) return;
+  //   const appData = app.getPath('appData');
+  //   const compatUserData = path.join(appData, 'robsremote');
+  //
+  //   const targets = [
+  //     path.join(userData, 'plugin-system.log'),
+  //     path.join(compatUserData, 'plugin-system.log')
+  //   ];
+  //
+  //   for (const logPath of targets) {
+  //     try {
+  //       fsSync.mkdirSync(path.dirname(logPath), { recursive: true });
+  //       fsSync.appendFileSync(logPath, `[${ts}] ${message}\n`, 'utf8');
+  //     } catch (_) {
+  //       // ignore per-target failures
+  //     }
+  //   }
+  // } catch (_) {
+  //   // Intentionally ignore logging failures
+  // }
+}
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -38,6 +68,8 @@ function createWindow() {
 app.whenReady().then(() => {
   const win = createWindow();
   setupIpcHandlers();
+
+  pluginLogLine(`App ready. isPackaged=${app.isPackaged} execPath=${process.execPath} cwd=${process.cwd()} appPath=${app.getAppPath()} userData=${app.getPath('userData')}`);
   
   // Window control handlers
   ipcMain.on('window-minimize', () => {
@@ -169,18 +201,80 @@ function setupIpcHandlers() {
 let pluginWatcher = null;
 
 function getPluginDirectory() {
-  // Get plugins directory relative to the app executable
-  const appPath = app.getAppPath();
-  return path.join(path.dirname(appPath), 'plugins');
+  if (app.isPackaged) {
+    const primary = path.join(path.dirname(process.execPath), 'plugins');
+    const fallback = path.join(app.getPath('userData'), 'plugins');
+    const compat = path.join(app.getPath('appData'), 'robsremote', 'plugins');
+
+    try {
+      if (fsSync.existsSync(primary)) {
+        fsSync.accessSync(primary, fsSync.constants.R_OK);
+        pluginLogLine(`Plugin directory (packaged): using exe-adjacent ${primary}`);
+        return primary;
+      }
+    } catch (err) {
+      console.warn(`Plugins dir not accessible at ${primary}. Falling back to ${fallback}.`, err);
+      pluginLogLine(`Plugin directory (packaged): exe-adjacent not accessible ${primary} err=${err?.message || err}`);
+    }
+
+    try {
+      if (fsSync.existsSync(compat)) {
+        fsSync.accessSync(compat, fsSync.constants.R_OK);
+        pluginLogLine(`Plugin directory (packaged): using compat roaming dir ${compat}`);
+        return compat;
+      }
+    } catch (err) {
+      pluginLogLine(`Plugin directory (packaged): compat roaming dir not accessible ${compat} err=${err?.message || err}`);
+    }
+
+    try {
+      fsSync.mkdirSync(fallback, { recursive: true });
+      pluginLogLine(`Plugin directory (packaged): using userData ${fallback}`);
+    } catch (e) {
+      console.error(`Failed to create fallback plugins dir at ${fallback}:`, e);
+      pluginLogLine(`Plugin directory (packaged): failed to create userData ${fallback} err=${e?.message || e}`);
+    }
+    return fallback;
+  }
+  const devDir = path.join(process.cwd(), 'plugins');
+  pluginLogLine(`Plugin directory (dev): ${devDir}`);
+  return devDir;
 }
 
 function setupPluginHandlers() {
   ipcMain.handle('plugins-get-directory', async () => {
-    return getPluginDirectory();
+    const dir = getPluginDirectory();
+    pluginLogLine(`IPC plugins-get-directory -> ${dir}`);
+    return dir;
+  });
+
+  ipcMain.handle('plugins-read-file', async (event, relativeFile) => {
+    const pluginDir = getPluginDirectory();
+    const file = String(relativeFile || '');
+    const normalized = path.normalize(file).replace(/^([/\\])+/, '');
+
+    pluginLogLine(`IPC plugins-read-file requested: ${file} (normalized=${normalized})`);
+
+    if (normalized.includes('..')) {
+      throw new Error('Invalid plugin file path');
+    }
+
+    const fullPath = path.join(pluginDir, normalized);
+    const resolvedDir = path.resolve(pluginDir) + path.sep;
+    const resolvedFile = path.resolve(fullPath);
+
+    if (!resolvedFile.startsWith(resolvedDir)) {
+      throw new Error('Invalid plugin file path');
+    }
+
+    pluginLogLine(`IPC plugins-read-file reading: ${resolvedFile}`);
+    return await fs.readFile(resolvedFile, 'utf8');
   });
 
   ipcMain.handle('plugins-load-external', async () => {
     const pluginDir = getPluginDirectory();
+    console.log(`Loading external plugins from: ${pluginDir}`);
+    pluginLogLine(`IPC plugins-load-external from: ${pluginDir}`);
     
     try {
       // Ensure plugins directory exists
@@ -189,6 +283,8 @@ function setupPluginHandlers() {
       // Read all JS files in plugins directory
       const files = await fs.readdir(pluginDir);
       const jsFiles = files.filter(file => file.endsWith('.js'));
+      console.log(`External plugin files found: ${jsFiles.length ? jsFiles.join(', ') : '(none)'}`);
+      pluginLogLine(`External plugin files found: ${jsFiles.length ? jsFiles.join(', ') : '(none)'}`);
       
       const plugins = [];
       
@@ -201,9 +297,13 @@ function setupPluginHandlers() {
           const plugin = await validateAndLoadPlugin(content, file);
           if (plugin) {
             plugins.push(plugin);
+            pluginLogLine(`External plugin accepted: ${file}`);
+          } else {
+            pluginLogLine(`External plugin skipped by validation: ${file}`);
           }
         } catch (err) {
           console.error(`Failed to load plugin ${file}:`, err);
+          pluginLogLine(`Failed to load plugin ${file}: ${err?.message || err}`);
         }
       }
       
@@ -215,6 +315,7 @@ function setupPluginHandlers() {
       return plugins;
     } catch (err) {
       console.error('Failed to load external plugins:', err);
+      pluginLogLine(`Failed to load external plugins: ${err?.message || err}`);
       return [];
     }
   });
@@ -222,28 +323,42 @@ function setupPluginHandlers() {
 
 function setupPluginWatcher() {
   const pluginDir = getPluginDirectory();
+
+  pluginLogLine(`Setting up plugin watcher on: ${pluginDir}`);
   
-  pluginWatcher = chokidar.watch(path.join(pluginDir, '*.js'), {
+  pluginWatcher = chokidar.watch([
+    path.join(pluginDir, '*.js'),
+    path.join(pluginDir, '*.json')
+  ], {
     ignored: /^\./, // ignore dotfiles
-    persistent: true
+    persistent: true,
+    ignoreInitial: true
   });
 
   pluginWatcher
     .on('add', (filePath) => {
       console.log(`Plugin added: ${path.basename(filePath)}`);
+      pluginLogLine(`Watcher add: ${filePath}`);
       notifyPluginChange('added', filePath);
     })
     .on('change', (filePath) => {
       console.log(`Plugin changed: ${path.basename(filePath)}`);
+      pluginLogLine(`Watcher change: ${filePath}`);
       notifyPluginChange('changed', filePath);
     })
     .on('unlink', (filePath) => {
       console.log(`Plugin removed: ${path.basename(filePath)}`);
+      pluginLogLine(`Watcher unlink: ${filePath}`);
       notifyPluginChange('removed', filePath);
+    })
+    .on('error', (err) => {
+      console.error('Plugin watcher error:', err);
+      pluginLogLine(`Watcher error: ${err?.message || err}`);
     });
 }
 
 function notifyPluginChange(action, filePath) {
+  pluginLogLine(`notifyPluginChange: action=${action} file=${filePath}`);
   // Notify all renderer processes about plugin changes
   BrowserWindow.getAllWindows().forEach(win => {
     win.webContents.send('plugins-directory-changed', {
@@ -256,9 +371,12 @@ function notifyPluginChange(action, filePath) {
 
 async function validateAndLoadPlugin(content, filename) {
   try {
-    // Basic validation - check for required plugin structure
-    if (!content.includes('name:') || !content.includes('canHandle') || !content.includes('execute')) {
-      console.warn(`Plugin ${filename} missing required properties`);
+    // Basic validation - keep this light since external plugins are executed in a sandbox.
+    // We mainly want to avoid loading clearly unrelated files.
+    const hasCanHandle = content.includes('canHandle');
+    const hasExecute = content.includes('execute') || content.includes('enhance');
+    if (!hasCanHandle || !hasExecute) {
+      console.warn(`Plugin ${filename} missing required methods (canHandle/execute)`);
       return null;
     }
     
