@@ -56,11 +56,32 @@
   
     return applied;
   };
+
+  const fetchJson = async (url, opts) => {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      ...(opts || {})
+    });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    return await res.json();
+  };
+
+  const setTextSource = async (sourceName, text) => {
+    const name = String(sourceName || '').trim();
+    if (!name) throw new Error('Missing source name');
+    if (!window.obsAPI?.sources?.setSettings) throw new Error('OBS API not available');
+    await window.obsAPI.sources.setSettings(name, { text: String(text ?? '') });
+  };
 /*----------------------------------------------------------------------------------------
   Expose globally
   ---------------------------------------------------------------------------------------- */
   window.PluginUtils = {
     applyRowBackground,
-    applySourceIcon
+    applySourceIcon,
+    fetchJson,
+    setTextSource
   };
 })();
