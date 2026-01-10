@@ -76,6 +76,107 @@
     await window.obsAPI.sources.setSettings(name, { text: String(text ?? '') });
   };
 
+  const getSourceText = async (sourceName) => {
+    const name = String(sourceName || '').trim();
+    if (!name) throw new Error('Missing source name');
+    if (!window.obsAPI?.sources?.getSettings) throw new Error('OBS API not available');
+    const res = await window.obsAPI.sources.getSettings(name);
+    return String(res?.inputSettings?.text ?? '');
+  };
+
+  const setSourceURL = async (sourceName, url) => {
+    const name = String(sourceName || '').trim();
+    if (!name) throw new Error('Missing source name');
+    if (!window.obsAPI?.browser?.setUrl) throw new Error('OBS API not available');
+    await window.obsAPI.browser.setUrl(name, String(url ?? ''));
+  };
+
+  const getSourceURL = async (sourceName) => {
+    const name = String(sourceName || '').trim();
+    if (!name) throw new Error('Missing source name');
+    if (!window.obsAPI?.browser?.getUrl) throw new Error('OBS API not available');
+    return await window.obsAPI.browser.getUrl(name);
+  };
+
+  const setSourceVolume = async (sourceName, volume) => {
+    const name = String(sourceName || '').trim();
+    if (!name) throw new Error('Missing source name');
+    if (!window.obsAPI?.sources?.setVolume) throw new Error('OBS API not available');
+    const n = Number(volume);
+    if (!Number.isFinite(n)) throw new Error('Invalid volume');
+    const mul = n > 1 ? (n / 100) : n;
+    const clamped = Math.max(0, Math.min(1, mul));
+    await window.obsAPI.sources.setVolume(name, clamped);
+  };
+
+  const getSourceVolume = async (sourceName) => {
+    const name = String(sourceName || '').trim();
+    if (!name) throw new Error('Missing source name');
+    if (!window.obsAPI?.sources?.getVolume) throw new Error('OBS API not available');
+    const res = await window.obsAPI.sources.getVolume(name);
+    const mul = typeof res?.inputVolumeMul === 'number' ? res.inputVolumeMul : 1.0;
+    return mul;
+  };
+
+  const getSourceVolumePercent = async (sourceName) => {
+    const mul = await getSourceVolume(sourceName);
+    return Math.round(Math.max(0, Math.min(1, mul)) * 100);
+  };
+
+  const _getCurrentSceneName = () => {
+    try {
+      const el = document.getElementById('sceneSelect');
+      const v = String(el?.value || '').trim();
+      return v || null;
+    } catch (_) {
+      return null;
+    }
+  };
+
+  const _findSceneItemBySourceName = async (sceneName, sourceName) => {
+    if (!window.obsAPI?.sceneItems?.list) throw new Error('OBS API not available');
+    const res = await window.obsAPI.sceneItems.list(sceneName);
+    const items = res && (res.sceneItems || res.items || res);
+    if (!Array.isArray(items)) throw new Error('Unexpected scene item list response');
+    const target = String(sourceName || '').trim();
+    return items.find((it) => {
+      const nm = it?.sourceName ?? it?.inputName ?? '';
+      return String(nm) === target;
+    }) || null;
+  };
+
+  const getSourceEnabled = async (sourceName, sceneName) => {
+    const name = String(sourceName || '').trim();
+    if (!name) throw new Error('Missing source name');
+    if (!window.obsAPI?.sceneItems?.list) throw new Error('OBS API not available');
+    const scene = String(sceneName || '').trim() || _getCurrentSceneName();
+    if (!scene) throw new Error('Missing scene name');
+    const item = await _findSceneItemBySourceName(scene, name);
+    if (!item) throw new Error(`Scene item not found: ${name}`);
+    return !!item.sceneItemEnabled;
+  };
+
+  const setSourceEnabled = async (sourceName, enabled, sceneName) => {
+    const name = String(sourceName || '').trim();
+    if (!name) throw new Error('Missing source name');
+    if (!window.obsAPI?.sceneItems?.setEnabled) throw new Error('OBS API not available');
+    const scene = String(sceneName || '').trim() || _getCurrentSceneName();
+    if (!scene) throw new Error('Missing scene name');
+    const item = await _findSceneItemBySourceName(scene, name);
+    if (!item) throw new Error(`Scene item not found: ${name}`);
+    await window.obsAPI.sceneItems.setEnabled(scene, item.sceneItemId, !!enabled);
+  };
+
+  const toggleSourceEnabled = async (sourceName, sceneName) => {
+    const current = await getSourceEnabled(sourceName, sceneName);
+    await setSourceEnabled(sourceName, !current, sceneName);
+    return !current;
+  };
+
+  const setSourceVisibility = async (sourceName, state, sceneName) => {
+    return await setSourceEnabled(sourceName, state, sceneName);
+  };
+
   const _sidebarRegistry = new Map();
 
   const addControlButton = (id, label, onClick, className) => {
@@ -144,6 +245,16 @@
     applySourceIcon,
     fetchJson,
     setTextSource,
+    getSourceText,
+    setSourceURL,
+    getSourceURL,
+    setSourceVolume,
+    getSourceVolume,
+    getSourceVolumePercent,
+    setSourceEnabled,
+    getSourceEnabled,
+    toggleSourceEnabled,
+    setSourceVisibility,
     addControlButton,
     removeControlButton,
     registerSidebarButton,
