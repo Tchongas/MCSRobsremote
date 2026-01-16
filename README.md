@@ -45,7 +45,7 @@ If another person changes scenes or toggles items from a different ROBSon instan
 
 # Plugins
 
-### Documentation
+### Documentation (work in progress, not updated)
 ([PLUGIN-SYSTEM](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/pluginoverview.md))
 ([PLUGIN-API](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/pluginAPI.md))
 ([EXAMPLE](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/examples.md))
