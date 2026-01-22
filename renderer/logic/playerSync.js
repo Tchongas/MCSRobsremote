@@ -14,22 +14,6 @@
     };
   }
 
-  function getConfig() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return _defaultConfig();
-      const parsed = JSON.parse(raw);
-      return {
-        ..._defaultConfig(),
-        ...parsed,
-        player1: { ..._defaultConfig().player1, ...(parsed.player1 || {}) },
-        player2: { ..._defaultConfig().player2, ...(parsed.player2 || {}) }
-      };
-    } catch (_) {
-      return _defaultConfig();
-    }
-  }
-
   function saveConfig(cfg) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
   }
@@ -62,7 +46,7 @@
 
   async function _fetchPlayer(identifier) {
     const id = encodeURIComponent(String(identifier || '').trim());
-    const url = `https://mcsrranked.com/api/users/${id}`;
+    const url = `https://api.mcsrranked.com/users/${id}`;
 
     const res = await fetch(url, {
       method: 'GET',
@@ -70,7 +54,13 @@
     });
 
     if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
+      let body = '';
+      try {
+        body = await res.text();
+      } catch (_) {
+        // ignore
+      }
+      throw new Error(`HTTP ${res.status}${body ? `: ${body}` : ''}`);
     }
 
     const json = await res.json();
@@ -93,6 +83,10 @@
   async function _setTextSource(sourceName, value) {
     const name = String(sourceName || '').trim();
     if (!name) throw new Error('Missing source name');
+    if (window.PluginUtils?.setTextSource) {
+      await window.PluginUtils.setTextSource(name, String(value ?? ''));
+      return;
+    }
     await window.obsAPI.sources.setSettings(name, { text: String(value ?? '') });
   }
 

@@ -10,65 +10,158 @@
   <body>
     <div class="app">
       <!-- Custom title bar will be inserted here by titlebar.js -->
-      <div class="header" style="padding-top: 30px;">
-        <div class="title">
-          <div class="dot"></div>
-          <div>rOBSon</div>
+      
+      <!-- Top Status Bar -->
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <div class="app-brand">
+            <div class="brand-icon"></div>
+            <span class="brand-name">rOBSon</span>
+          </div>
         </div>
-        <div class="header-center">
-          <input id="sourceSearch" class="search-input" type="text" placeholder="Search sources..." aria-label="Search sources">
+        
+        <div class="top-bar-center">
+          <div class="connection-status" id="connectionStatus">
+            <div class="status-indicator disconnected"></div>
+            <span class="status-text">Disconnected</span>
+          </div>
         </div>
-        <div class="badges">
-          <span id="connBadge" class="badge badge-off">Disconnected</span>
-          <span id="sceneBadge" class="badge">Scene: -</span>
-          <button id="settingsBtn" class="icon-btn" title="Settings" aria-label="Settings" tabindex="-1">⚙️</button>
+        
+        <div class="top-bar-right">
+          <button id="settingsBtn" class="top-btn" title="Settings" aria-label="Settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
         </div>
-      </div>
+      </header>
 
-      <div class="content">
-        <!-- Left: Controls panel -->
-        <section class="panel">
-          <h2>Controls</h2>
-          <div class="controls">
-            <button id="connect" class="btn-accent btn-indicator is-red" tabindex="-1">Connect to OBS</button>
-            <button id="disconnect" class="btn-danger" tabindex="-1">Disconnect</button>
-
-            <button id="start" class="btn-success" tabindex="-1">Start Streaming</button>
-            <button id="stop" class="btn-danger" tabindex="-1">Stop Streaming</button>
-
-            <div class="select-row">
-              <label for="sceneSelect" class="input-label">Scene</label>
-              <div class="select-with-refresh">
-                <select id="sceneSelect" disabled tabindex="-1">
-                  <option value="">Select a scene...</option>
-                </select>
-                <button id="refreshScenes" class="icon-btn" title="Refresh scenes" aria-label="Refresh scenes" tabindex="-1">⟳</button>
-              </div>
+      <!-- Main Layout -->
+      <div class="main-layout">
+        <!-- Left Sidebar - Controls & Scenes -->
+        <aside class="sidebar sidebar-left" id="sidebarLeft">
+          <div class="sidebar-section">
+            <h3 class="sidebar-title">Connection</h3>
+            <div class="connection-controls">
+              <button id="connect" class="ctrl-btn ctrl-btn-primary ctrl-btn-sm" tabindex="-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+                Connect
+              </button>
+              <button id="disconnect" class="ctrl-btn ctrl-btn-danger ctrl-btn-sm" tabindex="-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                Disconnect
+              </button>
             </div>
-
-            <div id="pluginButtons" class="controls"></div>
-
           </div>
-        </section>
 
-        <!-- Right: Main area / future preview / stats -->
-        <section class="panel main">
-          <h2 style="margin-bottom: 8px;">Dashboard</h2>
+          <div class="sidebar-section">
+            <h3 class="sidebar-title">Stream</h3>
+            <button id="streamToggle" class="stream-toggle-btn" tabindex="-1" data-streaming="false">
+              <div class="stream-toggle-indicator"></div>
+              <span class="stream-toggle-text">Start Stream</span>
+            </button>
+          </div>
+
+          <div class="sidebar-section sidebar-section-grow">
+            <h3 class="sidebar-title">
+              Scenes
+              <button id="refreshScenes" class="sidebar-title-btn" title="Refresh scenes" aria-label="Refresh scenes" tabindex="-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 4v6h-6M1 20v-6h6"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+              </button>
+            </h3>
+            <div id="sceneList" class="scene-list">
+              <div class="scene-list-empty">Connect to load scenes</div>
+            </div>
+            <!-- Hidden select for compatibility -->
+            <select id="sceneSelect" style="display:none;" disabled></select>
+            <span id="sceneBadge" style="display:none;"></span>
+          </div>
+        </aside>
+
+        <!-- Center - Dashboard -->
+        <main class="dashboard-area">
+          <div class="dashboard-header">
+            <h2 class="dashboard-title">Sources</h2>
+            <div class="dashboard-search">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input id="sourceSearch" type="text" placeholder="Search sources..." aria-label="Search sources">
+            </div>
+          </div>
           <div id="dashboardItems" class="dash-list placeholder">
-            Select a scene to load its items...
+            <div class="empty-state">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              <p>Select a scene to view sources</p>
+            </div>
           </div>
-        </section>
+        </main>
+
+        <!-- Right Sidebar - Quick Actions & Plugins -->
+        <aside class="sidebar sidebar-right" id="sidebarRight">
+          <div class="sidebar-section">
+            <h3 class="sidebar-title">Quick Actions</h3>
+            <div class="quick-actions">
+              <button class="quick-action-btn" id="quickRefresh" title="Refresh All" tabindex="-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 4v6h-6M1 20v-6h6"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+                <span>Refresh All</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="sidebar-section sidebar-section-grow">
+            <h3 class="sidebar-title">Plugins</h3>
+            <div id="pluginButtons" class="plugin-buttons"></div>
+          </div>
+        </aside>
+        
+        <!-- Resize handles (absolutely positioned) -->
+        <div class="resize-handle resize-handle-left" data-resize="left"></div>
+        <div class="resize-handle resize-handle-right" data-resize="right"></div>
       </div>
 
-      <!-- Console area -->
-      <section class="console">
+      <!-- Console Area with resize handle -->
+      <div class="resize-handle resize-handle-console" data-resize="console"></div>
+      <section class="console-area" id="consoleArea">
         <div class="console-header">
-          <div>Console</div>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <small>Live logs</small>
+          <div class="console-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+            <span>Console</span>
+          </div>
+          <div class="console-actions">
+            <button id="clearConsole" class="console-action-btn" title="Clear console">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+            <span class="console-live-indicator">
+              <span class="live-dot"></span>
+              Live
+            </span>
           </div>
         </div>
-        <pre id="log"></pre>
+        <div id="log" class="console-log"></div>
       </section>
     </div>
 
@@ -172,6 +265,7 @@
     <script src="renderer/logic/config.js"></script>
     <script src="renderer/logic/scenes.js"></script>
     <script src="renderer/logic/dashboard.js"></script>
+    <script src="renderer/logic/resize.js"></script>
     <script src="renderer/logic/sourceTypes.js"></script>
     <!-- Handler Registry System -->
     <script src="renderer/logic/handlers/HandlerRegistry.js"></script>

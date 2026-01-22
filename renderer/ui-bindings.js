@@ -74,18 +74,41 @@
         await window.obsAPI.disconnect();
         setConnBadge(false);
         setIndicator(connectBtn, 'red');
+        // Reset stream toggle
+        const streamToggle = document.getElementById('streamToggle');
+        if (streamToggle) {
+          streamToggle.dataset.streaming = 'false';
+          streamToggle.querySelector('.stream-toggle-text').textContent = 'Start Stream';
+        }
         // Reset scene UI
         setSceneBadge('-');
+        const sceneList = document.getElementById('sceneList');
+        if (sceneList) {
+          sceneList.innerHTML = '<div class="scene-list-empty">Connect to load scenes</div>';
+        }
         const select = document.getElementById('sceneSelect');
         if (select) {
           select.value = '';
           select.disabled = true;
         }
-        // Clear dashboard
+        // Clear dashboard with proper empty state
         const container = document.getElementById('dashboardItems');
         if (container) {
           container.classList.add('placeholder');
-          container.textContent = 'Disconnected. Connect to load items...';
+          container.innerHTML = `
+            <div class="empty-state">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+                <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+                <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+                <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+                <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                <line x1="12" y1="20" x2="12.01" y2="20"></line>
+              </svg>
+              <p>Connect to OBS to view sources</p>
+            </div>
+          `;
         }
         window.uiHelpers.logSuccess('Disconnected from OBS', 'conn');
       } catch (e) {
@@ -93,24 +116,60 @@
       }
     });
 
-    // Streaming controls
-    document.getElementById('start').addEventListener('click', async () => {
-      try {
-        await window.obsAPI.streaming.start();
-        window.uiHelpers.logSuccess('Streaming started', 'stream');
-      } catch (e) {
-        window.uiHelpers.logError('Failed to start streaming: ' + e.message, 'stream');
-      }
-    });
+    // Stream toggle button
+    const streamToggle = document.getElementById('streamToggle');
+    if (streamToggle) {
+      streamToggle.addEventListener('click', async () => {
+        const isStreaming = streamToggle.dataset.streaming === 'true';
+        try {
+          if (isStreaming) {
+            await window.obsAPI.streaming.stop();
+            streamToggle.dataset.streaming = 'false';
+            streamToggle.querySelector('.stream-toggle-text').textContent = 'Start Stream';
+            window.uiHelpers.logSuccess('Streaming stopped', 'stream');
+          } else {
+            await window.obsAPI.streaming.start();
+            streamToggle.dataset.streaming = 'true';
+            streamToggle.querySelector('.stream-toggle-text').textContent = 'Stop Stream';
+            window.uiHelpers.logSuccess('Streaming started', 'stream');
+          }
+        } catch (e) {
+          window.uiHelpers.logError('Stream toggle failed: ' + e.message, 'stream');
+        }
+      });
+    }
 
-    document.getElementById('stop').addEventListener('click', async () => {
-      try {
-        await window.obsAPI.streaming.stop();
-        window.uiHelpers.logSuccess('Streaming stopped', 'stream');
-      } catch (e) {
-        window.uiHelpers.logError('Failed to stop streaming: ' + e.message, 'stream');
-      }
-    });
+    // Legacy streaming controls (hidden but kept for compatibility)
+    const startBtn = document.getElementById('start');
+    const stopBtn = document.getElementById('stop');
+    if (startBtn) {
+      startBtn.addEventListener('click', async () => {
+        try {
+          await window.obsAPI.streaming.start();
+          if (streamToggle) {
+            streamToggle.dataset.streaming = 'true';
+            streamToggle.querySelector('.stream-toggle-text').textContent = 'Stop Stream';
+          }
+          window.uiHelpers.logSuccess('Streaming started', 'stream');
+        } catch (e) {
+          window.uiHelpers.logError('Failed to start streaming: ' + e.message, 'stream');
+        }
+      });
+    }
+    if (stopBtn) {
+      stopBtn.addEventListener('click', async () => {
+        try {
+          await window.obsAPI.streaming.stop();
+          if (streamToggle) {
+            streamToggle.dataset.streaming = 'false';
+            streamToggle.querySelector('.stream-toggle-text').textContent = 'Start Stream';
+          }
+          window.uiHelpers.logSuccess('Streaming stopped', 'stream');
+        } catch (e) {
+          window.uiHelpers.logError('Failed to stop streaming: ' + e.message, 'stream');
+        }
+      });
+    }
 
     // Refresh scenes button
     document.getElementById('refreshScenes').addEventListener('click', refreshScenes);
@@ -187,25 +246,50 @@
       }
     });
 
+    // Clear console button
+    const clearConsoleBtn = document.getElementById('clearConsole');
+    if (clearConsoleBtn) {
+      clearConsoleBtn.addEventListener('click', () => {
+        window.uiHelpers.clearConsole();
+      });
+    }
+
+    // Quick refresh button (refreshes scenes and dashboard)
+    const quickRefreshBtn = document.getElementById('quickRefresh');
+    if (quickRefreshBtn) {
+      quickRefreshBtn.addEventListener('click', async () => {
+        window.uiHelpers.logInfo('Refreshing...', 'system');
+        try {
+          await refreshScenes();
+          const currentScene = document.getElementById('sceneSelect')?.value;
+          if (currentScene) {
+            await loadDashboardItems(currentScene);
+          }
+          window.uiHelpers.logSuccess('Refresh complete', 'system');
+        } catch (e) {
+          window.uiHelpers.logError('Refresh failed: ' + e.message, 'system');
+        }
+      });
+    }
+
     // Set up real-time event handling for multi-user synchronization
     window.obsAPI.onEvent((eventData) => {
       const { type, data } = eventData;
       
       switch (type) {
         case 'scene-changed':
-          // Update scene badge and selection
+          // Update scene badge and scene list UI
           setSceneBadge(data.sceneName);
-          const sceneSelect = document.getElementById('sceneSelect');
-          if (sceneSelect && sceneSelect.value !== data.sceneName) {
-            sceneSelect.value = data.sceneName;
-            // Load dashboard items for the new scene
-            loadDashboardItems(data.sceneName).then(() => {
-              const el = document.getElementById('sourceSearch');
-              if (el) {
-                el.dispatchEvent(new Event('input'));
-              }
-            });
+          if (window.sceneLogic && window.sceneLogic.updateCurrentScene) {
+            window.sceneLogic.updateCurrentScene(data.sceneName);
           }
+          // Load dashboard items for the new scene
+          loadDashboardItems(data.sceneName).then(() => {
+            const el = document.getElementById('sourceSearch');
+            if (el) {
+              el.dispatchEvent(new Event('input'));
+            }
+          });
           window.uiHelpers.logInfo(`Scene changed to: ${data.sceneName} (remote)`, 'scenes');
           break;
 

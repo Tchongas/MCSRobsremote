@@ -139,6 +139,4 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 README-HANDLERS.md
-plugins/PlayerSyncPlugin.js
-plugins/PlayerSyncPlugin.json
 docs/*

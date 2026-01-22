@@ -4,7 +4,7 @@
 
   function _defaultConfig() {
     return {
-      fakeTimerSource: '_timerfake',
+      fakeTimerSource: 'timerfake',
       countingTimerSource: '_timer'
     };
   }

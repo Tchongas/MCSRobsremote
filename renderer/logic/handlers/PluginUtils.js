@@ -64,9 +64,43 @@
       ...(opts || {})
     });
     if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
+      let body = '';
+      try {
+        body = await res.text();
+      } catch (_) {
+        // ignore
+      }
+      throw new Error(`HTTP ${res.status} for ${url}${body ? `: ${body}` : ''}`);
     }
     return await res.json();
+  };
+
+  let _dashboardRefreshTimer = null;
+  const requestDashboardRefresh = (reason) => {
+    if (_dashboardRefreshTimer) {
+      clearTimeout(_dashboardRefreshTimer);
+    }
+
+    _dashboardRefreshTimer = setTimeout(async () => {
+      _dashboardRefreshTimer = null;
+
+      const sceneName = _getCurrentSceneName();
+      if (!sceneName) return;
+      if (!window.dashboardLogic?.loadDashboardItems) return;
+
+      try {
+        await window.dashboardLogic.loadDashboardItems(sceneName);
+        const el = document.getElementById('sourceSearch');
+        if (el) {
+          el.dispatchEvent(new Event('input'));
+        }
+      } catch (e) {
+        window.uiHelpers?.logError(
+          'Failed to refresh dashboard' + (reason ? ` (${reason})` : '') + ': ' + (e?.message || e),
+          'dashboard'
+        );
+      }
+    }, 200);
   };
 
   const setTextSource = async (sourceName, text) => {
@@ -74,6 +108,7 @@
     if (!name) throw new Error('Missing source name');
     if (!window.obsAPI?.sources?.setSettings) throw new Error('OBS API not available');
     await window.obsAPI.sources.setSettings(name, { text: String(text ?? '') });
+    requestDashboardRefresh('setTextSource');
   };
 
   const getSourceText = async (sourceName) => {
@@ -89,6 +124,7 @@
     if (!name) throw new Error('Missing source name');
     if (!window.obsAPI?.browser?.setUrl) throw new Error('OBS API not available');
     await window.obsAPI.browser.setUrl(name, String(url ?? ''));
+    requestDashboardRefresh('setSourceURL');
   };
 
   const getSourceURL = async (sourceName) => {
@@ -107,6 +143,7 @@
     const mul = n > 1 ? (n / 100) : n;
     const clamped = Math.max(0, Math.min(1, mul));
     await window.obsAPI.sources.setVolume(name, clamped);
+    requestDashboardRefresh('setSourceVolume');
   };
 
   const getSourceVolume = async (sourceName) => {
@@ -165,6 +202,7 @@
     const item = await _findSceneItemBySourceName(scene, name);
     if (!item) throw new Error(`Scene item not found: ${name}`);
     await window.obsAPI.sceneItems.setEnabled(scene, item.sceneItemId, !!enabled);
+    requestDashboardRefresh('setSourceEnabled');
   };
 
   const toggleSourceEnabled = async (sourceName, sceneName) => {
@@ -214,7 +252,14 @@
   };
 
   const registerSidebarButton = (pluginName, id, label, onClick, className) => {
-    const btn = addControlButton(id, label, onClick, className);
+    const wrappedOnClick = async (...args) => {
+      try {
+        return await onClick?.(...args);
+      } finally {
+        requestDashboardRefresh('plugin-button');
+      }
+    };
+    const btn = addControlButton(id, label, wrappedOnClick, className);
     if (!btn) return null;
 
     const p = String(pluginName || '').trim() || 'unknown';
@@ -244,6 +289,7 @@
     applyRowBackground,
     applySourceIcon,
     fetchJson,
+    requestDashboardRefresh,
     setTextSource,
     getSourceText,
     setSourceURL,

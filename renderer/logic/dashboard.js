@@ -1,16 +1,46 @@
 // Dashboard: scene items management with modular source handlers
 (function() {
+  // Helper to show empty state
+  function showEmptyState(container, message) {
+    container.classList.add('placeholder');
+    container.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        <p>${message}</p>
+      </div>
+    `;
+  }
+
+  // Helper to show loading state
+  function showLoadingState(container) {
+    container.classList.remove('placeholder');
+    container.innerHTML = `
+      <div class="empty-state">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        </svg>
+        <p>Loading sources...</p>
+      </div>
+      <style>@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style>
+    `;
+  }
+
   // Dashboard: list and control scene items for selected scene
   async function loadDashboardItems(sceneName) {
     const container = document.getElementById('dashboardItems');
     if (!container) return;
-    container.classList.remove('placeholder');
-    container.textContent = 'Loading items...';
+    
+    showLoadingState(container);
+    
     try {
       const res = await window.obsAPI.sceneItems.list(sceneName);
       const items = res && (res.sceneItems || res.items || res);
       if (!Array.isArray(items)) {
-        container.textContent = 'No items found.';
+        showEmptyState(container, 'No items found in this scene');
         return;
       }
 
@@ -20,9 +50,10 @@
         return typeof nm === 'string' && nm.startsWith('_');
       });
       if (filtered.length === 0) {
-        container.textContent = 'No matching items (names starting with _).';
+        showEmptyState(container, 'No controllable sources (names starting with _)');
         return;
       }
+      container.classList.remove('placeholder');
       container.innerHTML = '';
 
       // Build context for handlers

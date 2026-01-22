@@ -57,6 +57,17 @@ Plugins can enhance the controls for certain sources. For example, a plugin can 
 - You can add your own plugins by placing `.js` files in the `plugins/` folder next to the app executable.
 - When you add or edit a plugin file, the app detects the change and reloads automatically.
 
+# Build (Portable)
+
+This project uses Electron Builder. Windows is configured to build a `portable` target.
+
+```bash
+npm install
+npm run build
+```
+
+Output is written to `dist/`.
+
 ## Getting updates or help
 
 You can open a issue here on github, or message me in discord: @limifaooooo

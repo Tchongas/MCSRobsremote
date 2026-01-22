@@ -26,6 +26,8 @@
       
       // Scene management
       refreshScenes: window.sceneLogic.refreshScenes,
+      switchScene: window.sceneLogic.switchScene,
+      updateCurrentScene: window.sceneLogic.updateCurrentScene,
       
       // Dashboard management
       loadDashboardItems: window.dashboardLogic.loadDashboardItems,
