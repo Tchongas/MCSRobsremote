@@ -280,7 +280,15 @@
       allPlugins.forEach(plugin => {
         if (plugin.cleanup) {
           try {
-            plugin.cleanup(sourceName);
+            // Only call cleanup on plugins that actually handle this source.
+            // Plugins that return false from canHandle (e.g. sidebar-only plugins)
+            // should not have their cleanup called for arbitrary source names.
+            const handles = plugin.canHandle
+              ? plugin.canHandle('', sourceName, { inputKindMap: new Map() })
+              : true;
+            if (handles) {
+              plugin.cleanup(sourceName);
+            }
           } catch (e) {
             console.warn(`Plugin ${plugin.name} cleanup error:`, e);
           }

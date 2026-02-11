@@ -1,5 +1,23 @@
 // Dashboard: scene items management with modular source handlers
 (function() {
+  // ── Request deduplication ──
+  // Tracks the current in-flight load. Any new call while one is running
+  // will cancel the previous one (via a generation counter) so only the
+  // latest request's results are applied to the DOM.
+  let loadGeneration = 0;
+  let loadingScene = null; // scene name currently being loaded
+
+  // ── Handler context cache ──
+  // Avoids re-fetching sources.get() on every dashboard load.
+  let cachedContext = null;
+  let contextAge = 0; // timestamp of last fetch
+  const CONTEXT_MAX_AGE_MS = 10000; // 10 seconds
+
+  // ── Dashboard item cache ──
+  // Map<sceneItemId, { rawName, enabled, domElement }> for the currently displayed scene
+  let itemCache = new Map();
+  let cachedSceneName = null;
+
   // Helper to show empty state
   function showEmptyState(container, message) {
     container.classList.add('placeholder');
@@ -13,9 +31,11 @@
         <p>${message}</p>
       </div>
     `;
+    itemCache.clear();
+    cachedSceneName = null;
   }
 
-  // Helper to show loading state
+  // Helper to show loading state (only when no cached items exist)
   function showLoadingState(container) {
     container.classList.remove('placeholder');
     container.innerHTML = `
@@ -29,15 +49,27 @@
     `;
   }
 
-  // Dashboard: list and control scene items for selected scene
+  // Dashboard: list and control scene items for selected scene (diff-based)
   async function loadDashboardItems(sceneName) {
     const container = document.getElementById('dashboardItems');
     if (!container) return;
-    
-    showLoadingState(container);
-    
+
+    // ── Deduplication: bump generation so any in-flight load is ignored ──
+    const thisGen = ++loadGeneration;
+    loadingScene = sceneName;
+
+    // Only show loading spinner when switching to a different scene with no cache
+    const isSameScene = sceneName === cachedSceneName;
+    if (!isSameScene && itemCache.size === 0) {
+      showLoadingState(container);
+    }
+
     try {
       const res = await window.obsAPI.sceneItems.list(sceneName);
+
+      // ── Stale check: if a newer load was started, discard this result ──
+      if (thisGen !== loadGeneration) return;
+
       const items = res && (res.sceneItems || res.items || res);
       if (!Array.isArray(items)) {
         showEmptyState(container, 'No items found in this scene');
@@ -53,22 +85,200 @@
         showEmptyState(container, 'No controllable sources (names starting with _)');
         return;
       }
-      container.classList.remove('placeholder');
-      container.innerHTML = '';
 
-      // Build context for handlers
+      // Build context for handlers (cached)
       const context = await buildHandlerContext();
 
-      for (const item of filtered) {
-        await createDashboardItem(container, item, sceneName, context);
+      // ── Stale check again after async context fetch ──
+      if (thisGen !== loadGeneration) return;
+
+      // ── Diff-update: sync DOM with incoming items ──
+      if (isSameScene && itemCache.size > 0) {
+        // Same scene: update existing items in-place
+        await syncDashboardItems(container, filtered, sceneName, context);
+      } else {
+        // Different scene: clean swap
+        await fullRebuildDashboard(container, filtered, sceneName, context, thisGen);
       }
+
+      cachedSceneName = sceneName;
     } catch (e) {
-      container.textContent = 'Failed to load items: ' + e.message;
-      window.uiHelpers.logError('Failed to load dashboard items: ' + e.message, 'dashboard');
+      // Only show error if this is still the active load
+      if (thisGen === loadGeneration) {
+        // If we have cached items, keep them visible and just log the error
+        if (itemCache.size === 0) {
+          container.textContent = 'Failed to load items: ' + e.message;
+        }
+        window.uiHelpers.logError('Failed to load dashboard items: ' + e.message, 'dashboard');
+      }
+    } finally {
+      if (thisGen === loadGeneration) {
+        loadingScene = null;
+      }
     }
   }
 
-  async function buildHandlerContext() {
+  // Sync existing dashboard items in-place (same scene refresh)
+  async function syncDashboardItems(container, incomingItems, sceneName, context) {
+    const incomingById = new Map();
+    for (const item of incomingItems) {
+      incomingById.set(item.sceneItemId, item);
+    }
+
+    // Remove items that no longer exist
+    for (const [id, cached] of itemCache) {
+      if (!incomingById.has(id)) {
+        if (cached.domElement && cached.domElement.parentNode) {
+          // Cleanup handlers before removing
+          if (window.HandlerRegistry) {
+            window.HandlerRegistry.cleanup(cached.rawName);
+          }
+          cached.domElement.remove();
+        }
+        itemCache.delete(id);
+      }
+    }
+
+    // Update existing items and add new ones
+    let prevEl = null;
+    for (const item of incomingItems) {
+      const cached = itemCache.get(item.sceneItemId);
+      const rawName = item.sourceName || item.inputName || `Item ${item.sceneItemId}`;
+
+      if (cached && cached.domElement && cached.domElement.parentNode) {
+        // Update visibility toggle if changed
+        if (cached.enabled !== !!item.sceneItemEnabled) {
+          const chk = cached.domElement.querySelector('input[type="checkbox"]');
+          if (chk) chk.checked = !!item.sceneItemEnabled;
+          cached.enabled = !!item.sceneItemEnabled;
+        }
+
+        // Re-run handlers to refresh source properties (e.g. browser URL changes)
+        await refreshItemOptions(cached.domElement, rawName, rawName.length > 0 ? rawName.slice(1) : rawName, context);
+
+        // Ensure correct order
+        const expectedNext = prevEl ? prevEl.nextElementSibling : container.firstElementChild;
+        if (cached.domElement !== expectedNext) {
+          if (prevEl) {
+            prevEl.after(cached.domElement);
+          } else {
+            container.prepend(cached.domElement);
+          }
+        }
+        prevEl = cached.domElement;
+      } else {
+        // New item: create and insert
+        const newEl = await createDashboardItem(item, sceneName, context);
+        if (newEl) {
+          if (prevEl) {
+            prevEl.after(newEl);
+          } else {
+            // Insert at start, before any existing children
+            container.prepend(newEl);
+          }
+          itemCache.set(item.sceneItemId, {
+            rawName,
+            enabled: !!item.sceneItemEnabled,
+            domElement: newEl
+          });
+          prevEl = newEl;
+        }
+      }
+    }
+
+    // Remove any leftover empty-state / placeholder elements
+    container.classList.remove('placeholder');
+    const emptyState = container.querySelector('.empty-state');
+    if (emptyState) emptyState.remove();
+  }
+
+  // Full rebuild when switching scenes (but still uses the cache for the new scene)
+  async function fullRebuildDashboard(container, filtered, sceneName, context, thisGen) {
+    // Cleanup old handlers
+    for (const [, cached] of itemCache) {
+      if (window.HandlerRegistry) {
+        window.HandlerRegistry.cleanup(cached.rawName);
+      }
+    }
+    itemCache.clear();
+
+    container.classList.remove('placeholder');
+    container.innerHTML = '';
+
+    for (const item of filtered) {
+      // Stale check inside the loop for responsiveness
+      if (thisGen !== loadGeneration) return;
+
+      const el = await createDashboardItem(item, sceneName, context);
+      if (el) {
+        container.appendChild(el);
+        const rawName = item.sourceName || item.inputName || `Item ${item.sceneItemId}`;
+        itemCache.set(item.sceneItemId, {
+          rawName,
+          enabled: !!item.sceneItemEnabled,
+          domElement: el
+        });
+      }
+    }
+  }
+
+  // Refresh the options panel of an existing cached dashboard item.
+  // Instead of rebuilding the whole item, we clear the options panel and
+  // re-run handlers so that source properties (URLs, text, etc.) are fresh.
+  async function refreshItemOptions(itemEl, rawName, displayName, context) {
+    if (!itemEl || !window.HandlerRegistry) return;
+
+    const options = itemEl.querySelector('.dash-options');
+    if (!options) return;
+
+    // Remember expanded state
+    const wasOpen = options.classList.contains('open');
+
+    // Cleanup old handler state for this source
+    window.HandlerRegistry.cleanup(rawName);
+
+    // Clear options content and re-run handlers
+    options.innerHTML = '';
+    let hasOptions = false;
+    try {
+      hasOptions = await window.HandlerRegistry.processSource(options, rawName, displayName, context);
+    } catch (err) {
+      console.error('Handler registry refresh error:', err);
+    }
+
+    // Manage expand button visibility
+    const nameWrap = itemEl.querySelector('.name-wrap');
+    const existingExpandBtn = nameWrap?.querySelector('.expand-btn');
+    const chk = itemEl.querySelector('input[type="checkbox"]');
+    const optionsId = options.id;
+
+    if (hasOptions && !existingExpandBtn && nameWrap) {
+      createExpandButton(nameWrap, options, chk, optionsId);
+    } else if (!hasOptions && existingExpandBtn) {
+      existingExpandBtn.remove();
+    }
+
+    // Restore expanded state
+    if (wasOpen && hasOptions) {
+      options.classList.add('open');
+      options.setAttribute('aria-hidden', 'false');
+      const expandBtn = nameWrap?.querySelector('.expand-btn');
+      if (expandBtn) {
+        expandBtn.textContent = '▾';
+        expandBtn.setAttribute('aria-expanded', 'true');
+      }
+      enableTabInside(options);
+    } else {
+      disableTabInside(options);
+    }
+  }
+
+  async function buildHandlerContext(forceRefresh) {
+    const now = Date.now();
+    if (!forceRefresh && cachedContext && (now - contextAge) < CONTEXT_MAX_AGE_MS) {
+      return cachedContext;
+    }
+
     let micNameSet = new Set();
     let inputKindMap = new Map();
     
@@ -82,13 +292,17 @@
       }
     } catch (_) { /* ignore */ }
 
-    return { inputKindMap, micNameSet };
+    cachedContext = { inputKindMap, micNameSet };
+    contextAge = now;
+    return cachedContext;
   }
 
-  async function createDashboardItem(container, item, sceneName, context) {
+  // Creates a dashboard item DOM element and returns it (does NOT append to container)
+  async function createDashboardItem(item, sceneName, context) {
     // Item wrapper to place row + options panel
     const itemWrap = document.createElement('div');
     itemWrap.className = 'dash-item';
+    itemWrap.dataset.sceneItemId = String(item.sceneItemId);
 
     const row = document.createElement('div');
     row.className = 'dash-row';
@@ -163,17 +377,18 @@
     // Make every focusable element inside options non-tabbable so only the row enters tab order
     disableTabInside(options);
 
-    // Create arrow now that we know options exist
-    if (hasOptions) {
-      createExpandButton(nameWrap, options, chk, optionsId);
-    }
-
     row.appendChild(nameWrap);
     row.appendChild(toggleWrap);
 
     itemWrap.appendChild(row);
     itemWrap.appendChild(options);
-    container.appendChild(itemWrap);
+
+    // Create expand button AFTER nameWrap is in the DOM tree
+    // (createExpandButton reads nameWrap.parentElement)
+    if (hasOptions) {
+      createExpandButton(nameWrap, options, chk, optionsId);
+    }
+    return itemWrap;
   }
 
 
@@ -187,7 +402,10 @@
     if (optionsId) expandBtn.setAttribute('aria-controls', optionsId);
     nameWrap.insertBefore(expandBtn, nameWrap.firstChild);
 
-    let expanded = false; // default closed; user can expand via arrow or name click
+    // The row element is the parent of nameWrap
+    const row = nameWrap.parentElement;
+
+    let expanded = false; // default closed; user can expand via clicking the row
     const setArrow = () => expandBtn.textContent = expanded ? '▾' : '▸';
     const applyExpanded = () => {
       options.classList.toggle('open', expanded);
@@ -212,23 +430,21 @@
 
     // Make arrow non-tabbable; row handles focus
     expandBtn.tabIndex = -1;
-    // Toggle via arrow button (mouse)
-    expandBtn.addEventListener('click', () => {
-      expanded = !expanded;
-      applyExpanded();
-    });
 
-    // Also toggle by clicking the name area for better accessibility
-    nameWrap.style.cursor = 'pointer';
-    nameWrap.setAttribute('role', 'button');
-    nameWrap.tabIndex = 0;
+    // Clicking anywhere on the row toggles the dropdown,
+    // EXCEPT clicking on the toggle switch / checkbox area
     const safeToggle = (evt) => {
-      // Avoid toggling when interacting with inputs or buttons inside
-      if (evt.target.closest('input, button, .dash-options')) return;
+      if (evt.target.closest('.dash-toggle, input, .dash-options')) return;
       expanded = !expanded;
       applyExpanded();
     };
-    nameWrap.addEventListener('click', safeToggle);
+
+    // Make the entire row clickable (cursor set via CSS on .dash-row)
+    row.addEventListener('click', safeToggle);
+
+    // Keep nameWrap focusable for keyboard navigation
+    nameWrap.setAttribute('role', 'button');
+    nameWrap.tabIndex = 0;
     nameWrap.addEventListener('keydown', (e) => {
       // Expand/collapse
       if (e.key === 'Enter' || e.key === ' ') {

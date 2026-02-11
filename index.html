@@ -81,6 +81,10 @@
             <div id="sceneList" class="scene-list">
               <div class="scene-list-empty">Connect to load scenes</div>
             </div>
+            <!-- Transition bar: appears when preview ≠ program -->
+            <div id="transitionBar" class="transition-bar">
+              <button id="transitionBtn" class="transition-btn" tabindex="-1">Change Scene</button>
+            </div>
             <!-- Hidden select for compatibility -->
             <select id="sceneSelect" style="display:none;" disabled></select>
             <span id="sceneBadge" style="display:none;"></span>
@@ -91,6 +95,7 @@
         <main class="dashboard-area">
           <div class="dashboard-header">
             <h2 class="dashboard-title">Sources</h2>
+            <span id="dashboardSceneTag" class="dashboard-scene-tag"></span>
             <div class="dashboard-search">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
@@ -127,7 +132,14 @@
           </div>
 
           <div class="sidebar-section sidebar-section-grow">
-            <h3 class="sidebar-title">Plugins</h3>
+            <div class="sidebar-title-row">
+              <h3 class="sidebar-title">Plugins</h3>
+              <button id="openPluginFolder" class="icon-btn" title="Open plugins folder" tabindex="-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </button>
+            </div>
             <div id="pluginButtons" class="plugin-buttons"></div>
           </div>
         </aside>
@@ -167,43 +179,139 @@
 
     <!-- Settings Modal -->
     <div id="settingsModal" class="modal" style="display: none;">
-      <div class="modal-content">
+      <div class="modal-content modal-content-tabbed">
         <div class="modal-header">
-          <h3>OBS Connection Settings</h3>
+          <h3>Settings</h3>
           <button id="closeSettings" class="icon-btn">&times;</button>
         </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="profileSelect" class="input-label">Connection Profile</label>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <select id="profileSelect" class="input-grow" style="flex: 1;">
-                <option value="Default">Default</option>
-              </select>
-              <button id="newProfile" class="btn-ghost" title="Create new profile">+ New</button>
-              <button id="deleteProfile" class="btn-ghost" title="Delete current profile">🗑️</button>
+
+        <!-- Tab bar -->
+        <div class="modal-tabs" role="tablist">
+          <button class="modal-tab active" data-tab="connection" role="tab" aria-selected="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            Connection
+          </button>
+          <button class="modal-tab" data-tab="info" role="tab" aria-selected="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            Info
+          </button>
+        </div>
+
+        <!-- Connection tab -->
+        <div class="modal-tab-panel active" data-panel="connection" role="tabpanel">
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="profileSelect" class="input-label">Connection Profile</label>
+              <div class="profile-row">
+                <select id="profileSelect" class="input-grow">
+                  <option value="Default">Default</option>
+                </select>
+                <button id="newProfile" class="btn-ghost btn-sm" title="Create new profile">+ New</button>
+                <button id="deleteProfile" class="btn-ghost btn-sm btn-danger-ghost" title="Delete current profile">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+              <small class="help-text">Save multiple OBS connection setups</small>
             </div>
-            <small class="help-text">Save multiple OBS connection setups</small>
+            <div class="form-group" id="profileNameGroup" style="display: none;">
+              <label for="profileName" class="input-label">Profile Name</label>
+              <input type="text" id="profileName" class="input-grow" placeholder="Enter profile name">
+              <small class="help-text">Name for this connection profile</small>
+            </div>
+            <div class="form-group">
+              <label for="obsUrl" class="input-label">OBS WebSocket URL</label>
+              <input type="text" id="obsUrl" class="input-grow" placeholder="ws://localhost:4455" value="ws://localhost:4455">
+              <small class="help-text">Default: ws://localhost:4455</small>
+            </div>
+            <div class="form-group">
+              <label for="obsPassword" class="input-label">WebSocket Password</label>
+              <div class="password-row">
+                <input type="password" id="obsPassword" class="input-grow" placeholder="Enter password">
+                <button id="togglePasswordVis" class="icon-btn" title="Show password" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+              <small class="help-text">Set in OBS → Tools → WebSocket Server Settings</small>
+            </div>
           </div>
-          <div class="form-group" id="profileNameGroup" style="display: none;">
-            <label for="profileName" class="input-label">Profile Name</label>
-            <input type="text" id="profileName" class="input-grow" placeholder="Enter profile name">
-            <small class="help-text">Name for this connection profile</small>
-          </div>
-          <div class="form-group">
-            <label for="obsUrl" class="input-label">OBS WebSocket URL</label>
-            <input type="text" id="obsUrl" class="input-grow" placeholder="ws://localhost:4455" value="ws://localhost:4455">
-            <small class="help-text">Default: ws://localhost:4455</small>
-          </div>
-          <div class="form-group">
-            <label for="obsPassword" class="input-label">WebSocket Password</label>
-            <input type="password" id="obsPassword" class="input-grow" placeholder="Enter password">
-            <small class="help-text">Set in OBS: Tools → WebSocket Server Settings</small>
+          <div class="modal-footer">
+            <button id="resetSettings" class="btn-ghost">Reset to Default</button>
+            <button id="saveSettings" class="btn-accent">Save Settings</button>
           </div>
         </div>
-        <div class="modal-footer">
-          <button id="resetSettings" class="btn-ghost">Reset to Default</button>
-          <button id="saveSettings" class="btn-accent">Save Settings</button>
+
+        <!-- Info tab -->
+        <div class="modal-tab-panel" data-panel="info" role="tabpanel">
+          <div class="modal-body">
+            <div class="info-section">
+              <h4 class="info-section-title">Keyboard Shortcuts</h4>
+              <table class="shortcut-table">
+                <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+                <tbody>
+                  <tr><td><kbd>F5</kbd></td><td>Refresh scenes &amp; sources</td></tr>
+                  <tr><td><kbd>F1</kbd></td><td>Open this info panel</td></tr>
+                  <tr><td><kbd>Ctrl</kbd> + <kbd>F</kbd></td><td>Focus source search bar</td></tr>
+                  <tr><td><kbd>Ctrl</kbd> + <kbd>G</kbd></td><td>Focus scene list for keyboard navigation</td></tr>
+                  <tr><td><kbd>Ctrl</kbd> + <kbd>Enter</kbd></td><td>Change scene (transition preview to live)</td></tr>
+                  <tr><td><kbd>Escape</kbd></td><td>Close modal / clear search</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="info-section">
+              <h4 class="info-section-title">Source Row Shortcuts</h4>
+              <p class="info-desc">When a source row is focused:</p>
+              <table class="shortcut-table">
+                <thead><tr><th>Key</th><th>Action</th></tr></thead>
+                <tbody>
+                  <tr><td><kbd>Enter</kbd> / <kbd>Space</kbd></td><td>Toggle source options panel</td></tr>
+                  <tr><td><kbd>V</kbd></td><td>Toggle source visibility</td></tr>
+                  <tr><td><kbd>E</kbd></td><td>Enter edit mode (focus first control)</td></tr>
+                  <tr><td><kbd>Escape</kbd></td><td>Exit edit mode</td></tr>
+                  <tr><td><kbd>↑</kbd> / <kbd>↓</kbd></td><td>Navigate between sources</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="info-section">
+              <h4 class="info-section-title">Scene Interactions</h4>
+              <table class="shortcut-table">
+                <thead><tr><th>Action</th><th>Result</th></tr></thead>
+                <tbody>
+                  <tr><td>Click scene</td><td>Preview scene (load sources for editing)</td></tr>
+                  <tr><td>Double-click scene</td><td>Immediately change to that scene</td></tr>
+                  <tr><td>Click <strong>Change Scene</strong></td><td>Transition preview scene to live</td></tr>
+                  <tr><td><kbd>↑</kbd> / <kbd>↓</kbd></td><td>Navigate scenes (when list is focused)</td></tr>
+                  <tr><td><kbd>Enter</kbd></td><td>Preview selected scene</td></tr>
+                  <tr><td><kbd>Ctrl</kbd> + <kbd>Enter</kbd></td><td>Immediately change to selected scene</td></tr>
+                  <tr><td><kbd>Escape</kbd></td><td>Exit scene list focus</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="info-section">
+              <h4 class="info-section-title">About</h4>
+              <div class="info-about">
+                <div class="info-about-row"><span class="info-label">Application</span><span>ROBS — Remote OBS Controller</span></div>
+                <div class="info-about-row"><span class="info-label">Dashboard</span><span>Only sources prefixed with <kbd>_</kbd> appear</span></div>
+                <div class="info-about-row"><span class="info-label">Plugins</span><span>Place <code>.js</code> files in the plugins folder</span></div>
+              </div>
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
 

@@ -162,7 +162,45 @@
     });
   }
 
-  function showSettingsModal() {
+  // ── Tab switching logic ──
+  function switchModalTab(tabName) {
+    const tabs = document.querySelectorAll('.modal-tab');
+    const panels = document.querySelectorAll('.modal-tab-panel');
+    tabs.forEach(t => {
+      const isTarget = t.dataset.tab === tabName;
+      t.classList.toggle('active', isTarget);
+      t.setAttribute('aria-selected', isTarget ? 'true' : 'false');
+    });
+    panels.forEach(p => {
+      p.classList.toggle('active', p.dataset.panel === tabName);
+    });
+  }
+
+  function initModalTabs() {
+    document.querySelectorAll('.modal-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchModalTab(tab.dataset.tab));
+    });
+
+    // Password visibility toggle
+    const toggleBtn = document.getElementById('togglePasswordVis');
+    const pwdInput = document.getElementById('obsPassword');
+    if (toggleBtn && pwdInput) {
+      toggleBtn.addEventListener('click', () => {
+        const showing = pwdInput.type === 'text';
+        pwdInput.type = showing ? 'password' : 'text';
+        toggleBtn.title = showing ? 'Show password' : 'Hide password';
+      });
+    }
+  }
+
+  // Initialise tabs once DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initModalTabs);
+  } else {
+    initModalTabs();
+  }
+
+  function showSettingsModal(tab) {
     const modal = document.getElementById('settingsModal');
     const urlInput = document.getElementById('obsUrl');
     const passwordInput = document.getElementById('obsPassword');
@@ -176,6 +214,13 @@
     const config = getStoredConfig();
     urlInput.value = config.url;
     passwordInput.value = config.password;
+
+    // Reset password field to hidden
+    passwordInput.type = 'password';
+    
+    // Switch to requested tab (default: connection)
+    const tabName = (typeof tab === 'string') ? tab : 'connection';
+    switchModalTab(tabName);
     
     modal.style.display = 'flex';
   }
@@ -183,6 +228,22 @@
   function hideSettingsModal() {
     const modal = document.getElementById('settingsModal');
     if (modal) modal.style.display = 'none';
+  }
+
+  // Close modal on backdrop click
+  function initModalBackdrop() {
+    const modal = document.getElementById('settingsModal');
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) hideSettingsModal();
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initModalBackdrop);
+  } else {
+    initModalBackdrop();
   }
 
   function saveSettings() {

@@ -66,7 +66,7 @@
       throw new Error('PluginUtils.setSourceURL not available');
     }
     const id = encodeURIComponent(String(identifier || '').trim());
-    const url = `https://nmsr.nickac.dev/face/${id}`;
+    const url = `https://mc-heads.net/avatar/${id}`;
     await Promise.all(sources.map((s) => window.PluginUtils.setSourceURL(s, url)));
   };
 

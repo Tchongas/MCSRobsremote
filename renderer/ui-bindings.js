@@ -18,20 +18,82 @@
             handleDeleteProfile 
           } = window.uiLogic;
 
+    // ── Source search bar ──
     const sourceSearch = document.getElementById('sourceSearch');
     const applySourceFilter = () => {
       const q = (sourceSearch && sourceSearch.value || '').trim().toLowerCase();
       const items = document.querySelectorAll('#dashboardItems .dash-item');
+      let visibleCount = 0;
       items.forEach(el => {
         const name = el.dataset?.name || el.querySelector('.name')?.textContent?.toLowerCase() || '';
         const raw = el.dataset?.rawName || '';
         const match = !q || name.includes(q) || raw.includes(q);
         el.classList.toggle('is-hidden', !match);
+        if (match) visibleCount++;
       });
+    };
+    const clearSearch = () => {
+      if (sourceSearch) {
+        sourceSearch.value = '';
+        applySourceFilter();
+      }
     };
     if (sourceSearch) {
       sourceSearch.addEventListener('input', applySourceFilter);
+      // Escape clears the search and blurs
+      sourceSearch.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          clearSearch();
+          sourceSearch.blur();
+        }
+      });
     }
+    // ── Global keyboard shortcuts ──
+    document.addEventListener('keydown', (e) => {
+      const tag = (e.target.tagName || '').toLowerCase();
+      const isInput = tag === 'input' || tag === 'textarea' || tag === 'select';
+
+      // Ctrl+F / Cmd+F — focus search bar
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        if (sourceSearch) { sourceSearch.focus(); sourceSearch.select(); }
+        return;
+      }
+      // Ctrl+G — focus scene list for keyboard navigation
+      if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+        e.preventDefault();
+        if (window.sceneLogic?.focusSceneList) window.sceneLogic.focusSceneList();
+        return;
+      }
+      // Ctrl+Enter — transition scene (change scene)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (window.sceneLogic?.transitionScene) window.sceneLogic.transitionScene();
+        return;
+      }
+      // F5 — refresh scenes + dashboard
+      if (e.key === 'F5') {
+        e.preventDefault();
+        if (window.sceneLogic?.refreshScenes) window.sceneLogic.refreshScenes();
+        return;
+      }
+      // Escape — close settings modal if open, or blur active input
+      if (e.key === 'Escape' && !isInput) {
+        const modal = document.getElementById('settingsModal');
+        if (modal && modal.style.display !== 'none') {
+          e.preventDefault();
+          if (window.configLogic?.hideSettingsModal) window.configLogic.hideSettingsModal();
+          return;
+        }
+      }
+      // F1 — open settings / info
+      if (e.key === 'F1') {
+        e.preventDefault();
+        if (window.configLogic?.showSettingsModal) window.configLogic.showSettingsModal('info');
+        return;
+      }
+    });
 
     const connectBtn = document.getElementById('connect');
     const disconnectBtn = document.getElementById('disconnect');
@@ -174,19 +236,26 @@
     // Refresh scenes button
     document.getElementById('refreshScenes').addEventListener('click', refreshScenes);
 
-    // Immediate scene switching on selection change
+    // Hidden select change — select scene for preview (studio mode)
     document.getElementById('sceneSelect').addEventListener('change', async (e) => {
       const sceneName = e.target.value;
       if (!sceneName) return;
-      try {
-        await window.obsAPI.scenes.change(sceneName);
-        window.uiHelpers.logSuccess('Switched scene to: ' + sceneName, 'scenes');
-        setSceneBadge(sceneName);
-        await loadDashboardItems(sceneName);
-      } catch (e) {
-        window.uiHelpers.logError('Failed to switch scene: ' + e.message, 'scenes');
+      clearSearch();
+      if (window.sceneLogic?.selectScene) {
+        await window.sceneLogic.selectScene(sceneName);
       }
     });
+
+    // Transition button — push preview scene to program (go live)
+    const transitionBtn = document.getElementById('transitionBtn');
+    if (transitionBtn) {
+      transitionBtn.addEventListener('click', async () => {
+        clearSearch();
+        if (window.sceneLogic?.transitionScene) {
+          await window.sceneLogic.transitionScene();
+        }
+      });
+    }
 
     // Settings modal event handlers
     const settingsBtn = document.getElementById('settingsBtn');
@@ -254,17 +323,31 @@
       });
     }
 
+    // Open plugin folder button
+    const openPluginFolderBtn = document.getElementById('openPluginFolder');
+    if (openPluginFolderBtn) {
+      openPluginFolderBtn.addEventListener('click', async () => {
+        try {
+          if (window.pluginAPI?.openPluginFolder) {
+            const dir = await window.pluginAPI.openPluginFolder();
+            window.uiHelpers.logInfo('Opened plugins folder: ' + dir, 'plugin');
+          } else {
+            window.uiHelpers.logError('Plugin API not available', 'plugin');
+          }
+        } catch (e) {
+          window.uiHelpers.logError('Failed to open plugins folder: ' + e.message, 'plugin');
+        }
+      });
+    }
+
     // Quick refresh button (refreshes scenes and dashboard)
     const quickRefreshBtn = document.getElementById('quickRefresh');
     if (quickRefreshBtn) {
       quickRefreshBtn.addEventListener('click', async () => {
         window.uiHelpers.logInfo('Refreshing...', 'system');
         try {
+          // refreshScenes already loads dashboard items for the current scene
           await refreshScenes();
-          const currentScene = document.getElementById('sceneSelect')?.value;
-          if (currentScene) {
-            await loadDashboardItems(currentScene);
-          }
           window.uiHelpers.logSuccess('Refresh complete', 'system');
         } catch (e) {
           window.uiHelpers.logError('Refresh failed: ' + e.message, 'system');
@@ -278,41 +361,58 @@
       
       switch (type) {
         case 'scene-changed':
-          // Update scene badge and scene list UI
+          // Remote program scene change — update program state and badge,
+          // but do NOT change what we're previewing (studio mode)
           setSceneBadge(data.sceneName);
-          if (window.sceneLogic && window.sceneLogic.updateCurrentScene) {
-            window.sceneLogic.updateCurrentScene(data.sceneName);
+          if (window.sceneLogic?.updateProgramScene) {
+            window.sceneLogic.updateProgramScene(data.sceneName);
           }
-          // Load dashboard items for the new scene
-          loadDashboardItems(data.sceneName).then(() => {
-            const el = document.getElementById('sourceSearch');
-            if (el) {
-              el.dispatchEvent(new Event('input'));
-            }
-          });
-          window.uiHelpers.logInfo(`Scene changed to: ${data.sceneName} (remote)`, 'scenes');
+          window.uiHelpers.logInfo(`Live scene: ${data.sceneName} (remote)`, 'scenes');
           break;
 
-        case 'scene-item-changed':
-          // Update scene item visibility in dashboard
-          updateSceneItemVisibility(data.sceneName, data.sceneItemId, data.sceneItemEnabled);
+        case 'scene-item-changed': {
+          // Update scene item visibility — only if it's the scene we're previewing
+          const previewScene = window.sceneLogic?.getPreviewScene?.() || document.getElementById('sceneSelect')?.value;
+          updateSceneItemVisibility(previewScene, data.sceneItemId, data.sceneItemEnabled);
           window.uiHelpers.logInfo(`Item ${data.sceneItemId} ${data.sceneItemEnabled ? 'shown' : 'hidden'} (remote)`, 'dashboard');
           break;
+        }
 
         case 'scene-list-changed':
-          // Refresh the scene list
+          // Refresh the scene list sidebar (also reloads dashboard for preview scene)
           refreshScenes();
           window.uiHelpers.logInfo('Scene list updated (remote)', 'scenes');
           break;
 
-        case 'scene-items-reordered':
-          // Reload dashboard items for the affected scene
-          const currentScene = document.getElementById('sceneSelect')?.value;
-          if (currentScene === data.sceneName) {
+        case 'scene-items-reordered': {
+          // Reload dashboard only if the reordered scene is the one we're previewing
+          const previewScene2 = window.sceneLogic?.getPreviewScene?.() || document.getElementById('sceneSelect')?.value;
+          if (previewScene2 === data.sceneName) {
             loadDashboardItems(data.sceneName);
           }
           window.uiHelpers.logInfo(`Scene items reordered in: ${data.sceneName} (remote)`, 'dashboard');
           break;
+        }
+
+        case 'scene-item-created': {
+          // A source was added — refresh dashboard if it's the scene we're previewing
+          const previewScene3 = window.sceneLogic?.getPreviewScene?.() || document.getElementById('sceneSelect')?.value;
+          if (previewScene3 === data.sceneName) {
+            loadDashboardItems(data.sceneName);
+          }
+          window.uiHelpers.logInfo(`Source added: ${data.sourceName} in ${data.sceneName} (remote)`, 'dashboard');
+          break;
+        }
+
+        case 'scene-item-removed': {
+          // A source was removed — refresh dashboard if it's the scene we're previewing
+          const previewScene4 = window.sceneLogic?.getPreviewScene?.() || document.getElementById('sceneSelect')?.value;
+          if (previewScene4 === data.sceneName) {
+            loadDashboardItems(data.sceneName);
+          }
+          window.uiHelpers.logInfo(`Source removed: ${data.sourceName} from ${data.sceneName} (remote)`, 'dashboard');
+          break;
+        }
 
         case 'input-mute-changed':
           // Update microphone UI in dashboard if present
@@ -332,17 +432,23 @@
     });
 
     // Helper function to update scene item visibility without full reload
-    function updateSceneItemVisibility(sceneName, sceneItemId, enabled) {
-      const currentScene = document.getElementById('sceneSelect')?.value;
-      if (currentScene !== sceneName) return;
-
-      // Find the checkbox for this scene item
+    function updateSceneItemVisibility(activeSceneName, sceneItemId, enabled) {
+      // Find the checkbox for this scene item by sceneItemId data attribute
       const dashboardItems = document.getElementById('dashboardItems');
       if (!dashboardItems) return;
 
-      const items = dashboardItems.querySelectorAll('.dash-item');
-      items.forEach(item => {
+      // Use the data attribute on the dash-item for faster lookup
+      const item = dashboardItems.querySelector(`.dash-item[data-scene-item-id="${sceneItemId}"]`);
+      if (item) {
         const checkbox = item.querySelector('input[type="checkbox"]');
+        if (checkbox) checkbox.checked = enabled;
+        return;
+      }
+
+      // Fallback: search by checkbox dataset
+      const items = dashboardItems.querySelectorAll('.dash-item');
+      items.forEach(el => {
+        const checkbox = el.querySelector('input[type="checkbox"]');
         if (checkbox && checkbox.dataset && checkbox.dataset.sceneItemId == sceneItemId) {
           checkbox.checked = enabled;
         }

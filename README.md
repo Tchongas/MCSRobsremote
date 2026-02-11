@@ -1,73 +1,106 @@
-# ROBSon – OBS Remote Control
+# ROBS — Remote OBS Controller
 
-ROBSon lets you control OBS Studio remotely from a simple electron app. Connect to your OBS over WebSocket, change scenes instantly, toggle scene item visibility, start/stop streaming, and extend the dashboard with plugins, with real‑time updates that can be shared across multiple clients.
+A desktop app for controlling OBS Studio remotely. Built with Electron and the OBS WebSocket protocol.
 
-# How to use
+We use this for professional livestream operations — connecting to OBS instances running on other machines, switching scenes, toggling sources, adjusting audio, all from one place. Multiple operators can connect to the same OBS at the same time and everything stays in sync.
 
-## IMPORTANT
-### Only sources whose names start with an underscore appear in the Dashboard. Example: `_Scoreboard`, `_Timer`, `_LowerThird`, so you can control what to see in the dashboard.
-### This IS NOT a security feature, it is just a way to organize your sources, DO NOT, give access to your OBS to people who you dont trust, since they can just plug the password in other apps to control your OBS, not putting a `_` will not stop them from controlling your OBS.
-### DO NOT download plugins from unknown sources, they can be malicious.
+## Important stuff
+
+- **Only sources starting with `_` show up in the dashboard.** Name your sources like `_Scoreboard`, `_Camera`, `_Overlay` to control which ones appear. This is just for organization, not security.
+- **Don't give your OBS WebSocket password to people you don't trust.** Anyone with the password can control your OBS from any app, not just this one.
+- **Don't install plugins from unknown sources.** Plugins run code in the app.
+
+## Features
+
+- **Scene management** — preview/program workflow (studio mode). Click to preview, double-click or press the button to go live.
+- **Source controls** — toggle visibility, adjust volume with proper sliders, mute/unmute, browser source URL editing and refresh.
+- **Real-time sync** — multiple clients can connect to the same OBS. Scene changes, visibility toggles, volume changes all update instantly across everyone.
+- **Plugin system** — extend the app with custom `.js` plugins. Hot-reload on file save, no restart needed.
+- **Keyboard shortcuts** — scene navigation, search, transitions, all accessible from the keyboard. Press `F1` in the app to see the full list.
+- **Connection profiles** — save multiple OBS connection configs and switch between them.
+- **Stream control** — start/stop streaming from the sidebar.
 
 ## Requirements
 
-- OBS Studio 28+ with OBS WebSocket enabled.
-- OBS WebSocket address and (if set) password.
+- OBS Studio 28+ with the WebSocket server enabled
+- The WebSocket address and password (if you set one)
 
-## First‑time setup in OBS
+## Setup
 
-Tools → WebSocket Server Settings → enable the server. Default local URL is `ws://localhost:4455`. Set a password if you use one.
+### OBS side
 
-## Connect the app to OBS
+Go to **Tools → WebSocket Server Settings** and enable the server. The default URL is `ws://localhost:4455`. Set a password if you want one.
 
-Open Settings (⚙️), set the WebSocket URL and optional password, Save, then hit “Connect to OBS”. Scenes load automatically on success.
+### App side
 
+1. Open Settings (gear icon in the top bar, or press `F1`)
+2. Enter the WebSocket URL and password
+3. Save, then click **Connect to OBS**
+4. Scenes load automatically
+
+If you're connecting remotely (different machine), you'll need to forward the port or use a VPN like Radmin or Tailscale.
 
 ## Using the app
 
-- Top badges show connection and current scene.
-- Left panel: Connect/Disconnect, Start/Stop, Scene selector.
-- Right panel (Dashboard):
-  - Select a scene to load its items.
-  - You will only see items whose source names start with `_`.
-  - Toggle visibility via the switch.
-  - If available, use ▸ to expand extra controls (e.g., browser source tools).
-- Bottom Console shows logs.
+- **Left sidebar** — connect/disconnect, start/stop stream, scene list
+- **Center** — dashboard with source controls for the selected scene
+- **Right sidebar** — quick actions, plugin buttons
+- **Bottom** — console log
 
-If another person changes scenes or toggles items from a different ROBSon instance (or directly in OBS), your app will update automatically. You’ll see “(remote)” in the console next to those actions.
+Select a scene on the left to load its sources in the dashboard. Only sources with names starting with `_` will appear. Each source row can be expanded to show controls (volume, URL editing, etc.) depending on the source type.
 
-## Connection hiccups (quick checks)
+When someone else changes something in OBS (or from another ROBS instance), your UI updates automatically. You'll see `(remote)` in the console for those changes.
 
-- Is OBS running and its WebSocket enabled?
-- Is the URL/password correct? Local default: `ws://localhost:4455`.
-- Any firewall blocking the port?
-- If you are using it remotely, make sure to forward the port, or use something like RadminVPN.
+### Keyboard shortcuts
 
-# Plugins
+| Shortcut | Action |
+|----------|--------|
+| `F5` | Refresh scenes and sources |
+| `F1` | Open info/shortcuts panel |
+| `Ctrl+F` | Focus search bar |
+| `Ctrl+G` | Focus scene list (then arrow keys to navigate, Enter to preview, Ctrl+Enter to go live) |
+| `Ctrl+Enter` | Transition preview scene to live |
+| `Escape` | Close modal / exit focus |
 
-### Documentation (work in progress, not updated)
-([PLUGIN-SYSTEM](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/pluginoverview.md))
-([PLUGIN-API](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/pluginAPI.md))
-([EXAMPLE](https://github.com/Tchongas/MCSRobsremote/blob/main/documentation/examples.md))
+## Plugins
 
+Plugins let you add custom controls for specific source types. Drop a `.js` file in the `plugins/` folder and the app picks it up automatically — no restart needed.
 
-Plugins can enhance the controls for certain sources. For example, a plugin can add a “Refresh” button or special controls for browser overlays.
+See the full plugin docs:
+- [Plugin Overview](documentation/pluginoverview.md) — how plugins work, lifecycle, structure
+- [Plugin API Reference](documentation/pluginAPI.md) — all available functions with inputs/outputs
 
-- Built‑in plugins are included with the app and work automatically.
-- You can add your own plugins by placing `.js` files in the `plugins/` folder next to the app executable.
-- When you add or edit a plugin file, the app detects the change and reloads automatically.
+## Building
 
-# Build (Portable)
-
-This project uses Electron Builder. Windows is configured to build a `portable` target.
+Requires Node.js. Uses Electron Builder.
 
 ```bash
 npm install
+
+# Run in dev mode
+npm start
+
+# Build portable executable (Windows)
 npm run build
 ```
 
-Output is written to `dist/`.
+## Project structure
 
-## Getting updates or help
+```
+main/           — Electron main process (window, IPC, OBS client)
+renderer/       — Frontend (HTML, CSS, JS)
+  logic/        — App modules (scenes, dashboard, config, resize)
+    handlers/   — Source type handlers (audio, browser, mic)
+      plugins/  — Built-in plugins
+documentation/  — Plugin docs
+```
 
-You can open a issue here on github, or message me in discord: @limifaooooo
+## Troubleshooting
+
+- **Can't connect?** — Make sure OBS is running, WebSocket is enabled, URL and password are correct. Check firewall if remote.
+- **Sources not showing?** — Source names need to start with `_` to appear in the dashboard.
+- **Plugin not loading?** — Check the console at the bottom for errors. Make sure `canHandle()` returns `true` for the source type you're targeting.
+
+## Contact
+
+Open an issue on GitHub, or message me on Discord: **@limifaooooo**

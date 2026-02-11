@@ -24,8 +24,15 @@
       setSceneBadge: window.uiHelpers.setSceneBadge,
       setIndicator: window.uiHelpers.setIndicator,
       
-      // Scene management
+      // Scene management (studio mode)
       refreshScenes: window.sceneLogic.refreshScenes,
+      selectScene: window.sceneLogic.selectScene,
+      transitionScene: window.sceneLogic.transitionScene,
+      updateProgramScene: window.sceneLogic.updateProgramScene,
+      getProgramScene: window.sceneLogic.getProgramScene,
+      getPreviewScene: window.sceneLogic.getPreviewScene,
+      getCurrentScene: window.sceneLogic.getCurrentScene,
+      // Legacy aliases
       switchScene: window.sceneLogic.switchScene,
       updateCurrentScene: window.sceneLogic.updateCurrentScene,
       

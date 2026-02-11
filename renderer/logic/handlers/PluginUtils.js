@@ -283,9 +283,133 @@
     return removed;
   };
 /*----------------------------------------------------------------------------------------
+  createVolumeControl — shared volume UI builder for all audio handlers
+  Returns { container, slider, numInput, muteBtn } so the caller can append & wire events.
+  opts: { sourceName, displayName, logTag }
+  ---------------------------------------------------------------------------------------- */
+  const createVolumeControl = (opts = {}) => {
+    const { sourceName, displayName, logTag = 'audio' } = opts;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'volume-control';
+
+    // Mute button with SVG icon
+    const muteBtn = document.createElement('button');
+    muteBtn.className = 'mute-btn';
+    muteBtn.type = 'button';
+    muteBtn.title = 'Toggle mute';
+    muteBtn.dataset.inputName = sourceName;
+    muteBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
+
+    // Slider wrap
+    const sliderWrap = document.createElement('div');
+    sliderWrap.className = 'volume-slider-wrap';
+
+    // Minus step
+    const minusBtn = document.createElement('button');
+    minusBtn.className = 'volume-step-btn';
+    minusBtn.type = 'button';
+    minusBtn.textContent = '−';
+    minusBtn.title = 'Decrease volume';
+
+    // Range slider
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = '0';
+    slider.max = '100';
+    slider.value = '100';
+    slider.className = 'volume-slider';
+    slider.dataset.inputName = sourceName;
+    slider.setAttribute('aria-label', `Volume for ${displayName}`);
+
+    // Plus step
+    const plusBtn = document.createElement('button');
+    plusBtn.className = 'volume-step-btn';
+    plusBtn.type = 'button';
+    plusBtn.textContent = '+';
+    plusBtn.title = 'Increase volume';
+
+    // Numeric input
+    const numInput = document.createElement('input');
+    numInput.type = 'number';
+    numInput.min = '0';
+    numInput.max = '100';
+    numInput.value = '100';
+    numInput.className = 'volume-num';
+    numInput.setAttribute('aria-label', `Volume % for ${displayName}`);
+
+    // Sync helpers
+    const STEP = 5;
+    const clamp = (v) => Math.max(0, Math.min(100, Math.round(v)));
+
+    const setVolume = async (pct) => {
+      pct = clamp(pct);
+      slider.value = String(pct);
+      numInput.value = String(pct);
+      const mul = pct / 100;
+      try {
+        await window.obsAPI.sources.setVolume(sourceName, mul);
+      } catch (err) {
+        if (window.uiHelpers) window.uiHelpers.logError('Error setting volume: ' + err.message, logTag);
+      }
+    };
+
+    slider.addEventListener('input', () => {
+      const v = Number(slider.value);
+      numInput.value = String(v);
+      setVolume(v);
+    });
+
+    numInput.addEventListener('change', () => {
+      setVolume(Number(numInput.value));
+    });
+
+    numInput.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp') { e.preventDefault(); setVolume(Number(numInput.value) + STEP); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); setVolume(Number(numInput.value) - STEP); }
+    });
+
+    minusBtn.addEventListener('click', () => setVolume(Number(slider.value) - STEP));
+    plusBtn.addEventListener('click', () => setVolume(Number(slider.value) + STEP));
+
+    // Mute toggle
+    const applyMuteVisual = (muted) => {
+      muteBtn.classList.toggle('is-muted', muted);
+      muteBtn.title = muted ? 'Unmute' : 'Mute';
+      muteBtn.innerHTML = muted
+        ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`
+        : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
+    };
+
+    muteBtn.addEventListener('click', async () => {
+      try {
+        const current = await window.obsAPI.sources.getMute(sourceName);
+        const isMuted = !!(current && (current.inputMuted ?? current.muted));
+        await window.obsAPI.sources.setMute(sourceName, !isMuted);
+        applyMuteVisual(!isMuted);
+        if (window.uiHelpers) window.uiHelpers.logInfo(`${displayName} ${!isMuted ? 'muted' : 'unmuted'}`, logTag);
+      } catch (e) {
+        if (window.uiHelpers) window.uiHelpers.logError('Error toggling mute: ' + e.message, logTag);
+      }
+    });
+
+    // Assemble
+    sliderWrap.appendChild(minusBtn);
+    sliderWrap.appendChild(slider);
+    sliderWrap.appendChild(plusBtn);
+    sliderWrap.appendChild(numInput);
+
+    wrap.appendChild(muteBtn);
+    wrap.appendChild(sliderWrap);
+
+    return { container: wrap, slider, numInput, muteBtn, applyMuteVisual, setVolume };
+  };
+
+/*----------------------------------------------------------------------------------------
   Expose globally
   ---------------------------------------------------------------------------------------- */
   window.PluginUtils = {
+    createVolumeControl,
     applyRowBackground,
     applySourceIcon,
     fetchJson,

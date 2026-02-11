@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const fsSync = require('fs');
 const fs = require('fs').promises;
@@ -248,6 +248,14 @@ function setupPluginHandlers() {
     return dir;
   });
 
+  ipcMain.handle('plugins-open-folder', async () => {
+    const dir = getPluginDirectory();
+    pluginLogLine(`IPC plugins-open-folder -> ${dir}`);
+    await fs.mkdir(dir, { recursive: true });
+    shell.openPath(dir);
+    return dir;
+  });
+
   ipcMain.handle('plugins-read-file', async (event, relativeFile) => {
     const pluginDir = getPluginDirectory();
     const file = String(relativeFile || '');
@@ -411,6 +419,14 @@ function setupEventForwarding(win) {
 
   onEvent('scene-items-reordered', (data) => {
     win.webContents.send('obs-event', { type: 'scene-items-reordered', data });
+  });
+
+  onEvent('scene-item-created', (data) => {
+    win.webContents.send('obs-event', { type: 'scene-item-created', data });
+  });
+
+  onEvent('scene-item-removed', (data) => {
+    win.webContents.send('obs-event', { type: 'scene-item-removed', data });
   });
 
   onEvent('input-mute-changed', (data) => {

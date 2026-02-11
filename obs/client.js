@@ -66,6 +66,18 @@ function setupEventListeners() {
     notifyRenderer('scene-items-reordered', data);
   });
 
+  // Scene item created (new source added to a scene)
+  obs.on('SceneItemCreated', (data) => {
+    console.log('Scene item created:', data.sourceName, 'in', data.sceneName);
+    notifyRenderer('scene-item-created', data);
+  });
+
+  // Scene item removed (source removed from a scene)
+  obs.on('SceneItemRemoved', (data) => {
+    console.log('Scene item removed:', data.sourceName, 'from', data.sceneName);
+    notifyRenderer('scene-item-removed', data);
+  });
+
   // Source/Input changes
   obs.on('InputMuteStateChanged', (data) => {
     console.log('Input mute state changed:', data.inputName, data.inputMuted);

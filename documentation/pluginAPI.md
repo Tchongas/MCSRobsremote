@@ -1,577 +1,480 @@
 # Plugin API Reference
 
-[![OBS Remote](https://img.shields.io/badge/OBS-Remote-blue.svg)](https://github.com/Tchongas/MCSRobsremote)
-[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![Plugin System](https://img.shields.io/badge/Plugin-System-green.svg)](#plugin-management)
+Everything a plugin can call. All functions accessed through `window.PluginUtils` unless noted otherwise.
 
-> **The Plugin Api for rOBSon.**
+---
 
-## Table of Contents
+## PluginUtils
 
-- [🎨 Dashboard API](#dashboard-api)
-  - [`applyRowBackground()`](#applyrowbackground)
-  - [`applySourceIcon()`](#applysourceicon)
-  - [`fetchJson()`](#fetchjson)
-  - [`setTextSource()`](#settextsource)
-  - [`log()`](#log)
-- [🔌 Plugin Management](#plugin-management)
-  - [`register()`](#register)
-  - [`unregister()`](#unregister)
-  - [`getRegisteredPlugins()`](#getregisteredplugins)
-- [📁 Plugin Files](#plugin-files)
-  - [`readFile()`](#readfile)
-- [🐛 Debug API](#debug-api)
-  - [`GetBuiltInPlugins()`](#getbuiltinplugins)
-  - [`GetExternalPlugins()`](#getexternalplugins)
-  - [`GetAllPlugins()`](#getallplugins)
-  - [`GetPluginDirectory()`](#getplugindirectory)
-  - [`LoadExternalPlugins()`](#loadexternalplugins)
-- [📺 OBS API](#obs-api)
-  - [`SetSettings()`](#setsettings)
-  - [`RefreshBrowserNoCache()`](#refreshbrowsernocache)
-  - [`ChangeScene()`](#changescene)
+### `applyRowBackground`
 
-# 🎨 Dashboard API
+Sets a custom background color on the source's dashboard row. Retries if the DOM isn't ready yet.
 
-The Dashboard API provides functions to customize the appearance and functionality of sources in the OBS Remote dashboard interface.
-
-### `applyRowBackground()`
-
-Applies a custom background color to a source row in the dashboard.
-
-#### Syntax
+| | |
+|---|---|
+| **Parameters** | `optionsEl` (HTMLElement) — the options container passed to `execute()`<br>`color` (string) — any CSS color value |
+| **Returns** | `boolean` — whether the background was applied |
+| **Description** | Finds the parent `.dash-row` element and sets its background. Has built-in retry logic (requestAnimationFrame + setTimeout) for cases where the DOM hasn't rendered yet. |
 
 ```javascript
-window.PluginUtils.applyRowBackground(optionsEl, rowBg)
-```
-
-#### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|--------------|
-| `optionsEl` | `HTMLElement` | The options element for the source |
-| `rowBg` | `string` | The color to apply as background (e.g., `#b39544`) |
-
-#### Returns
-
-`void`
-
-#### Example
-
-```javascript
-// Apply a golden background to a source row
 window.PluginUtils.applyRowBackground(options, '#b39544');
 ```
 
 ---
 
-### `applySourceIcon()`
+### `applySourceIcon`
 
-Changes the icon displayed for a source in the dashboard.
+Replaces the default source icon in the dashboard row.
 
-#### Syntax
-
-```javascript
-window.PluginUtils.applySourceIcon(optionsEl, icon)
-```
-
-#### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|--------------|
-| `optionsEl` | `HTMLElement` | The options element for the source |
-| `icon` | `string` | The icon to apply (emoji or text) |
-
-#### Returns
-
-`void`
-
-#### Example
+| | |
+|---|---|
+| **Parameters** | `optionsEl` (HTMLElement) — the options container<br>`icon` (string) — emoji or text character |
+| **Returns** | `boolean` — whether the icon was applied |
+| **Description** | Finds the `.source-icon` element inside the row and sets its text content. Retries with a timeout if the element isn't available yet. |
 
 ```javascript
-// Set a TV emoji as the source icon
 window.PluginUtils.applySourceIcon(options, '📺');
 ```
 
 ---
 
-### `fetchJson()`
+### `setTextSource`
 
-Fetches a URL and returns parsed JSON. Throws on non-2xx status.
+Sets the text content of a GDI/Freetype text source in OBS.
 
-#### Syntax
-
-```javascript
-window.PluginUtils.fetchJson(url, opts)
-```
-
-#### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|--------------|
-| `url` | `string` | URL to fetch |
-| `opts` | `object` | Optional fetch options (merged into defaults) |
-
-#### Returns
-
-`Promise<any>`
-
-#### Example
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string) — OBS source name, e.g. `'_Score'`<br>`text` (string) — the text to set |
+| **Returns** | `Promise<void>` |
+| **Description** | Calls `obsAPI.sources.setSettings` with `{ text }`. Triggers a dashboard refresh after. Throws if the source name is empty or the API isn't available. |
 
 ```javascript
-const data = await window.PluginUtils.fetchJson('https://example.com/data.json');
+await window.PluginUtils.setTextSource('_Score', '3 - 1');
 ```
 
 ---
 
-### `setTextSource()`
+### `getSourceText`
 
-Updates an OBS Text source by setting its `text` setting via `obsAPI.sources.setSettings`.
+Reads the current text from a text source.
 
-#### Syntax
-
-```javascript
-await window.PluginUtils.setTextSource(sourceName, text)
-```
-
-#### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|--------------|
-| `sourceName` | `string` | OBS source name (e.g. `_elo1`) |
-| `text` | `string` | Text content to write |
-
-#### Returns
-
-`Promise<void>`
-
-#### Example
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string) — OBS source name |
+| **Returns** | `Promise<string>` — the current text value (empty string if not set) |
+| **Description** | Calls `obsAPI.sources.getSettings` and reads `inputSettings.text`. |
 
 ```javascript
-await window.PluginUtils.setTextSource('_elo1', '1500');
+const score = await window.PluginUtils.getSourceText('_Score');
 ```
 
 ---
 
-### `log()`
+### `setSourceURL`
 
-Logs a message to the application console with plugin context.
+Sets the URL on a browser source.
 
-#### Syntax
-
-```javascript
-window.uiHelpers?.log(message)
-```
-
-#### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|--------------|
-| `message` | `string` | The message to log to the console |
-
-#### Returns
-
-`void`
-
-#### Example
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string) — OBS source name<br>`url` (string) — the URL to set |
+| **Returns** | `Promise<void>` |
+| **Description** | Calls `obsAPI.browser.setUrl`. Triggers a dashboard refresh after. |
 
 ```javascript
-// Log a plugin registration message
-window.uiHelpers?.log('🔌 Plugin attempting registration...');
-```
-
-# 📁 Plugin Files
-
-Plugins can ship a `*.json` config file alongside the plugin `.js` file inside the `plugins/` folder.
-
-### `readFile()`
-
-Reads a file from the `plugins/` directory.
-
-This is **restricted** to the plugins directory; paths containing `..` are rejected.
-
-#### Syntax
-
-```javascript
-const raw = await window.pluginAPI.readFile('MyPluginConfig.json')
-```
-
-#### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|--------------|
-| `relativeFile` | `string` | File path relative to the `plugins/` directory |
-
-#### Returns
-
-`Promise<string>`
-
-#### Example
-
-```javascript
-const raw = await window.pluginAPI.readFile('PlayerSyncPlugin.json');
-const cfg = JSON.parse(raw);
-```
-
-# 🔌 Plugin Management
-
-The Plugin Management API handles plugin lifecycle operations including registration, removal, and discovery.
-
-### `register()`
-
-Registers a plugin with the system. This is a required step for plugin activation and should be called at the end of your plugin file.
-
-#### Syntax
-
-```javascript
-window.CustomHandlerPlugins.register(plugin)
-```
-
-#### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|--------------|
-| `plugin` | `Object` | The plugin object to register |
-
-#### Returns
-
-`void`
-
-#### Example
-
-```javascript
-// Register your plugin
-const myPlugin = {
-  name: 'MyAwesomePlugin',
-  version: '1.0.0',
-  // ... plugin implementation
-};
-
-window.CustomHandlerPlugins.register(myPlugin);
+await window.PluginUtils.setSourceURL('_Overlay', 'https://example.com/overlay');
 ```
 
 ---
 
-### `unregister()`
+### `getSourceURL`
 
-Removes a plugin from the active registry.
+Gets the current URL of a browser source.
 
-#### Syntax
-
-```javascript
-window.CustomHandlerPlugins.unregister(plugin)
-```
-
-#### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|--------------|
-| `plugin` | `Object` | The plugin object to unregister |
-
-#### Returns
-
-`void`
-
-#### Example
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string) — OBS source name |
+| **Returns** | `Promise<string>` — the current URL |
+| **Description** | Calls `obsAPI.browser.getUrl`. |
 
 ```javascript
-// Unregister a plugin
-window.CustomHandlerPlugins.unregister(myPlugin);
+const url = await window.PluginUtils.getSourceURL('_Overlay');
 ```
 
 ---
 
-### `getRegisteredPlugins()`
+### `setSourceVolume`
 
-Retrieves an array of all currently registered plugins.
+Sets the volume on an audio source.
 
-#### Syntax
-
-```javascript
-window.CustomHandlerPlugins.getRegisteredPlugins()
-```
-
-#### Parameters
-
-None
-
-#### Returns
-
-| Type | Description |
-|------|--------------|
-| `Array<Object>` | Array of all registered plugin objects |
-
-#### Example
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string) — OBS source name<br>`volume` (number) — 0-100 as percent, or 0.0-1.0 as multiplier (auto-detected) |
+| **Returns** | `Promise<void>` |
+| **Description** | Values greater than 1 are treated as percentages and divided by 100. The result is clamped to 0-1 before being sent to OBS. Triggers a dashboard refresh. |
 
 ```javascript
-// Get all registered plugins
-const plugins = window.CustomHandlerPlugins.getRegisteredPlugins();
-console.log(`Found ${plugins.length} registered plugins`);
-```
-
-# 🐛 Debug API
-
-The Debug API provides utilities for plugin development, testing, and system introspection.
-
-### `GetBuiltInPlugins()`
-
-Retrieves all built-in plugins that come with the application.
-
-#### Syntax
-
-```javascript
-window.CustomHandlerPlugins.GetBuiltInPlugins()
-```
-
-#### Parameters
-
-None
-
-#### Returns
-
-| Type | Description |
-|------|--------------|
-| `Array<Object>` | Array of built-in plugin objects |
-
-#### Example
-
-```javascript
-// Get all built-in plugins
-const builtInPlugins = window.CustomHandlerPlugins.GetBuiltInPlugins();
-console.log('Built-in plugins:', builtInPlugins);
+await window.PluginUtils.setSourceVolume('_Mic', 75);    // 75%
+await window.PluginUtils.setSourceVolume('_Mic', 0.75);  // same thing
 ```
 
 ---
 
-### `GetExternalPlugins()`
+### `getSourceVolume`
 
-Retrieves all external plugins loaded from the plugins directory.
+Gets the current volume of a source as a multiplier.
 
-#### Syntax
-
-```javascript
-window.CustomHandlerPlugins.GetExternalPlugins()
-```
-
-#### Parameters
-
-None
-
-#### Returns
-
-| Type | Description |
-|------|--------------|
-| `Array<Object>` | Array of external plugin objects |
-
-#### Example
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string) — OBS source name |
+| **Returns** | `Promise<number>` — volume multiplier from 0.0 to 1.0 |
+| **Description** | Reads `inputVolumeMul` from the OBS response. Defaults to 1.0 if not present. |
 
 ```javascript
-// Get all external plugins
-const externalPlugins = window.CustomHandlerPlugins.GetExternalPlugins();
-console.log('External plugins:', externalPlugins);
+const vol = await window.PluginUtils.getSourceVolume('_Mic'); // 0.75
 ```
 
 ---
 
-### `GetAllPlugins()`
+### `getSourceVolumePercent`
 
-Retrieves all plugins (both built-in and external) available in the system.
+Gets the current volume as a rounded percentage.
 
-#### Syntax
-
-```javascript
-window.CustomHandlerPlugins.GetAllPlugins()
-```
-
-#### Parameters
-
-None
-
-#### Returns
-
-| Type | Description |
-|------|--------------|
-| `Array<Object>` | Array of all plugin objects |
-
-#### Example
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string) — OBS source name |
+| **Returns** | `Promise<number>` — volume from 0 to 100 |
+| **Description** | Wraps `getSourceVolume`, multiplies by 100, rounds, and clamps. |
 
 ```javascript
-// Get all plugins
-const allPlugins = window.CustomHandlerPlugins.GetAllPlugins();
-console.log(`Total plugins: ${allPlugins.length}`);
+const pct = await window.PluginUtils.getSourceVolumePercent('_Mic'); // 75
 ```
 
 ---
 
-### `GetPluginDirectory()`
+### `getSourceEnabled`
 
-Retrieves the file system path where external plugins are stored.
+Checks if a source is enabled (visible) in a scene.
 
-#### Syntax
-
-```javascript
-window.CustomHandlerPlugins.GetPluginDirectory()
-```
-
-#### Parameters
-
-None
-
-#### Returns
-
-| Type | Description |
-|------|--------------|
-| `string` | Absolute path to the plugins directory |
-
-#### Example
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string) — OBS source name<br>`sceneName` (string, optional) — defaults to the current scene |
+| **Returns** | `Promise<boolean>` |
+| **Description** | Looks up the scene item by source name and returns its `sceneItemEnabled` state. Throws if the source isn't found in the scene. |
 
 ```javascript
-// Get plugin directory path
-const pluginDir = window.CustomHandlerPlugins.GetPluginDirectory();
-console.log('Plugins are stored in:', pluginDir);
+const visible = await window.PluginUtils.getSourceEnabled('_Overlay');
 ```
 
 ---
 
-### `LoadExternalPlugins()`
+### `setSourceEnabled`
 
-Reloads all external plugins from the plugins directory. Useful for development and hot-reloading.
+Enables or disables a source in a scene.
 
-#### Syntax
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string) — OBS source name<br>`enabled` (boolean) — true to show, false to hide<br>`sceneName` (string, optional) — defaults to the current scene |
+| **Returns** | `Promise<void>` |
+| **Description** | Finds the scene item ID, then calls `obsAPI.sceneItems.setEnabled`. Triggers a dashboard refresh. |
 
 ```javascript
-window.CustomHandlerPlugins.LoadExternalPlugins()
+await window.PluginUtils.setSourceEnabled('_Overlay', false);
 ```
 
-#### Parameters
+---
 
-None
+### `toggleSourceEnabled`
 
-#### Returns
+Toggles a source's visibility and returns the new state.
 
-`void`
-
-#### Example
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string) — OBS source name<br>`sceneName` (string, optional) — defaults to the current scene |
+| **Returns** | `Promise<boolean>` — the new enabled state |
+| **Description** | Reads the current state with `getSourceEnabled`, flips it, and calls `setSourceEnabled`. |
 
 ```javascript
-// Reload all external plugins
-window.CustomHandlerPlugins.LoadExternalPlugins();
-console.log('External plugins reloaded');
+const newState = await window.PluginUtils.toggleSourceEnabled('_Overlay');
 ```
 
-# 📺 OBS API
+---
 
-The OBS API provides direct integration with OBS Studio functionality, allowing plugins to control scenes, sources, and settings.
+### `setSourceVisibility`
 
-### `SetSettings()`
+Alias for `setSourceEnabled`. Same parameters, same behavior.
 
-Updates the settings for a specific OBS source.
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string)<br>`state` (boolean)<br>`sceneName` (string, optional) |
+| **Returns** | `Promise<void>` |
 
-#### Syntax
+---
 
-```javascript
-window.obsAPI.SetSettings(sourceName, settings)
-```
+### `addControlButton`
 
-#### Parameters
+Adds a button to the plugin sidebar. USE `registerSidebarButton` INSTEAD
 
-| Parameter | Type | Description |
-|-----------|------|--------------|
-| `sourceName` | `string` | The name of the OBS source |
-| `settings` | `Object` | Settings object to apply to the source |
-
-#### Returns
-
-`void`
-
-#### Example
+| | |
+|---|---|
+| **Parameters** | `id` (string) — unique button ID<br>`label` (string) — button text<br>`onClick` (function) — click handler<br>`className` (string, optional) — CSS class, defaults to `'btn-plugin'` |
+| **Returns** | `HTMLElement \| null` — the button element, or null if the sidebar host wasn't found |
+| **Description** | Creates a `<button>` and appends it to `#pluginButtons`. Won't create duplicates — if a button with that ID already exists, it returns the existing one. |
 
 ```javascript
-// Update browser source settings
-window.obsAPI.SetSettings('my-browser-source', {
-  url: 'https://example.com',
-  width: 1920,
-  height: 1080
-});
-
-// Update text source settings
-window.obsAPI.SetSettings('my-text-source', {
-  text: 'Hello World!',
-  color: 0xFFFFFF
+window.PluginUtils.addControlButton('resetBtn', 'Reset Score', async () => {
+  await window.PluginUtils.setTextSource('_Score', '0 - 0');
 });
 ```
 
 ---
 
-### `RefreshBrowserNoCache()`
+### `removeControlButton`
 
-Refreshes a browser source, bypassing the cache to ensure fresh content.
+Removes a sidebar button by ID. USE `unregisterSidebarButtons` INSTEAD
 
-#### Syntax
-
-```javascript
-window.obsAPI.RefreshBrowserNoCache(sourceName)
-```
-
-#### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|--------------|
-| `sourceName` | `string` | The name of the browser source to refresh |
-
-#### Returns
-
-`void`
-
-#### Example
+| | |
+|---|---|
+| **Parameters** | `id` (string) — the button ID |
+| **Returns** | `boolean` — true if found and removed |
 
 ```javascript
-// Refresh a browser source without cache
-window.obsAPI.RefreshBrowserNoCache('my-browser-source');
+window.PluginUtils.removeControlButton('resetBtn');
 ```
 
 ---
 
-### `ChangeScene()`
+### `registerSidebarButton`
 
-Switches the current active scene in OBS Studio.
+Adds a tracked sidebar button under a plugin name. Recommended over `addControlButton` for plugins.
 
-#### Syntax
-
-```javascript
-window.obsAPI.ChangeScene(sceneName)
-```
-
-#### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|--------------|
-| `sceneName` | `string` | The name of the scene to switch to |
-
-#### Returns
-
-`void`
-
-#### Example
+| | |
+|---|---|
+| **Parameters** | `pluginName` (string) — your plugin's name (used for cleanup)<br>`id` (string) — unique button ID<br>`label` (string) — button text<br>`onClick` (function) — click handler<br>`className` (string, optional) — CSS class |
+| **Returns** | `HTMLElement \| null` |
+| **Description** | Same as `addControlButton`, but the click handler is wrapped to auto-refresh the dashboard after execution. The button is tracked so you can remove all of a plugin's buttons at once with `unregisterSidebarButtons`. |
 
 ```javascript
-// Switch to a specific scene
-window.obsAPI.ChangeScene('Gaming Scene');
-
-// Switch to break scene
-window.obsAPI.ChangeScene('BRB Screen');
+window.PluginUtils.registerSidebarButton('ScorePlugin', 'resetBtn', 'Reset', async () => {
+  await window.PluginUtils.setTextSource('_Score', '0 - 0');
+});
 ```
 
 ---
 
-## 📚 Additional Resources
+### `unregisterSidebarButtons`
 
-- [Plugin Development Guide](./pluginoverview.md)
-- [Example Plugin](../plugins/ExamplePlugin.js)
-- [OBS WebSocket Documentation](https://github.com/obsproject/obs-websocket/blob/master/docs/generated/protocol.md)
+Removes all sidebar buttons registered under a plugin name.
 
-## 🤝 Contributing
+| | |
+|---|---|
+| **Parameters** | `pluginName` (string) |
+| **Returns** | `number` — how many buttons were removed |
 
-Found an issue with this documentation? Please [open an issue](https://github.com/Tchongas/MCSRobsremote/issues) or submit a pull request.
+```javascript
+window.PluginUtils.unregisterSidebarButtons('ScorePlugin'); // removes all buttons from that plugin
+```
 
 ---
+
+### `fetchJson`
+
+Fetches a URL and returns parsed JSON.
+
+| | |
+|---|---|
+| **Parameters** | `url` (string) — the URL to fetch<br>`opts` (object, optional) — extra fetch options, merged with defaults |
+| **Returns** | `Promise<any>` — parsed JSON response |
+| **Description** | Sets `Accept: application/json` by default. Throws on non-2xx responses, including the status code and response body in the error message. |
+
+```javascript
+const data = await window.PluginUtils.fetchJson('https://api.example.com/stats');
+```
+
+---
+
+### `requestDashboardRefresh`
+
+Triggers a debounced dashboard refresh.
+
+| | |
+|---|---|
+| **Parameters** | `reason` (string, optional) — logged if the refresh fails |
+| **Returns** | `void` |
+| **Description** | Waits 200ms (debounced) then reloads the dashboard for the current scene. Most setter functions already call this internally, so you only need it if you're doing something custom. |
+
+```javascript
+window.PluginUtils.requestDashboardRefresh('updated overlay config');
+```
+
+---
+
+## Plugin Management
+
+Accessed via `window.CustomHandlerPlugins`.
+
+### `register`
+
+| | |
+|---|---|
+| **Parameters** | `plugin` (object) — your plugin object |
+| **Returns** | `void` |
+| **Description** | Registers a plugin with the system. Call at the end of your plugin file. |
+
+```javascript
+window.CustomHandlerPlugins.register(MyPlugin);
+```
+
+---
+
+### `unregister`
+
+| | |
+|---|---|
+| **Parameters** | `plugin` (object) — the plugin to remove |
+| **Returns** | `void` |
+
+---
+
+### `getRegisteredPlugins`
+
+| | |
+|---|---|
+| **Parameters** | none |
+| **Returns** | `Array<object>` — all registered plugins |
+
+---
+
+### `GetBuiltInPlugins`
+
+| | |
+|---|---|
+| **Parameters** | none |
+| **Returns** | `Array<object>` — built-in plugins only |
+
+---
+
+### `GetExternalPlugins`
+
+| | |
+|---|---|
+| **Parameters** | none |
+| **Returns** | `Array<object>` — user plugins only |
+
+---
+
+### `GetAllPlugins`
+
+| | |
+|---|---|
+| **Parameters** | none |
+| **Returns** | `Array<object>` — all plugins (built-in + external) |
+
+---
+
+### `GetPluginDirectory`
+
+| | |
+|---|---|
+| **Parameters** | none |
+| **Returns** | `string` — absolute path to the plugins folder |
+
+---
+
+### `LoadExternalPlugins`
+
+| | |
+|---|---|
+| **Parameters** | none |
+| **Returns** | `void` |
+| **Description** | Force-reloads all external plugins from disk. |
+
+---
+
+## Plugin Files
+
+Accessed via `window.pluginAPI`.
+
+### `readFile`
+
+| | |
+|---|---|
+| **Parameters** | `relativePath` (string) — file path relative to the `plugins` folder |
+| **Returns** | `Promise<string>` — file contents as text |
+| **Description** | Reads a file from the plugins directory. Paths containing `..` are rejected. |
+
+```javascript
+const raw = await window.pluginAPI.readFile('MyPlugin.json');
+const config = JSON.parse(raw);
+```
+
+---
+
+## Logging
+
+Accessed via `window.uiHelpers`. All take `(message, tag)` where tag is an optional category string.
+
+### `logInfo`
+
+| | |
+|---|---|
+| **Parameters** | `message` (string), `tag` (string, optional) |
+| **Description** | Blue info message in the app console. |
+
+### `logSuccess`
+
+| | |
+|---|---|
+| **Parameters** | `message` (string), `tag` (string, optional) |
+| **Description** | Green success message. |
+
+### `logWarn`
+
+| | |
+|---|---|
+| **Parameters** | `message` (string), `tag` (string, optional) |
+| **Description** | Yellow warning message. |
+
+### `logError`
+
+| | |
+|---|---|
+| **Parameters** | `message` (string), `tag` (string, optional) |
+| **Description** | Red error message. |
+
+```javascript
+window.uiHelpers.logInfo('Plugin loaded', 'myplugin');
+window.uiHelpers.logError('Something broke: ' + err.message, 'myplugin');
+```
+
+---
+
+## OBS API (Direct)
+
+Lower-level OBS WebSocket calls via `window.obsAPI`. PluginUtils are for convenience.
+
+| Function | Description |
+|----------|-------------|
+| `obsAPI.sources.setSettings(name, settings)` | Set arbitrary source settings |
+| `obsAPI.sources.getSettings(name)` | Get source settings |
+| `obsAPI.sources.setVolume(name, multiplier)` | Set volume (0.0 - 1.0) |
+| `obsAPI.sources.getVolume(name)` | Get volume info |
+| `obsAPI.sources.getMute(name)` | Get mute state |
+| `obsAPI.sources.setMute(name, muted)` | Set mute state |
+| `obsAPI.browser.setUrl(name, url)` | Set browser source URL |
+| `obsAPI.browser.getUrl(name)` | Get browser source URL |
+| `obsAPI.browser.refresh(name)` | Refresh browser source (no cache) |
+| `obsAPI.scenes.get()` | Get scene list |
+| `obsAPI.scenes.change(name)` | Switch to a scene |
+| `obsAPI.media.toggle(name)` | Toggle media playback |
+| `obsAPI.media.stop(name)` | Stop media playback |
+| `obsAPI.media.restart(name)` | Restart media from beginning |
+| `obsAPI.sceneItems.list(sceneName)` | List scene items |
+| `obsAPI.sceneItems.setEnabled(scene, itemId, enabled)` | Enable/disable a scene item |
+
+---
+
+## Additional Resources
+
+- [Plugin Overview](./pluginoverview.md) — how plugins work, lifecycle, structure
+- [Example Plugin](./example-plugin.md) — full working plugin with comments
+- [OBS WebSocket Protocol](https://github.com/obsproject/obs-websocket/blob/master/docs/generated/protocol.md)

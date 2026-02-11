@@ -7,8 +7,8 @@
   let startWidth = 0;
   let startHeight = 0;
 
-  const MIN_SIDEBAR = 160;
-  const MAX_SIDEBAR = 320;
+  const MIN_SIDEBAR = 170;
+  const MAX_SIDEBAR = 420;
   const MIN_CONSOLE = 50;
   const MAX_CONSOLE = 250;
 
