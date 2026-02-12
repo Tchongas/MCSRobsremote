@@ -51,7 +51,6 @@ contextBridge.exposeInMainWorld('obsAPI', {
   }
 });
 
-// Plugin System API
 // Window controls
 contextBridge.exposeInMainWorld('windowControls', {
   minimize: () => ipcRenderer.send('window-minimize'),

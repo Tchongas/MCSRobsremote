@@ -43,18 +43,11 @@
     }
   };
 
-  // Autoregister plugin
-  window.uiHelpers?.logInfo('TwitchPlugin attempting registration...', 'plugin');
   if (window.CustomHandlerPlugins) {
     window.CustomHandlerPlugins.register(TwitchPlugin);
-    window.uiHelpers?.logSuccess('TwitchPlugin registered', 'plugin');
   } else {
-    window.uiHelpers?.logWarn('CustomHandlerPlugins not ready, waiting for event...', 'plugin');
     window.addEventListener('customHandlerReady', () => {
       window.CustomHandlerPlugins.register(TwitchPlugin);
-      window.uiHelpers?.logSuccess('TwitchPlugin registered (after event)', 'plugin');
     });
   }
-
-  window.uiHelpers?.logInfo('TwitchPlugin loaded', 'plugin');
 })();

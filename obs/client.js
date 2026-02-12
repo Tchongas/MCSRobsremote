@@ -42,54 +42,14 @@ async function disconnect() {
 
 // Event handling system
 function setupEventListeners() {
-  // Scene change events
-  obs.on('CurrentProgramSceneChanged', (data) => {
-    console.log('Scene changed to:', data.sceneName);
-    notifyRenderer('scene-changed', data);
-  });
-
-  // Scene item visibility changes
-  obs.on('SceneItemEnableStateChanged', (data) => {
-    console.log('Scene item visibility changed:', data.sceneItemId, data.sceneItemEnabled);
-    notifyRenderer('scene-item-changed', data);
-  });
-
-  // Scene list changes (when scenes are added/removed)
-  obs.on('SceneListChanged', (data) => {
-    console.log('Scene list changed');
-    notifyRenderer('scene-list-changed', data);
-  });
-
-  // Scene item list changes (when items are added/removed/reordered)
-  obs.on('SceneItemListReindexed', (data) => {
-    console.log('Scene items reordered in:', data.sceneName);
-    notifyRenderer('scene-items-reordered', data);
-  });
-
-  // Scene item created (new source added to a scene)
-  obs.on('SceneItemCreated', (data) => {
-    console.log('Scene item created:', data.sourceName, 'in', data.sceneName);
-    notifyRenderer('scene-item-created', data);
-  });
-
-  // Scene item removed (source removed from a scene)
-  obs.on('SceneItemRemoved', (data) => {
-    console.log('Scene item removed:', data.sourceName, 'from', data.sceneName);
-    notifyRenderer('scene-item-removed', data);
-  });
-
-  // Source/Input changes
-  obs.on('InputMuteStateChanged', (data) => {
-    console.log('Input mute state changed:', data.inputName, data.inputMuted);
-    notifyRenderer('input-mute-changed', data);
-  });
-
-  // Input volume changes
-  obs.on('InputVolumeChanged', (data) => {
-    // data: { inputName, inputVolumeMul, inputVolumeDb }
-    console.log('Input volume changed:', data.inputName, data.inputVolumeMul);
-    notifyRenderer('input-volume-changed', data);
-  });
+  obs.on('CurrentProgramSceneChanged', (data) => notifyRenderer('scene-changed', data));
+  obs.on('SceneItemEnableStateChanged', (data) => notifyRenderer('scene-item-changed', data));
+  obs.on('SceneListChanged', (data) => notifyRenderer('scene-list-changed', data));
+  obs.on('SceneItemListReindexed', (data) => notifyRenderer('scene-items-reordered', data));
+  obs.on('SceneItemCreated', (data) => notifyRenderer('scene-item-created', data));
+  obs.on('SceneItemRemoved', (data) => notifyRenderer('scene-item-removed', data));
+  obs.on('InputMuteStateChanged', (data) => notifyRenderer('input-mute-changed', data));
+  obs.on('InputVolumeChanged', (data) => notifyRenderer('input-volume-changed', data));
 }
 
 function notifyRenderer(eventType, data) {

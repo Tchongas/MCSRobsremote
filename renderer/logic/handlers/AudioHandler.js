@@ -1,4 +1,4 @@
-// Microphone Handler - Manages audio input controls (mute/volume)
+// Audio Output Handler - Manages desktop/system audio capture controls (mute/volume)
 (function() {
     const AudioHandler = {
       name: 'AudioHandler',

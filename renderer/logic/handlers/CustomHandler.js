@@ -6,40 +6,6 @@
   let pluginWatcherBound = false;
   let reloadTimer = null;
 
-  // DEBUG: in-app plugin system status line (disabled)
-  //
-  // const PLUGIN_STATUS_ID = 'pluginSystemStatus';
-  //
-  // function ensurePluginStatusEl() {
-  //   const container = document.getElementById('pluginButtons');
-  //   if (!container) return null;
-  //
-  //   let el = document.getElementById(PLUGIN_STATUS_ID);
-  //   if (!el) {
-  //     el = document.createElement('div');
-  //     el.id = PLUGIN_STATUS_ID;
-  //     el.style.cssText = 'margin-top:6px;font-size:11px;line-height:1.2;color:#9aa3b2;opacity:0.95;';
-  //     container.appendChild(el);
-  //   }
-  //   return el;
-  // }
-  //
-  // async function updatePluginStatus() {
-  //   const el = ensurePluginStatusEl();
-  //   if (!el) return;
-  //
-  //   let pluginDir = '(pluginAPI unavailable)';
-  //   if (window.pluginAPI?.getPluginDirectory) {
-  //     try {
-  //       pluginDir = await window.pluginAPI.getPluginDirectory();
-  //     } catch (e) {
-  //       pluginDir = `(error: ${e?.message || e})`;
-  //     }
-  //   }
-  //
-  //   el.textContent = `Plugins: built-in ${plugins.size}, external ${externalPlugins.size} | Dir: ${pluginDir}`;
-  // }
-  
   // Plugin interface specification
   const PluginInterface = {
     // Required methods

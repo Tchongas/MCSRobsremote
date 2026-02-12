@@ -295,20 +295,29 @@
     return previewScene;
   }
 
-  // Legacy compatibility aliases
+  // Legacy compatibility alias
   function getCurrentScene() {
     return programScene;
   }
 
   // ── Scene list keyboard navigation ──
-  // Focuses the scene list, highlighting the current preview scene (or first item).
+  // Toggles focus: if scene list is already focused, jump to first dashboard item.
+  // Otherwise, focus the current preview scene (or first scene).
   function focusSceneList() {
     const list = document.getElementById('sceneList');
     if (!list) return;
+
+    // If already inside the scene list, move focus to the dashboard
+    if (document.activeElement?.closest('#sceneList')) {
+      const firstItem = document.querySelector('#dashboardItems .dash-item:not(.is-hidden) .name-wrap');
+      if (firstItem) { firstItem.focus(); return; }
+      document.activeElement.blur();
+      return;
+    }
+
     const items = list.querySelectorAll('.scene-item');
     if (items.length === 0) return;
 
-    // Try to focus the current preview scene, otherwise first item
     let target = null;
     if (previewScene) {
       target = list.querySelector(`.scene-item[data-scene-name="${CSS.escape(previewScene)}"]`);
@@ -335,32 +344,22 @@
       // Arrow Down / Tab — next scene
       if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
         e.preventDefault();
-        const next = items[idx + 1] || items[0]; // wrap around
+        const next = items[idx + 1] || items[0];
         next.focus();
         return;
       }
       // Arrow Up / Shift+Tab — previous scene
       if (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey)) {
         e.preventDefault();
-        const prev = items[idx - 1] || items[items.length - 1]; // wrap around
+        const prev = items[idx - 1] || items[items.length - 1];
         prev.focus();
         return;
       }
-      // Enter — preview scene (select)
+      // Enter — preview the focused scene (plain Enter only; Ctrl+Enter falls through to global transition handler)
       if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         const name = focused.dataset.sceneName;
         if (name) selectScene(name);
-        return;
-      }
-      // Ctrl+Enter — hard change (select + transition)
-      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        e.stopPropagation(); // prevent global Ctrl+Enter handler
-        const name = focused.dataset.sceneName;
-        if (name) {
-          selectScene(name).then(() => transitionScene());
-        }
         return;
       }
       // Escape — blur out of scene list

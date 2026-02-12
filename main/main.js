@@ -11,34 +11,8 @@ const streaming = require('../actions/streaming');
 const sceneItems = require('../actions/sceneItems');
 const media = require('../actions/media');
 
-function pluginLogLine(message) {
-  // DEBUG: plugin-system file logging (disabled)
-  //
-  // Uncomment to write plugin-system debug logs to disk.
-  // try {
-  //   const ts = new Date().toISOString();
-  //   const userData = app?.getPath ? app.getPath('userData') : null;
-  //   if (!userData) return;
-  //   const appData = app.getPath('appData');
-  //   const compatUserData = path.join(appData, 'robsremote');
-  //
-  //   const targets = [
-  //     path.join(userData, 'plugin-system.log'),
-  //     path.join(compatUserData, 'plugin-system.log')
-  //   ];
-  //
-  //   for (const logPath of targets) {
-  //     try {
-  //       fsSync.mkdirSync(path.dirname(logPath), { recursive: true });
-  //       fsSync.appendFileSync(logPath, `[${ts}] ${message}\n`, 'utf8');
-  //     } catch (_) {
-  //       // ignore per-target failures
-  //     }
-  //   }
-  // } catch (_) {
-  //   // Intentionally ignore logging failures
-  // }
-}
+// Stub for plugin-system debug logging. Enable body to write to disk.
+function pluginLogLine(message) {}
 
 function createWindow() {
   const win = new BrowserWindow({

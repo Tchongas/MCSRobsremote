@@ -201,38 +201,6 @@
       });
     }
 
-    // Legacy streaming controls (hidden but kept for compatibility)
-    const startBtn = document.getElementById('start');
-    const stopBtn = document.getElementById('stop');
-    if (startBtn) {
-      startBtn.addEventListener('click', async () => {
-        try {
-          await window.obsAPI.streaming.start();
-          if (streamToggle) {
-            streamToggle.dataset.streaming = 'true';
-            streamToggle.querySelector('.stream-toggle-text').textContent = 'Stop Stream';
-          }
-          window.uiHelpers.logSuccess('Streaming started', 'stream');
-        } catch (e) {
-          window.uiHelpers.logError('Failed to start streaming: ' + e.message, 'stream');
-        }
-      });
-    }
-    if (stopBtn) {
-      stopBtn.addEventListener('click', async () => {
-        try {
-          await window.obsAPI.streaming.stop();
-          if (streamToggle) {
-            streamToggle.dataset.streaming = 'false';
-            streamToggle.querySelector('.stream-toggle-text').textContent = 'Start Stream';
-          }
-          window.uiHelpers.logSuccess('Streaming stopped', 'stream');
-        } catch (e) {
-          window.uiHelpers.logError('Failed to stop streaming: ' + e.message, 'stream');
-        }
-      });
-    }
-
     // Refresh scenes button
     document.getElementById('refreshScenes').addEventListener('click', refreshScenes);
 
@@ -300,20 +268,6 @@
     if (deleteProfileBtn) {
       deleteProfileBtn.addEventListener('click', handleDeleteProfile);
     }
-
-    // Close modal when clicking outside
-    document.getElementById('settingsModal').addEventListener('click', (e) => {
-      if (e.target.id === 'settingsModal') {
-        hideSettingsModal();
-      }
-    });
-
-    // Close modal with Escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        hideSettingsModal();
-      }
-    });
 
     // Clear console button
     const clearConsoleBtn = document.getElementById('clearConsole');

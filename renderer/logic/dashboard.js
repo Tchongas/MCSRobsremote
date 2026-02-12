@@ -392,8 +392,6 @@
   }
 
 
-
-
   function createExpandButton(nameWrap, options, chk, optionsId) {
     const expandBtn = document.createElement('button');
     expandBtn.className = 'icon-btn expand-btn';

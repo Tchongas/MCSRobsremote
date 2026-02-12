@@ -88,18 +88,11 @@
       }
     };
   
-    // Autoregister plugin
-    window.uiHelpers?.logInfo('MediaControllerPlugin attempting registration...', 'plugin');
     if (window.CustomHandlerPlugins) {
         window.CustomHandlerPlugins.register(MediaControllerPlugin);
-        window.uiHelpers?.logSuccess('MediaControllerPlugin registered', 'plugin');
     } else {
-        window.uiHelpers?.logWarn('CustomHandlerPlugins not ready, waiting for event...', 'plugin');
         window.addEventListener('customHandlerReady', () => {
-        window.CustomHandlerPlugins.register(MediaControllerPlugin);
-        window.uiHelpers?.logSuccess('MediaControllerPlugin registered (after eventawfawfawf)', 'plugin');
+            window.CustomHandlerPlugins.register(MediaControllerPlugin);
         });
     }
-
-    window.uiHelpers?.logInfo('MediaControllerPlugin loaded', 'plugin');
   })();

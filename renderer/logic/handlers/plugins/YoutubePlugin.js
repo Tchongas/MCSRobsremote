@@ -43,19 +43,11 @@
       }
     };
   
-    // Autoregister plugin
-    window.uiHelpers?.logInfo('YoutubePlugin attempting registration...', 'plugin');
     if (window.CustomHandlerPlugins) {
       window.CustomHandlerPlugins.register(YoutubePlugin);
-      window.uiHelpers?.logSuccess('YoutubePlugin registered', 'plugin');
     } else {
-      window.uiHelpers?.logWarn('CustomHandlerPlugins not ready, waiting for event...', 'plugin');
       window.addEventListener('customHandlerReady', () => {
         window.CustomHandlerPlugins.register(YoutubePlugin);
-        window.uiHelpers?.logSuccess('YoutubePlugin registered (after event)', 'plugin');
       });
     }
-  
-    window.uiHelpers?.logInfo('YoutubePlugin loaded', 'plugin');
   })();
-  

@@ -10,11 +10,6 @@ async function toggle(sourceName) {
   return obs.call('ToggleInputMute', { inputName: sourceName });
 }
 
-async function toggleMute(sourceName) {
-  await connect();
-  return obs.call('ToggleInputMute', { inputName: sourceName });
-}
-
 async function getMute(sourceName) {
   await connect();
   return obs.call('GetInputMute', { inputName: sourceName });
@@ -50,4 +45,4 @@ async function setSettings(sourceName, inputSettings) {
   return obs.call('SetInputSettings', { inputName: sourceName, inputSettings });
 }
 
-module.exports = { get, toggle, toggleMute, getMute, setMute, getVolume, setVolume, getSettings, setSettings };
+module.exports = { get, toggle, getMute, setMute, getVolume, setVolume, getSettings, setSettings };
