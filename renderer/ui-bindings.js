@@ -80,6 +80,13 @@
       }
       // Escape — close settings modal if open, or blur active input
       if (e.key === 'Escape' && !isInput) {
+        const pluginModal = document.getElementById('pluginModal');
+        if (pluginModal && pluginModal.style.display !== 'none') {
+          e.preventDefault();
+          if (window.PluginUtils?.closePluginModal) window.PluginUtils.closePluginModal();
+          return;
+        }
+
         const modal = document.getElementById('settingsModal');
         if (modal && modal.style.display !== 'none') {
           e.preventDefault();

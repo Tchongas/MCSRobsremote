@@ -315,6 +315,32 @@
       </div>
     </div>
 
+    <!-- Plugin Workspace Modal -->
+    <div id="pluginModal" class="modal plugin-modal" style="display: none;" aria-hidden="true">
+      <div class="modal-content plugin-modal-content" role="dialog" aria-modal="true" aria-labelledby="pluginModalTitle">
+        <div class="modal-header plugin-modal-header">
+          <div class="plugin-modal-title-wrap">
+            <span class="plugin-modal-badge">Plugin Workspace</span>
+            <h3 id="pluginModalTitle">Plugin</h3>
+          </div>
+          <div class="plugin-modal-actions">
+            <button id="popoutPluginModal" class="icon-btn" title="Open in window" aria-label="Open in window">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 3h7v7"></path>
+                <path d="M10 14L21 3"></path>
+                <path d="M21 14v7h-7"></path>
+                <path d="M3 10v11h11"></path>
+              </svg>
+            </button>
+            <button id="closePluginModal" class="icon-btn" title="Close" aria-label="Close plugin modal">&times;</button>
+          </div>
+        </div>
+        <div class="plugin-modal-body">
+          <div id="pluginModalMount" class="plugin-modal-mount"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Hidden Debug Page -->
     <div id="debugPage" class="debug-page hidden">
       <div class="debug-header">
@@ -383,6 +409,7 @@
     <script src="renderer/logic/handlers/TextSourceHandler.js"></script>
     <!-- Shared plugin utilities (must load before CustomHandler.js) -->
     <script src="renderer/logic/handlers/PluginUtils.js"></script>
+    <script src="renderer/logic/handlers/PluginWorkspaceUtils.js"></script>
     <!-- Load plugins and custom handlers -->
     <script src="renderer/logic/handlers/plugins/TwitchPlugin.js"></script>
     <script src="renderer/logic/handlers/plugins/YoutubePlugin.js"></script>

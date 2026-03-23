@@ -210,6 +210,82 @@ Alias for `setSourceEnabled`. Same parameters, same behavior.
 
 ---
 
+### `listSceneItems`
+
+Lists scene items for a scene (or current selected scene).
+
+| | |
+|---|---|
+| **Parameters** | `sceneName` (string, optional) |
+| **Returns** | `Promise<Array<object>>` |
+
+---
+
+### `getSourceSceneItem`
+
+Gets a scene item descriptor by source name.
+
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string)<br>`sceneName` (string, optional) |
+| **Returns** | `Promise<object>` — includes `sceneItemId` |
+
+---
+
+### `getSourceTransform`
+
+Reads transform information (position/scale/rotation/etc.) for a source in a scene.
+
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string)<br>`sceneName` (string, optional) |
+| **Returns** | `Promise<object>` — OBS scene item transform object |
+
+```javascript
+const tf = await window.PluginUtils.getSourceTransform('_*Stream1');
+console.log(tf.positionX, tf.positionY);
+```
+
+---
+
+### `setSourceTransform`
+
+Writes transform data for a source scene item.
+
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string)<br>`transform` (object)<br>`sceneName` (string, optional)<br>`options` (object, optional) — `{ refreshDashboard?: boolean }` |
+| **Returns** | `Promise<void>` |
+| **Description** | Use this for layout moves/swaps where URL/content should not refresh. |
+
+---
+
+### `setSourcePosition`
+
+Convenience method to update `positionX` / `positionY` only.
+
+| | |
+|---|---|
+| **Parameters** | `sourceName` (string)<br>`x` (number)<br>`y` (number)<br>`sceneName` (string, optional) |
+| **Returns** | `Promise<void>` |
+
+---
+
+### `swapSourcePositions`
+
+Swaps the position coordinates of two sources.
+
+| | |
+|---|---|
+| **Parameters** | `sourceA` (string)<br>`sourceB` (string)<br>`sceneName` (string, optional) |
+| **Returns** | `Promise<void>` |
+
+```javascript
+await window.PluginUtils.swapSourcePositions('_*Stream1', '_*Stream2');
+```
+
+---
+
 ### `addControlButton`
 
 Adds a button to the plugin sidebar. USE `registerSidebarButton` INSTEAD
@@ -223,6 +299,61 @@ Adds a button to the plugin sidebar. USE `registerSidebarButton` INSTEAD
 ```javascript
 window.PluginUtils.addControlButton('resetBtn', 'Reset Score', async () => {
   await window.PluginUtils.setTextSource('_Score', '0 - 0');
+});
+```
+
+---
+
+### `registerPopupRpcHandlers`
+
+Registers detached-popup callable handlers for a plugin.
+
+| | |
+|---|---|
+| **Parameters** | `pluginName` (string)<br>`handlers` (object) — map of method name to async function |
+| **Returns** | `void` |
+
+```javascript
+window.PluginUtils.registerPopupRpcHandlers('MyPlugin', {
+  async getState(sceneName) {
+    return await window.PluginUtils.listSceneItems(sceneName);
+  },
+  async swapPositions(a, b, sceneName) {
+    await window.PluginUtils.swapSourcePositions(a, b, sceneName);
+    return { ok: true };
+  }
+});
+```
+
+---
+
+### `unregisterPopupRpcHandlers`
+
+Removes popup RPC handlers registered for a plugin.
+
+| | |
+|---|---|
+| **Parameters** | `pluginName` (string) |
+| **Returns** | `void` |
+
+---
+
+### `createPopupHtml`
+
+Builds popup HTML with a prewired bridge object (`window.pluginPopupHost.call(method, ...args)`) so plugin popouts can call host handlers.
+
+| | |
+|---|---|
+| **Parameters** | `pluginName` (string)<br>`options` (object) — `{ bodyHtml, script }` |
+| **Returns** | `string` |
+
+```javascript
+const popupHtml = window.PluginUtils.createPopupHtml('MyPlugin', {
+  bodyHtml: '<div id="root"></div>',
+  script: `
+    const data = await window.pluginPopupHost.call('getState');
+    document.getElementById('root').textContent = JSON.stringify(data, null, 2);
+  `
 });
 ```
 
@@ -272,6 +403,88 @@ Removes all sidebar buttons registered under a plugin name.
 
 ```javascript
 window.PluginUtils.unregisterSidebarButtons('ScorePlugin'); // removes all buttons from that plugin
+```
+
+---
+
+### `openPluginModal`
+
+Opens the shared in-app plugin workspace modal and returns a mount node.
+
+| | |
+|---|---|
+| **Parameters** | `pluginName` (string)<br>`options` (object, optional) — `{ title, className, onClose, popupWidth, popupHeight, popupHtml }` |
+| **Returns** | `{ mount: HTMLElement, close: Function, pluginName: string }` |
+| **Description** | Uses the app's modal shell so plugin UIs look consistent. Use `mount` to append your custom DOM. `close()` closes the modal. `popup*` options configure the optional popout window button. |
+
+```javascript
+const modal = window.PluginUtils.openPluginModal('MyPlugin', {
+  title: 'My Plugin Workspace'
+});
+modal.mount.appendChild(document.createTextNode('Hello from plugin'));
+```
+
+---
+
+### `closePluginModal`
+
+Closes the active plugin workspace modal.
+
+| | |
+|---|---|
+| **Parameters** | none |
+| **Returns** | `void` |
+
+```javascript
+window.PluginUtils.closePluginModal();
+```
+
+---
+
+### `registerModalSidebarButton`
+
+Registers a sidebar button that opens the plugin workspace modal and renders plugin UI.
+
+| | |
+|---|---|
+| **Parameters** | `pluginName` (string)<br>`id` (string)<br>`label` (string)<br>`onRender` (async function receiving `{ mount, close, pluginName }`)<br>`options` (object, optional) — `{ title, className, onClose, popupWidth, popupHeight, popupHtml, disablePopout, buttonClassName }` |
+| **Returns** | `HTMLElement \| null` |
+| **Description** | Convenience helper for modal-based plugins. It also tracks the sidebar button under `pluginName` so cleanup with `unregisterSidebarButtons(pluginName)` keeps working. |
+
+```javascript
+window.PluginUtils.registerModalSidebarButton(
+  'MyPlugin',
+  'myPlugin_workspace',
+  'Open Workspace',
+  async ({ mount, close }) => {
+    const shell = document.createElement('div');
+    shell.className = 'plugin-shell';
+    shell.innerHTML = '<h3>Workspace</h3><p>Build your plugin UI here.</p>';
+    mount.appendChild(shell);
+  },
+  { title: 'My Plugin Workspace' }
+);
+```
+
+---
+
+### `openPluginPopup`
+
+Opens a standalone plugin popup window.
+
+| | |
+|---|---|
+| **Parameters** | `pluginName` (string)<br>`options` (object, optional) — `{ title, width, height, html }` |
+| **Returns** | `Promise<{ ok: boolean, popupId: string, title: string, width: number, height: number }>` |
+| **Description** | Creates a dedicated Electron `BrowserWindow` for plugin workspace content. Useful when operators want a detached control panel. |
+
+```javascript
+await window.PluginUtils.openPluginPopup('MyPlugin', {
+  title: 'My Plugin Popout',
+  width: 1000,
+  height: 700,
+  html: '<div class="plugin-window-shell"><h1>Popout UI</h1></div>'
+});
 ```
 
 ---
@@ -405,6 +618,27 @@ Accessed via `window.pluginAPI`.
 ```javascript
 const raw = await window.pluginAPI.readFile('MyPlugin.json');
 const config = JSON.parse(raw);
+```
+
+---
+
+### `openPopup`
+
+Low-level popup window API. Most plugins should prefer `PluginUtils.openPluginPopup`.
+
+| | |
+|---|---|
+| **Parameters** | `payload` (object) — `{ pluginName, title, width, height, html }` |
+| **Returns** | `Promise<{ ok: boolean, title: string, width: number, height: number }>` |
+
+```javascript
+await window.pluginAPI.openPopup({
+  pluginName: 'MyPlugin',
+  title: 'My Plugin Popout',
+  width: 980,
+  height: 700,
+  html: '<div class="plugin-window-shell">Detached controls</div>'
+});
 ```
 
 ---

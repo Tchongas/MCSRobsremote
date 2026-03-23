@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, webContents } = require('electron');
 const path = require('path');
 const fsSync = require('fs');
 const fs = require('fs').promises;
@@ -134,6 +134,14 @@ function setupIpcHandlers() {
     return await sceneItems.setEnabled(sceneName, sceneItemId, sceneItemEnabled);
   });
 
+  ipcMain.handle('sceneItems-getTransform', async (event, sceneName, sceneItemId) => {
+    return await sceneItems.getTransform(sceneName, sceneItemId);
+  });
+
+  ipcMain.handle('sceneItems-setTransform', async (event, sceneName, sceneItemId, sceneItemTransform) => {
+    return await sceneItems.setTransform(sceneName, sceneItemId, sceneItemTransform);
+  });
+
   // Streaming
   ipcMain.handle('streaming-start', async () => {
     return await streaming.start();
@@ -173,6 +181,9 @@ function setupIpcHandlers() {
 
 // Plugin System Implementation
 let pluginWatcher = null;
+let pluginPopupTemplateCache = null;
+const pluginPopupSessions = new Map(); // key: popup webContents.id
+const pluginPopupRpcPending = new Map(); // key: requestId
 
 function getPluginDirectory() {
   if (app.isPackaged) {
@@ -228,6 +239,122 @@ function setupPluginHandlers() {
     await fs.mkdir(dir, { recursive: true });
     shell.openPath(dir);
     return dir;
+  });
+
+  ipcMain.handle('plugins-open-popup', async (event, payload) => {
+    const cfg = payload || {};
+    const popupId = `popup_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const openerId = event.sender.id;
+    const pluginName = String(cfg.pluginName || 'unknown').trim() || 'unknown';
+    const title = String(cfg.title || cfg.pluginName || 'Plugin Workspace').trim() || 'Plugin Workspace';
+    const width = clampPopupSize(cfg.width, 640, 1600, 980);
+    const height = clampPopupSize(cfg.height, 420, 1200, 700);
+    const html = typeof cfg.html === 'string' ? cfg.html : '';
+
+    const popup = new BrowserWindow({
+      width,
+      height,
+      minWidth: 520,
+      minHeight: 360,
+      show: false,
+      autoHideMenuBar: true,
+      backgroundColor: '#0f1013',
+      parent: BrowserWindow.fromWebContents(event.sender) || undefined,
+      title,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload-popup.js'),
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false
+      }
+    });
+
+    pluginPopupSessions.set(popup.webContents.id, {
+      popupId,
+      pluginName,
+      openerId,
+      title,
+      createdAt: Date.now()
+    });
+
+    const wrappedHtml = await buildPluginPopupHtml({ title, html });
+    await popup.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(wrappedHtml)}`);
+
+    popup.once('ready-to-show', () => {
+      popup.show();
+    });
+
+    popup.on('closed', () => {
+      pluginPopupSessions.delete(popup.webContents.id);
+    });
+
+    pluginLogLine(`Opened plugin popup: popupId=${popupId} plugin=${pluginName} title=${title} width=${width} height=${height}`);
+    return { ok: true, popupId, title, width, height };
+  });
+
+  ipcMain.handle('plugins-popup-get-context', async (event) => {
+    const session = pluginPopupSessions.get(event.sender.id);
+    if (!session) {
+      throw new Error('Popup session not found');
+    }
+    return {
+      popupId: session.popupId,
+      pluginName: session.pluginName,
+      title: session.title
+    };
+  });
+
+  ipcMain.handle('plugins-popup-rpc-request', async (event, request) => {
+    const session = pluginPopupSessions.get(event.sender.id);
+    if (!session) throw new Error('Popup session not found');
+
+    const openerContents = webContents.fromId(session.openerId);
+    if (!openerContents || openerContents.isDestroyed()) {
+      throw new Error('Popup opener is not available');
+    }
+
+    const method = String(request?.method || '').trim();
+    if (!method) throw new Error('Missing popup RPC method');
+    const args = Array.isArray(request?.args) ? request.args : [];
+    const requestId = `${session.popupId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    return await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        pluginPopupRpcPending.delete(requestId);
+        reject(new Error(`Popup RPC timeout for method: ${method}`));
+      }, 12000);
+
+      pluginPopupRpcPending.set(requestId, {
+        resolve,
+        reject,
+        timeout
+      });
+
+      openerContents.send('plugins-popup-rpc-request', {
+        requestId,
+        popupId: session.popupId,
+        pluginName: session.pluginName,
+        method,
+        args
+      });
+    });
+  });
+
+  ipcMain.on('plugins-popup-rpc-response', (event, payload) => {
+    const requestId = String(payload?.requestId || '').trim();
+    if (!requestId) return;
+    const pending = pluginPopupRpcPending.get(requestId);
+    if (!pending) return;
+
+    pluginPopupRpcPending.delete(requestId);
+    clearTimeout(pending.timeout);
+
+    if (payload?.ok === false) {
+      pending.reject(new Error(String(payload?.error || 'Popup RPC failed')));
+      return;
+    }
+
+    pending.resolve(payload?.result);
   });
 
   ipcMain.handle('plugins-read-file', async (event, relativeFile) => {
@@ -301,6 +428,42 @@ function setupPluginHandlers() {
       return [];
     }
   });
+}
+
+function clampPopupSize(value, min, max, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(n)));
+}
+
+async function buildPluginPopupHtml({ title, html }) {
+  const escapedTitle = String(title)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+  const content = String(html || '').trim() || `
+    <section class="plugin-window-shell">
+      <h1>${escapedTitle}</h1>
+      <p>This popup is ready. Pass <code>popupHtml</code> from your plugin to render custom content here.</p>
+    </section>
+  `;
+
+  if (!pluginPopupTemplateCache) {
+    try {
+      const templatePath = path.join(__dirname, 'templates', 'plugin-popup.html');
+      pluginPopupTemplateCache = await fs.readFile(templatePath, 'utf8');
+    } catch (err) {
+      console.warn('Failed to load plugin popup template. Using fallback inline template.', err);
+      pluginPopupTemplateCache = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>{{TITLE}}</title></head><body>{{CONTENT}}</body></html>';
+    }
+  }
+
+  return pluginPopupTemplateCache
+    .replaceAll('{{TITLE}}', escapedTitle)
+    .replaceAll('{{CONTENT}}', content);
 }
 
 function setupPluginWatcher() {

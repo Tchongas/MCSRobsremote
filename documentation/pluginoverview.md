@@ -89,6 +89,47 @@ Inside your plugin code, you can use:
 
 Plugins can also add buttons to the right sidebar (not tied to any specific source). Use `PluginUtils.registerSidebarButton()` for this. The button persists until the plugin unregisters it.
 
+## Workspace plugins (modal + popup)
+
+For plugin UIs that need more space than a dashboard row, use the shared workspace modal.
+
+- `PluginUtils.registerModalSidebarButton(...)` adds a sidebar button and opens the workspace modal
+- `PluginUtils.openPluginModal(...)` opens the modal directly and gives you a `mount` node
+- `PluginUtils.openPluginPopup(...)` opens a detached Electron window (optional)
+
+Minimal pattern:
+
+```javascript
+window.PluginUtils.registerModalSidebarButton(
+  'MyWorkspacePlugin',
+  'my_workspace_open',
+  'Open Workspace',
+  async ({ mount, close }) => {
+    const shell = document.createElement('section');
+    shell.className = 'plugin-shell';
+    shell.innerHTML = `
+      <div class="plugin-toolbar">
+        <strong>My Workspace</strong>
+      </div>
+      <div class="plugin-grid">
+        <article class="plugin-card">Panel A</article>
+        <article class="plugin-card">Panel B</article>
+      </div>
+    `;
+    mount.appendChild(shell);
+  },
+  {
+    title: 'My Workspace Plugin',
+    popupWidth: 1100,
+    popupHeight: 720
+  }
+);
+```
+
+Cleanup tip: call `PluginUtils.unregisterSidebarButtons(pluginName)` in your plugin's `cleanup()`.
+
+Implementation note: workspace modal/popup internals live in `PluginWorkspaceUtils.js`, while core helpers stay in `PluginUtils.js`. Public API remains available through `window.PluginUtils`.
+
 ## Config files
 
 You can ship a `.json` file alongside your plugin. Read it with:

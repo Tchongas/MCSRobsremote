@@ -10,6 +10,7 @@ The OBS Remote app features a powerful plugin system that allows users to extend
 
 1. **Built-in Plugins**: Compiled into the app, located in `renderer/logic/handlers/plugins/`
 2. **External Plugins**: User-provided `.js` files in the `plugins/` folder next to the app executable
+3. **Workspace Plugins (pattern)**: Plugins that register a sidebar button and render a full modal/popup UI via `PluginUtils.registerModalSidebarButton`
 
 ### Directory Structure
 
@@ -21,6 +22,16 @@ app-directory/
     ├── TwitchEnhancer.js      # User plugin
     └── ExamplePlugin.js       # Template plugin
 ```
+
+### Internal plugin UI file split (maintainability)
+
+To keep files from growing into monoliths:
+
+- `renderer/logic/handlers/PluginUtils.js` keeps core source helpers + sidebar button registry
+- `renderer/logic/handlers/PluginWorkspaceUtils.js` owns modal/popup workspace APIs
+- `main/templates/plugin-popup.html` stores popup shell HTML/CSS (loaded by main process)
+
+`PluginWorkspaceUtils` merges its public methods back into `window.PluginUtils` for backward compatibility.
 
 ## 📋 Plugin Interface
 
@@ -110,6 +121,63 @@ const MyPlugin = {
 ```
 
 ## 🛠️ Available APIs
+
+### Workspace UI APIs (new scaffold)
+
+Use these when your plugin needs a full control panel instead of per-source controls.
+
+```javascript
+window.PluginUtils.registerModalSidebarButton(
+  'MyWorkspacePlugin',
+  'my_workspace_open',
+  'Open Workspace',
+  async ({ mount, close }) => {
+    const shell = document.createElement('section');
+    shell.className = 'plugin-shell';
+    shell.innerHTML = `
+      <div class="plugin-toolbar"><strong>My Workspace</strong></div>
+      <div class="plugin-grid">
+        <article class="plugin-card">Panel A</article>
+        <article class="plugin-card">Panel B</article>
+      </div>
+    `;
+    mount.appendChild(shell);
+  },
+  {
+    title: 'My Workspace Plugin',
+    popupWidth: 1100,
+    popupHeight: 720,
+    popupHtml: '<section class="plugin-window-shell"><h1>Detached UI</h1></section>'
+  }
+);
+```
+
+Related helpers:
+
+- `PluginUtils.openPluginModal(pluginName, options)`
+- `PluginUtils.closePluginModal()`
+- `PluginUtils.openPluginPopup(pluginName, { title, width, height, html })`
+- `PluginUtils.registerPopupRpcHandlers(pluginName, handlers)`
+- `PluginUtils.createPopupHtml(pluginName, { bodyHtml, script })`
+
+#### Detached popup pipeline (recommended)
+
+Use this pattern when your plugin should work both in modal and popout without duplicating OBS logic:
+
+1. Register popup handlers in main renderer (`registerPopupRpcHandlers`) using your existing `PluginUtils` methods.
+2. Build popup HTML with `createPopupHtml(...)`.
+3. In popup script, call host handlers with `window.pluginPopupHost.call(method, ...args)`.
+4. Reuse the same handler methods from modal and popup to keep behavior identical.
+
+This makes future features (e.g. click-to-select lists on stream blocks) easier to add in one place.
+
+### Live stream layout management pattern
+
+For stream router/manager plugins (e.g. sources named `_*Stream1`, `_*Stream2`, etc):
+
+- Change stream content with `PluginUtils.setSourceURL(source, url)` (this refreshes browser source content)
+- Reorder visual layout with `PluginUtils.swapSourcePositions(a, b, scene)` (position-only, avoids URL refresh)
+- For manual layout placement, use `PluginUtils.getSourceTransform()` + `PluginUtils.setSourcePosition()`
 
 ### OBS API Access
 

@@ -134,6 +134,26 @@
     return await window.obsAPI.browser.getUrl(name);
   };
 
+  const swapSourceURLs = async (sourceA, sourceB) => {
+    const a = String(sourceA || '').trim();
+    const b = String(sourceB || '').trim();
+    if (!a || !b) throw new Error('Missing source names');
+    if (a === b) return;
+
+    const [aRes, bRes] = await Promise.all([
+      getSourceURL(a),
+      getSourceURL(b)
+    ]);
+
+    const aUrl = typeof aRes === 'string' ? aRes : String(aRes?.inputSettings?.url || '');
+    const bUrl = typeof bRes === 'string' ? bRes : String(bRes?.inputSettings?.url || '');
+
+    await Promise.all([
+      setSourceURL(a, bUrl),
+      setSourceURL(b, aUrl)
+    ]);
+  };
+
   const setSourceVolume = async (sourceName, volume) => {
     const name = String(sourceName || '').trim();
     if (!name) throw new Error('Missing source name');
@@ -180,6 +200,103 @@
       const nm = it?.sourceName ?? it?.inputName ?? '';
       return String(nm) === target;
     }) || null;
+  };
+
+  const listSceneItems = async (sceneName) => {
+    if (!window.obsAPI?.sceneItems?.list) throw new Error('OBS API not available');
+    const scene = String(sceneName || '').trim() || _getCurrentSceneName();
+    if (!scene) throw new Error('Missing scene name');
+    const res = await window.obsAPI.sceneItems.list(scene);
+    const items = res && (res.sceneItems || res.items || res);
+    if (!Array.isArray(items)) throw new Error('Unexpected scene item list response');
+    return items;
+  };
+
+  const getSourceSceneItem = async (sourceName, sceneName) => {
+    const name = String(sourceName || '').trim();
+    if (!name) throw new Error('Missing source name');
+    const scene = String(sceneName || '').trim() || _getCurrentSceneName();
+    if (!scene) throw new Error('Missing scene name');
+    const item = await _findSceneItemBySourceName(scene, name);
+    if (!item) throw new Error(`Scene item not found: ${name}`);
+    return item;
+  };
+
+  const getSourceTransform = async (sourceName, sceneName) => {
+    const scene = String(sceneName || '').trim() || _getCurrentSceneName();
+    if (!scene) throw new Error('Missing scene name');
+    if (!window.obsAPI?.sceneItems?.getTransform) throw new Error('OBS API not available');
+    const item = await getSourceSceneItem(sourceName, scene);
+    const res = await window.obsAPI.sceneItems.getTransform(scene, item.sceneItemId);
+    return res?.sceneItemTransform || res || null;
+  };
+
+  const setSourceTransform = async (sourceName, transform, sceneName, options = {}) => {
+    const scene = String(sceneName || '').trim() || _getCurrentSceneName();
+    if (!scene) throw new Error('Missing scene name');
+    if (!window.obsAPI?.sceneItems?.setTransform) throw new Error('OBS API not available');
+    const item = await getSourceSceneItem(sourceName, scene);
+    const input = transform && typeof transform === 'object' ? transform : {};
+    const payload = {};
+    Object.entries(input).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      if (typeof value === 'number' && !Number.isFinite(value)) return;
+      if (key === 'sourceWidth' || key === 'sourceHeight' || key === 'width' || key === 'height') return;
+      payload[key] = value;
+    });
+
+    if (typeof payload.boundsWidth === 'number' && payload.boundsWidth < 1) {
+      delete payload.boundsWidth;
+    }
+    if (typeof payload.boundsHeight === 'number' && payload.boundsHeight < 1) {
+      delete payload.boundsHeight;
+    }
+
+    await window.obsAPI.sceneItems.setTransform(scene, item.sceneItemId, payload);
+    if (options?.refreshDashboard) {
+      requestDashboardRefresh('setSourceTransform');
+    }
+  };
+
+  const setSourcePosition = async (sourceName, x, y, sceneName, options = {}) => {
+    await setSourceTransform(sourceName, {
+      positionX: Number(x),
+      positionY: Number(y)
+    }, sceneName, options);
+  };
+
+  const swapSourcePositions = async (sourceA, sourceB, sceneName) => {
+    const [ta, tb] = await Promise.all([
+      getSourceTransform(sourceA, sceneName),
+      getSourceTransform(sourceB, sceneName)
+    ]);
+
+    const ax = Number(ta?.positionX ?? 0);
+    const ay = Number(ta?.positionY ?? 0);
+    const bx = Number(tb?.positionX ?? 0);
+    const by = Number(tb?.positionY ?? 0);
+
+    await Promise.all([
+      setSourcePosition(sourceA, bx, by, sceneName),
+      setSourcePosition(sourceB, ax, ay, sceneName)
+    ]);
+  };
+
+  const swapSourceTransforms = async (sourceA, sourceB, sceneName) => {
+    const a = String(sourceA || '').trim();
+    const b = String(sourceB || '').trim();
+    if (!a || !b) throw new Error('Missing source names');
+    if (a === b) return;
+
+    const [ta, tb] = await Promise.all([
+      getSourceTransform(a, sceneName),
+      getSourceTransform(b, sceneName)
+    ]);
+
+    await Promise.all([
+      setSourceTransform(a, tb || {}, sceneName),
+      setSourceTransform(b, ta || {}, sceneName)
+    ]);
   };
 
   const getSourceEnabled = async (sourceName, sceneName) => {
@@ -418,6 +535,7 @@
     getSourceText,
     setSourceURL,
     getSourceURL,
+    swapSourceURLs,
     setSourceVolume,
     getSourceVolume,
     getSourceVolumePercent,
@@ -425,6 +543,13 @@
     getSourceEnabled,
     toggleSourceEnabled,
     setSourceVisibility,
+    listSceneItems,
+    getSourceSceneItem,
+    getSourceTransform,
+    setSourceTransform,
+    setSourcePosition,
+    swapSourcePositions,
+    swapSourceTransforms,
     addControlButton,
     removeControlButton,
     registerSidebarButton,

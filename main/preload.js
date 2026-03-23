@@ -20,7 +20,9 @@ contextBridge.exposeInMainWorld('obsAPI', {
   },
   sceneItems: {
     list: (sceneName) => ipcRenderer.invoke('sceneItems-list', sceneName),
-    setEnabled: (sceneName, sceneItemId, sceneItemEnabled) => ipcRenderer.invoke('sceneItems-setEnabled', sceneName, sceneItemId, sceneItemEnabled)
+    setEnabled: (sceneName, sceneItemId, sceneItemEnabled) => ipcRenderer.invoke('sceneItems-setEnabled', sceneName, sceneItemId, sceneItemEnabled),
+    getTransform: (sceneName, sceneItemId) => ipcRenderer.invoke('sceneItems-getTransform', sceneName, sceneItemId),
+    setTransform: (sceneName, sceneItemId, sceneItemTransform) => ipcRenderer.invoke('sceneItems-setTransform', sceneName, sceneItemId, sceneItemTransform)
   },
   browser: {
     getUrl: (inputName) => ipcRenderer.invoke('browser-getUrl', inputName),
@@ -64,10 +66,26 @@ contextBridge.exposeInMainWorld('pluginAPI', {
   getPluginDirectory: () => ipcRenderer.invoke('plugins-get-directory'),
   openPluginFolder: () => ipcRenderer.invoke('plugins-open-folder'),
   readFile: (relativeFile) => ipcRenderer.invoke('plugins-read-file', relativeFile),
+  openPopup: (payload) => ipcRenderer.invoke('plugins-open-popup', payload),
+  onPopupRpcRequest: (callback) => {
+    ipcRenderer.on('plugins-popup-rpc-request', (event, data) => callback(data));
+  },
+  respondPopupRpc: (requestId, response) => {
+    ipcRenderer.send('plugins-popup-rpc-response', { requestId, ...(response || {}) });
+  },
+  removePopupRpcListeners: () => {
+    ipcRenderer.removeAllListeners('plugins-popup-rpc-request');
+  },
   watchPluginDirectory: (callback) => {
     ipcRenderer.on('plugins-directory-changed', (event, data) => callback(data));
   },
   removePluginWatchers: () => {
     ipcRenderer.removeAllListeners('plugins-directory-changed');
   }
+});
+
+// Popup RPC bridge (compatibility: available in both main and popup preloads)
+contextBridge.exposeInMainWorld('pluginPopupAPI', {
+  getContext: () => ipcRenderer.invoke('plugins-popup-get-context'),
+  callHost: (method, ...args) => ipcRenderer.invoke('plugins-popup-rpc-request', { method, args })
 });

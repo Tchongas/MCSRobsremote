@@ -10,4 +10,14 @@ async function setEnabled(sceneName, sceneItemId, sceneItemEnabled) {
   return obs.call('SetSceneItemEnabled', { sceneName, sceneItemId, sceneItemEnabled });
 }
 
-module.exports = { list, setEnabled };
+async function getTransform(sceneName, sceneItemId) {
+  await connect();
+  return obs.call('GetSceneItemTransform', { sceneName, sceneItemId });
+}
+
+async function setTransform(sceneName, sceneItemId, sceneItemTransform) {
+  await connect();
+  return obs.call('SetSceneItemTransform', { sceneName, sceneItemId, sceneItemTransform });
+}
+
+module.exports = { list, setEnabled, getTransform, setTransform };
