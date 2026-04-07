@@ -65,11 +65,6 @@ When someone else changes something in OBS (or from another ROBS instance), your
 ## Plugins
 
 Plugins let you add custom controls for specific source types. Drop a `.js` file in the `plugins/` folder and the app picks it up automatically — no restart needed.
-
-See the full plugin docs:
-- [Plugin Overview](documentation/pluginoverview.md) — how plugins work, lifecycle, structure
-- [Plugin API Reference](documentation/pluginAPI.md) — all available functions with inputs/outputs
-
 ## Building
 
 Requires Node.js. Uses Electron Builder.

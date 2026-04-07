@@ -20,7 +20,9 @@ contextBridge.exposeInMainWorld('obsAPI', {
   },
   sceneItems: {
     list: (sceneName) => ipcRenderer.invoke('sceneItems-list', sceneName),
+    listGroup: (groupName) => ipcRenderer.invoke('sceneItems-listGroup', groupName),
     setEnabled: (sceneName, sceneItemId, sceneItemEnabled) => ipcRenderer.invoke('sceneItems-setEnabled', sceneName, sceneItemId, sceneItemEnabled),
+    setGroupEnabled: (groupName, sceneItemId, sceneItemEnabled) => ipcRenderer.invoke('sceneItems-setGroupEnabled', groupName, sceneItemId, sceneItemEnabled),
     getTransform: (sceneName, sceneItemId) => ipcRenderer.invoke('sceneItems-getTransform', sceneName, sceneItemId),
     setTransform: (sceneName, sceneItemId, sceneItemTransform) => ipcRenderer.invoke('sceneItems-setTransform', sceneName, sceneItemId, sceneItemTransform)
   },

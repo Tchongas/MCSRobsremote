@@ -20,6 +20,7 @@
     enterEnd: '_EnterEnd',
     finalTime: '_FinalTime'
   };
+  const RUNNER_CSV_FILE = 'RunnerSync.csv';
 
   function _defaultConfig() {
     return {
@@ -78,9 +79,99 @@
     return json.data;
   }
 
+  function _parseCsvLine(line) {
+    const out = [];
+    let cur = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i += 1) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          cur += '"';
+          i += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+      if (ch === ',' && !inQuotes) {
+        out.push(cur.trim());
+        cur = '';
+        continue;
+      }
+      cur += ch;
+    }
+
+    out.push(cur.trim());
+    return out;
+  }
+
+  function _normalizeHeader(value) {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_');
+  }
+
+  async function _loadRunnerCsvRows() {
+    if (!window.pluginAPI?.readFile) return [];
+
+    const raw = await window.pluginAPI.readFile(RUNNER_CSV_FILE);
+    const lines = String(raw || '')
+      .split(/\r?\n/g)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('#'));
+
+    if (!lines.length) return [];
+
+    const headers = _parseCsvLine(lines[0]).map(_normalizeHeader);
+    const rows = [];
+
+    for (let i = 1; i < lines.length; i += 1) {
+      const values = _parseCsvLine(lines[i]);
+      const row = {};
+      headers.forEach((h, idx) => {
+        row[h] = String(values[idx] || '').trim();
+      });
+      if (row.ign) rows.push(row);
+    }
+
+    return rows;
+  }
+
+  function _resolveIgnFromCsv(rows, input) {
+    const raw = String(input || '').trim();
+    if (!raw) return '';
+
+    const key = raw.toLowerCase();
+    const found = rows.find((row) => {
+      const ign = String(row?.ign || '').trim().toLowerCase();
+      const chosen = String(row?.chosen_name || '').trim().toLowerCase();
+      const twitch = String(row?.twitchname || '').trim().toLowerCase();
+      return key === ign || key === chosen || key === twitch;
+    });
+
+    return String(found?.ign || raw).trim();
+  }
+
   async function _getPlayerIGNs() {
-    const ign1 = await window.PluginUtils.getSourceText('_IGN1');
-    const ign2 = await window.PluginUtils.getSourceText('_IGN2');
+    const ign1Raw = await window.PluginUtils.getSourceText('_IGN1');
+    const ign2Raw = await window.PluginUtils.getSourceText('_IGN2');
+
+    let ign1 = String(ign1Raw || '').trim();
+    let ign2 = String(ign2Raw || '').trim();
+
+    try {
+      const rows = await _loadRunnerCsvRows();
+      if (rows.length) {
+        ign1 = _resolveIgnFromCsv(rows, ign1);
+        ign2 = _resolveIgnFromCsv(rows, ign2);
+      }
+    } catch (e) {
+      window.uiHelpers?.logWarn(`Splits CSV resolve skipped: ${e?.message || e}`, 'splits');
+    }
+
     return {
       ign1: String(ign1 || '').trim().toLowerCase(),
       ign2: String(ign2 || '').trim().toLowerCase()

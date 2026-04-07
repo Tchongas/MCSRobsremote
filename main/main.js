@@ -130,8 +130,16 @@ function setupIpcHandlers() {
     return await sceneItems.list(sceneName);
   });
 
+  ipcMain.handle('sceneItems-listGroup', async (event, groupName) => {
+    return await sceneItems.listGroup(groupName);
+  });
+
   ipcMain.handle('sceneItems-setEnabled', async (event, sceneName, sceneItemId, sceneItemEnabled) => {
     return await sceneItems.setEnabled(sceneName, sceneItemId, sceneItemEnabled);
+  });
+
+  ipcMain.handle('sceneItems-setGroupEnabled', async (event, groupName, sceneItemId, sceneItemEnabled) => {
+    return await sceneItems.setGroupEnabled(groupName, sceneItemId, sceneItemEnabled);
   });
 
   ipcMain.handle('sceneItems-getTransform', async (event, sceneName, sceneItemId) => {

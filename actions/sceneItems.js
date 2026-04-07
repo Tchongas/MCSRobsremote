@@ -5,9 +5,19 @@ async function list(sceneName) {
   return obs.call('GetSceneItemList', { sceneName });
 }
 
+async function listGroup(groupName) {
+  await connect();
+  return obs.call('GetGroupSceneItemList', { sceneName: groupName });
+}
+
 async function setEnabled(sceneName, sceneItemId, sceneItemEnabled) {
   await connect();
   return obs.call('SetSceneItemEnabled', { sceneName, sceneItemId, sceneItemEnabled });
+}
+
+async function setGroupEnabled(groupName, sceneItemId, sceneItemEnabled) {
+  await connect();
+  return obs.call('SetSceneItemEnabled', { sceneName: groupName, sceneItemId, sceneItemEnabled });
 }
 
 async function getTransform(sceneName, sceneItemId) {
@@ -20,4 +30,4 @@ async function setTransform(sceneName, sceneItemId, sceneItemTransform) {
   return obs.call('SetSceneItemTransform', { sceneName, sceneItemId, sceneItemTransform });
 }
 
-module.exports = { list, setEnabled, getTransform, setTransform };
+module.exports = { list, listGroup, setEnabled, setGroupEnabled, getTransform, setTransform };
