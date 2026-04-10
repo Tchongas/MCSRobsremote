@@ -3,15 +3,16 @@
   const APPEARANCE_STORAGE_KEY = 'obsAppearanceSettings';
   const DEFAULT_APPEARANCE = {
     fontScale: 100,
-    sidebarScale: 100,
+    sidebarScale: 90,
     sceneScale: 100,
-    dashboardRowScale: 100,
+    sceneContainerHeight: 420,
+    dashboardRowScale: 105,
     pluginScale: 100,
     consoleFontSize: 12,
     dashboardEmojis: true,
     highContrast: false,
-    reducedMotion: false,
-    hideConsole: false,
+    reducedMotion: true,
+    hideConsole: true,
     hideStreamControls: false,
     hideDashboard: false
   };
@@ -45,6 +46,7 @@
       fontScale,
       sidebarScale: toSteppedScale(input.sidebarScale, DEFAULT_APPEARANCE.sidebarScale, 85, 130, 5),
       sceneScale: toSteppedScale(input.sceneScale, DEFAULT_APPEARANCE.sceneScale, 85, 140, 5),
+      sceneContainerHeight: toSteppedScale(input.sceneContainerHeight, DEFAULT_APPEARANCE.sceneContainerHeight, 220, 760, 20),
       dashboardRowScale: toSteppedScale(input.dashboardRowScale, DEFAULT_APPEARANCE.dashboardRowScale, 75, 130, 5),
       pluginScale: toSteppedScale(input.pluginScale, DEFAULT_APPEARANCE.pluginScale, 85, 130, 5),
       consoleFontSize: toSteppedScale(input.consoleFontSize, DEFAULT_APPEARANCE.consoleFontSize, 10, 18, 1),
@@ -79,6 +81,7 @@
     root.style.setProperty('--ui-zoom', String(safe.fontScale / 100));
     root.style.setProperty('--sidebar-scale', String(safe.sidebarScale / 100));
     root.style.setProperty('--scene-scale', String(safe.sceneScale / 100));
+    root.style.setProperty('--scene-container-height', `${safe.sceneContainerHeight}px`);
     root.style.setProperty('--dashboard-row-scale', String(safe.dashboardRowScale / 100));
     root.style.setProperty('--plugin-scale', String(safe.pluginScale / 100));
     root.style.setProperty('--console-font-size', `${safe.consoleFontSize}px`);
@@ -133,6 +136,8 @@
     const sidebarScaleValue = document.getElementById('appearanceSidebarScaleValue');
     const sceneScaleInput = document.getElementById('appearanceSceneScale');
     const sceneScaleValue = document.getElementById('appearanceSceneScaleValue');
+    const sceneContainerHeightInput = document.getElementById('appearanceSceneContainerHeight');
+    const sceneContainerHeightValue = document.getElementById('appearanceSceneContainerHeightValue');
     const dashboardRowScaleInput = document.getElementById('appearanceDashboardRowScale');
     const dashboardRowScaleValue = document.getElementById('appearanceDashboardRowScaleValue');
     const pluginScaleInput = document.getElementById('appearancePluginScale');
@@ -152,6 +157,8 @@
     if (sidebarScaleValue) sidebarScaleValue.textContent = `${safe.sidebarScale}%`;
     if (sceneScaleInput) sceneScaleInput.value = String(safe.sceneScale);
     if (sceneScaleValue) sceneScaleValue.textContent = `${safe.sceneScale}%`;
+    if (sceneContainerHeightInput) sceneContainerHeightInput.value = String(safe.sceneContainerHeight);
+    if (sceneContainerHeightValue) sceneContainerHeightValue.textContent = `${safe.sceneContainerHeight}px`;
     if (dashboardRowScaleInput) dashboardRowScaleInput.value = String(safe.dashboardRowScale);
     if (dashboardRowScaleValue) dashboardRowScaleValue.textContent = `${safe.dashboardRowScale}%`;
     if (pluginScaleInput) pluginScaleInput.value = String(safe.pluginScale);
@@ -170,6 +177,7 @@
     const scaleInput = document.getElementById('appearanceFontScale');
     const sidebarScaleInput = document.getElementById('appearanceSidebarScale');
     const sceneScaleInput = document.getElementById('appearanceSceneScale');
+    const sceneContainerHeightInput = document.getElementById('appearanceSceneContainerHeight');
     const dashboardRowScaleInput = document.getElementById('appearanceDashboardRowScale');
     const pluginScaleInput = document.getElementById('appearancePluginScale');
     const consoleFontSizeInput = document.getElementById('appearanceConsoleFontSize');
@@ -184,6 +192,7 @@
       fontScale: scaleInput ? Number(scaleInput.value) : DEFAULT_APPEARANCE.fontScale,
       sidebarScale: sidebarScaleInput ? Number(sidebarScaleInput.value) : DEFAULT_APPEARANCE.sidebarScale,
       sceneScale: sceneScaleInput ? Number(sceneScaleInput.value) : DEFAULT_APPEARANCE.sceneScale,
+      sceneContainerHeight: sceneContainerHeightInput ? Number(sceneContainerHeightInput.value) : DEFAULT_APPEARANCE.sceneContainerHeight,
       dashboardRowScale: dashboardRowScaleInput ? Number(dashboardRowScaleInput.value) : DEFAULT_APPEARANCE.dashboardRowScale,
       pluginScale: pluginScaleInput ? Number(pluginScaleInput.value) : DEFAULT_APPEARANCE.pluginScale,
       consoleFontSize: consoleFontSizeInput ? Number(consoleFontSizeInput.value) : DEFAULT_APPEARANCE.consoleFontSize,
@@ -390,6 +399,7 @@
       ['appearanceFontScale', 'appearanceFontScaleValue', '%'],
       ['appearanceSidebarScale', 'appearanceSidebarScaleValue', '%'],
       ['appearanceSceneScale', 'appearanceSceneScaleValue', '%'],
+      ['appearanceSceneContainerHeight', 'appearanceSceneContainerHeightValue', 'px'],
       ['appearanceDashboardRowScale', 'appearanceDashboardRowScaleValue', '%'],
       ['appearancePluginScale', 'appearancePluginScaleValue', '%'],
       ['appearanceConsoleFontSize', 'appearanceConsoleFontSizeValue', 'px']

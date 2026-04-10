@@ -410,7 +410,26 @@
       expandBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
       options.setAttribute('aria-hidden', expanded ? 'false' : 'true');
       setArrow();
-      if (expanded) enableTabInside(options);
+      if (expanded) {
+        enableTabInside(options);
+        requestAnimationFrame(() => {
+          const scroller = options.closest('.dash-list');
+          const itemWrap = options.closest('.dash-item');
+          if (!scroller || !itemWrap) return;
+
+          const scrollerRect = scroller.getBoundingClientRect();
+          const itemRect = itemWrap.getBoundingClientRect();
+          const bottomGap = 18;
+
+          if (itemRect.bottom > scrollerRect.bottom - bottomGap) {
+            scroller.scrollTop += itemRect.bottom - (scrollerRect.bottom - bottomGap);
+          }
+
+          if (itemRect.top < scrollerRect.top) {
+            scroller.scrollTop -= (scrollerRect.top - itemRect.top);
+          }
+        });
+      }
       else disableTabInside(options);
     };
     applyExpanded();
