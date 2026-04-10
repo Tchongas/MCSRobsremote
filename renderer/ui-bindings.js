@@ -9,8 +9,10 @@
             refreshScenes, 
             loadDashboardItems, 
             getStoredConfig, 
-            showSettingsModal, 
-            hideSettingsModal, 
+            showSettingsPage, 
+            hideSettingsPage, 
+            saveAppearanceSettings,
+            resetAppearanceSettings,
             saveSettings, 
             resetSettings, 
             handleProfileChange, 
@@ -78,7 +80,7 @@
         if (window.sceneLogic?.refreshScenes) window.sceneLogic.refreshScenes();
         return;
       }
-      // Escape — close settings modal if open, or blur active input
+      // Escape — close settings page if open, or blur active input
       if (e.key === 'Escape' && !isInput) {
         const pluginModal = document.getElementById('pluginModal');
         if (pluginModal && pluginModal.style.display !== 'none') {
@@ -87,17 +89,17 @@
           return;
         }
 
-        const modal = document.getElementById('settingsModal');
-        if (modal && modal.style.display !== 'none') {
+        const page = document.getElementById('settingsPage');
+        if (page && !page.classList.contains('hidden')) {
           e.preventDefault();
-          if (window.configLogic?.hideSettingsModal) window.configLogic.hideSettingsModal();
+          if (window.configLogic?.hideSettingsPage) window.configLogic.hideSettingsPage();
           return;
         }
       }
       // F1 — open settings / info
       if (e.key === 'F1') {
         e.preventDefault();
-        if (window.configLogic?.showSettingsModal) window.configLogic.showSettingsModal('info');
+        if (window.configLogic?.showSettingsPage) window.configLogic.showSettingsPage('info');
         return;
       }
     });
@@ -232,17 +234,17 @@
       });
     }
 
-    // Settings modal event handlers
+    // Settings page event handlers
     const settingsBtn = document.getElementById('settingsBtn');
     if (settingsBtn) {
-      settingsBtn.addEventListener('click', showSettingsModal);
+      settingsBtn.addEventListener('click', showSettingsPage);
     } else {
       console.error('settings button not found');
     }
 
     const closeSettings = document.getElementById('closeSettings');
     if (closeSettings) {
-      closeSettings.addEventListener('click', hideSettingsModal);
+      closeSettings.addEventListener('click', hideSettingsPage);
     } else {
       console.error('close settings button not found');
     }
@@ -259,6 +261,16 @@
       resetSettingsBtn.addEventListener('click', resetSettings);
     } else {
       console.error('reset settings button not found');
+    }
+
+    const saveAppearanceBtn = document.getElementById('saveAppearance');
+    if (saveAppearanceBtn) {
+      saveAppearanceBtn.addEventListener('click', saveAppearanceSettings);
+    }
+
+    const resetAppearanceBtn = document.getElementById('resetAppearance');
+    if (resetAppearanceBtn) {
+      resetAppearanceBtn.addEventListener('click', resetAppearanceSettings);
     }
     
     // Profile management event handlers

@@ -60,7 +60,7 @@
             </div>
           </div>
 
-          <div class="sidebar-section">
+          <div class="sidebar-section" id="streamControlsSection">
             <h3 class="sidebar-title">Stream</h3>
             <button id="streamToggle" class="stream-toggle-btn" tabindex="-1" data-streaming="false">
               <div class="stream-toggle-indicator"></div>
@@ -92,7 +92,7 @@
         </aside>
 
         <!-- Center - Dashboard -->
-        <main class="dashboard-area">
+        <main class="dashboard-area" id="dashboardArea">
           <div class="dashboard-header">
             <h2 class="dashboard-title">Sources</h2>
             <span id="dashboardSceneTag" class="dashboard-scene-tag"></span>
@@ -150,7 +150,7 @@
       </div>
 
       <!-- Console Area with resize handle -->
-      <div class="resize-handle resize-handle-console" data-resize="console"></div>
+      <div class="resize-handle resize-handle-console" id="consoleResizeHandle" data-resize="console"></div>
       <section class="console-area" id="consoleArea">
         <div class="console-header">
           <div class="console-title">
@@ -177,84 +177,98 @@
       </section>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="modal" style="display: none;">
-      <div class="modal-content modal-content-tabbed">
-        <div class="modal-header">
-          <h3>Settings</h3>
-          <button id="closeSettings" class="icon-btn">&times;</button>
-        </div>
-
-        <!-- Tab bar -->
-        <div class="modal-tabs" role="tablist">
-          <button class="modal-tab active" data-tab="connection" role="tab" aria-selected="true">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            Connection
-          </button>
-          <button class="modal-tab" data-tab="info" role="tab" aria-selected="false">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="16" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-            </svg>
-            Info
-          </button>
-        </div>
-
-        <!-- Connection tab -->
-        <div class="modal-tab-panel active" data-panel="connection" role="tabpanel">
-          <div class="modal-body">
-            <div class="form-group">
-              <label for="profileSelect" class="input-label">Connection Profile</label>
-              <div class="profile-row">
-                <select id="profileSelect" class="input-grow">
-                  <option value="Default">Default</option>
-                </select>
-                <button id="newProfile" class="btn-ghost btn-sm" title="Create new profile">+ New</button>
-                <button id="deleteProfile" class="btn-ghost btn-sm btn-danger-ghost" title="Delete current profile">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  </svg>
-                </button>
-              </div>
-              <small class="help-text">Save multiple OBS connection setups</small>
-            </div>
-            <div class="form-group" id="profileNameGroup" style="display: none;">
-              <label for="profileName" class="input-label">Profile Name</label>
-              <input type="text" id="profileName" class="input-grow" placeholder="Enter profile name">
-              <small class="help-text">Name for this connection profile</small>
-            </div>
-            <div class="form-group">
-              <label for="obsUrl" class="input-label">OBS WebSocket URL</label>
-              <input type="text" id="obsUrl" class="input-grow" placeholder="ws://localhost:4455" value="ws://localhost:4455">
-              <small class="help-text">Default: ws://localhost:4455</small>
-            </div>
-            <div class="form-group">
-              <label for="obsPassword" class="input-label">WebSocket Password</label>
-              <div class="password-row">
-                <input type="password" id="obsPassword" class="input-grow" placeholder="Enter password">
-                <button id="togglePasswordVis" class="icon-btn" title="Show password" type="button">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </button>
-              </div>
-              <small class="help-text">Set in OBS → Tools → WebSocket Server Settings</small>
-            </div>
+    <!-- Settings Page -->
+    <div id="settingsPage" class="settings-page hidden" aria-hidden="true">
+      <div class="settings-shell">
+        <header class="settings-header">
+          <div>
+            <h2 class="settings-title">Settings</h2>
+            <p class="settings-subtitle">Central place for connection and future workspace controls.</p>
           </div>
-          <div class="modal-footer">
-            <button id="resetSettings" class="btn-ghost">Reset to Default</button>
-            <button id="saveSettings" class="btn-accent">Save Settings</button>
-          </div>
-        </div>
+          <button id="closeSettings" class="icon-btn" title="Close settings" aria-label="Close settings">&times;</button>
+        </header>
 
-        <!-- Info tab -->
-        <div class="modal-tab-panel" data-panel="info" role="tabpanel">
-          <div class="modal-body">
+        <div class="settings-layout">
+          <aside class="settings-sidebar" role="tablist" aria-label="Settings Sections">
+            <button class="settings-nav-btn active" data-tab="connection" role="tab" aria-selected="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+              Connection
+            </button>
+            <button class="settings-nav-btn" data-tab="info" role="tab" aria-selected="false">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              Info
+            </button>
+            <button class="settings-nav-btn" data-tab="appearance" role="tab" aria-selected="false">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33"></path>
+                <path d="M4.6 9a1.65 1.65 0 0 1-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6"></path>
+              </svg>
+              Appearance
+            </button>
+          </aside>
+
+          <section class="settings-content" role="region" aria-label="Settings Content">
+            <div class="settings-panel active" data-panel="connection" role="tabpanel">
+              <div class="settings-panel-body">
+                <div class="form-group">
+                  <label for="profileSelect" class="input-label">Connection Profile</label>
+                  <div class="profile-row">
+                    <select id="profileSelect" class="input-grow">
+                      <option value="Default">Default</option>
+                    </select>
+                    <button id="newProfile" class="btn-ghost btn-sm btn-profile-new" title="Create new profile">+ New</button>
+                    <button id="deleteProfile" class="btn-ghost btn-sm btn-profile-delete" title="Delete current profile">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  <small class="help-text">Save multiple OBS connection setups</small>
+                </div>
+                <div class="form-group" id="profileNameGroup" style="display: none;">
+                  <label for="profileName" class="input-label">Profile Name</label>
+                  <input type="text" id="profileName" class="input-grow" placeholder="Enter profile name">
+                  <small class="help-text">Name for this connection profile</small>
+                </div>
+                <div class="form-group">
+                  <label for="obsUrl" class="input-label">OBS WebSocket URL</label>
+                  <input type="text" id="obsUrl" class="input-grow" placeholder="ws://localhost:4455" value="ws://localhost:4455">
+                  <small class="help-text">Default: ws://localhost:4455</small>
+                </div>
+                <div class="form-group">
+                  <label for="obsPassword" class="input-label">WebSocket Password</label>
+                  <div class="password-row">
+                    <input type="password" id="obsPassword" class="input-grow" placeholder="Enter password">
+                    <button id="togglePasswordVis" class="icon-btn" title="Show password" type="button">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    </button>
+                  </div>
+                  <small>Set in OBS → Tools → WebSocket Server Settings</small>
+                </div>
+                <div class="form-group">
+                  <p>You can save multiple connection profiles for different OBS setups.</p>
+                  <p>Make sure you Enable WebSocket Server in OBS.</p>
+                </div>
+              </div>
+              <div class="settings-panel-footer">
+                <button id="resetSettings" class="btn-ghost btn-reset-strong">Reset to Default</button>
+                <button id="saveSettings" class="btn-accent">Save Settings</button>
+              </div>
+            </div>
+
+            <div class="settings-panel" data-panel="info" role="tabpanel">
+              <div class="settings-panel-body">
             <div class="info-section">
               <h4 class="info-section-title">Keyboard Shortcuts</h4>
               <table class="shortcut-table">
@@ -265,7 +279,7 @@
                   <tr><td><kbd>Ctrl</kbd> + <kbd>F</kbd></td><td>Focus source search bar</td></tr>
                   <tr><td><kbd>Ctrl</kbd> + <kbd>G</kbd></td><td>Focus scene list for keyboard navigation</td></tr>
                   <tr><td><kbd>Ctrl</kbd> + <kbd>Enter</kbd></td><td>Change scene (transition preview to live)</td></tr>
-                  <tr><td><kbd>Escape</kbd></td><td>Close modal / clear search</td></tr>
+                  <tr><td><kbd>Escape</kbd></td><td>Close settings / clear search</td></tr>
                 </tbody>
               </table>
             </div>
@@ -309,9 +323,123 @@
                 <div class="info-about-row"><span class="info-label">Plugins</span><span>Place <code>.js</code> files in the plugins folder</span></div>
               </div>
             </div>
-          </div>
-        </div>
+              </div>
+            </div>
 
+            <div class="settings-panel" data-panel="appearance" role="tabpanel">
+              <div class="settings-panel-body">
+                <div class="info-section">
+                  <h4 class="info-section-title">Readability</h4>
+                  <div class="form-group">
+                    <label for="appearanceFontScale" class="input-label">Font &amp; UI Scale</label>
+                    <div class="appearance-row">
+                      <input id="appearanceFontScale" type="range" min="90" max="140" step="5" value="100">
+                      <span id="appearanceFontScaleValue" class="appearance-value">100%</span>
+                    </div>
+                    <small class="help-text">Increase this on full-monitor setups when text appears too small.</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="appearanceSidebarScale" class="input-label">Sidebar Control Size</label>
+                    <div class="appearance-row">
+                      <input id="appearanceSidebarScale" type="range" min="85" max="130" step="5" value="100">
+                      <span id="appearanceSidebarScaleValue" class="appearance-value">100%</span>
+                    </div>
+                    <small class="help-text">Scales left/right sidebar paddings and control button sizing.</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="appearanceSceneScale" class="input-label">Scene List Button Size</label>
+                    <div class="appearance-row">
+                      <input id="appearanceSceneScale" type="range" min="85" max="140" step="5" value="100">
+                      <span id="appearanceSceneScaleValue" class="appearance-value">100%</span>
+                    </div>
+                    <small class="help-text">Makes scene rows smaller or bigger for faster selection accuracy.</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="appearanceDashboardRowScale" class="input-label">Dashboard Row Size</label>
+                    <div class="appearance-row">
+                      <input id="appearanceDashboardRowScale" type="range" min="75" max="130" step="5" value="100">
+                      <span id="appearanceDashboardRowScaleValue" class="appearance-value">100%</span>
+                    </div>
+                    <small class="help-text">Controls height/spacing of each dashboard source row.</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="appearancePluginScale" class="input-label">Plugin/Quick Action Button Size</label>
+                    <div class="appearance-row">
+                      <input id="appearancePluginScale" type="range" min="85" max="130" step="5" value="100">
+                      <span id="appearancePluginScaleValue" class="appearance-value">100%</span>
+                    </div>
+                    <small class="help-text">Adjusts plugin buttons and right-sidebar quick action button scale.</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="appearanceConsoleFontSize" class="input-label">Console Font Size</label>
+                    <div class="appearance-row">
+                      <input id="appearanceConsoleFontSize" type="range" min="10" max="18" step="1" value="12">
+                      <span id="appearanceConsoleFontSizeValue" class="appearance-value">12px</span>
+                    </div>
+                    <small class="help-text">Useful if you monitor logs from far away.</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="toggle-row">
+                      <input id="appearanceDashboardEmojis" type="checkbox" checked>
+                      <span>Show dashboard source emojis/icons</span>
+                    </label>
+                    <small class="help-text">Disable for a cleaner text-only dashboard list.</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="toggle-row">
+                      <input id="appearanceHighContrast" type="checkbox">
+                      <span>Enable high contrast</span>
+                    </label>
+                    <small class="help-text">Stronger text and border contrast for better visibility.</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="toggle-row">
+                      <input id="appearanceReducedMotion" type="checkbox">
+                      <span>Reduce motion</span>
+                    </label>
+                    <small class="help-text">Minimizes animations and transitions.</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="toggle-row">
+                      <input id="appearanceHideConsole" type="checkbox">
+                      <span>Hide console panel</span>
+                    </label>
+                    <small class="help-text">Useful for plugin-only operation and cleaner workspace.</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="toggle-row">
+                      <input id="appearanceHideStreamControls" type="checkbox">
+                      <span>Hide Start Stream section</span>
+                    </label>
+                    <small class="help-text">Hides stream controls if this machine should not trigger live start/stop.</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="toggle-row">
+                      <input id="appearanceHideDashboard" type="checkbox">
+                      <span>Hide Sources dashboard</span>
+                    </label>
+                    <small class="help-text">Plugin-only layout with focus on scenes and plugin actions.</small>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-panel-footer">
+                <button id="resetAppearance" class="btn-ghost btn-reset-strong">Reset Appearance</button>
+                <button id="saveAppearance" class="btn-accent">Save Appearance</button>
+              </div>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
 
@@ -337,59 +465,6 @@
         </div>
         <div class="plugin-modal-body">
           <div id="pluginModalMount" class="plugin-modal-mount"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Hidden Debug Page -->
-    <div id="debugPage" class="debug-page hidden">
-      <div class="debug-header">
-        <h2>🔧 Debug Console</h2>
-        <button id="closeDebug" class="btn-ghost">✕ Close</button>
-      </div>
-      
-      <div class="debug-content">
-        <div class="debug-controls">
-          <h3>OBS Protocol Requests</h3>
-          
-          <div class="debug-section">
-            <h4>Scenes</h4>
-            <button class="debug-btn" data-request="GetSceneList">Get Scene List</button>
-            <button class="debug-btn" data-request="GetCurrentProgramScene">Get Current Scene</button>
-          </div>
-          
-          <div class="debug-section">
-            <h4>Sources</h4>
-            <button class="debug-btn" data-request="GetSourcesList">Get Sources List</button>
-            <button class="debug-btn" data-request="GetInputList">Get Input List</button>
-            <div class="debug-input-group">
-              <input type="text" id="sceneNameInput" placeholder="Scene name" class="debug-input">
-              <button class="debug-btn" data-request="GetSceneItemList" data-param="sceneName">Get Scene Items</button>
-            </div>
-          </div>
-          
-          <div class="debug-section">
-            <h4>Streaming</h4>
-            <button class="debug-btn" data-request="GetStreamStatus">Get Stream Status</button>
-            <button class="debug-btn" data-request="GetRecordStatus">Get Record Status</button>
-          </div>
-          
-          <div class="debug-section">
-            <h4>Custom Request</h4>
-            <div class="debug-input-group">
-              <input type="text" id="customRequest" placeholder="Request name (e.g. GetVersion)" class="debug-input">
-              <textarea id="customParams" placeholder='Parameters as JSON (e.g. {"sceneName": "Scene 1"})' class="debug-textarea"></textarea>
-              <button id="sendCustomRequest" class="debug-btn">Send Request</button>
-            </div>
-          </div>
-        </div>
-        
-        <div class="debug-output">
-          <div class="debug-output-header">
-            <h4>Response</h4>
-            <button id="clearOutput" class="btn-ghost">Clear</button>
-          </div>
-          <pre id="debugResponse" class="debug-response">Click a button to see the response...</pre>
         </div>
       </div>
     </div>
@@ -421,7 +496,6 @@
     <script src="renderer/titlebar.js"></script>
     <!-- UI bindings (load after logic is initialized) -->
     <script src="renderer/ui-bindings.js"></script>
-    <script src="renderer/logic/debug.js"></script>
 
   </body>
 </html>

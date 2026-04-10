@@ -42,8 +42,14 @@
       // Configuration management
       getStoredConfig: window.configLogic.getStoredConfig,
       saveConfig: window.configLogic.saveConfig,
+      showSettingsPage: window.configLogic.showSettingsPage,
+      hideSettingsPage: window.configLogic.hideSettingsPage,
       showSettingsModal: window.configLogic.showSettingsModal,
       hideSettingsModal: window.configLogic.hideSettingsModal,
+      getAppearanceSettings: window.configLogic.getAppearanceSettings,
+      applyAppearanceSettings: window.configLogic.applyAppearanceSettings,
+      saveAppearanceSettings: window.configLogic.saveAppearanceSettings,
+      resetAppearanceSettings: window.configLogic.resetAppearanceSettings,
       saveSettings: window.configLogic.saveSettings,
       resetSettings: window.configLogic.resetSettings,
       

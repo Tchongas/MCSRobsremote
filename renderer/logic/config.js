@@ -1,5 +1,21 @@
 // Configuration management with multi-profile support
 (function() {
+  const APPEARANCE_STORAGE_KEY = 'obsAppearanceSettings';
+  const DEFAULT_APPEARANCE = {
+    fontScale: 100,
+    sidebarScale: 100,
+    sceneScale: 100,
+    dashboardRowScale: 100,
+    pluginScale: 100,
+    consoleFontSize: 12,
+    dashboardEmojis: true,
+    highContrast: false,
+    reducedMotion: false,
+    hideConsole: false,
+    hideStreamControls: false,
+    hideDashboard: false
+  };
+
   // Safe logging helper
   function safeLog(message) {
     if (window.uiHelpers && window.uiHelpers.logInfo) {
@@ -9,6 +25,190 @@
     } else {
       console.log(message);
     }
+  }
+
+  function sanitizeAppearanceSettings(raw) {
+    const input = raw || {};
+    const toSteppedScale = (value, fallback, min, max, step) => {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return fallback;
+      const snapped = Math.round(n / step) * step;
+      return Math.min(max, Math.max(min, snapped));
+    };
+
+    const parsedScale = Number(input.fontScale);
+    const fontScale = Number.isFinite(parsedScale)
+      ? Math.min(140, Math.max(90, Math.round(parsedScale / 5) * 5))
+      : DEFAULT_APPEARANCE.fontScale;
+
+    return {
+      fontScale,
+      sidebarScale: toSteppedScale(input.sidebarScale, DEFAULT_APPEARANCE.sidebarScale, 85, 130, 5),
+      sceneScale: toSteppedScale(input.sceneScale, DEFAULT_APPEARANCE.sceneScale, 85, 140, 5),
+      dashboardRowScale: toSteppedScale(input.dashboardRowScale, DEFAULT_APPEARANCE.dashboardRowScale, 75, 130, 5),
+      pluginScale: toSteppedScale(input.pluginScale, DEFAULT_APPEARANCE.pluginScale, 85, 130, 5),
+      consoleFontSize: toSteppedScale(input.consoleFontSize, DEFAULT_APPEARANCE.consoleFontSize, 10, 18, 1),
+      dashboardEmojis: input.dashboardEmojis !== false,
+      highContrast: !!input.highContrast,
+      reducedMotion: !!input.reducedMotion,
+      hideConsole: !!input.hideConsole,
+      hideStreamControls: !!input.hideStreamControls,
+      hideDashboard: !!input.hideDashboard
+    };
+  }
+
+  function getAppearanceSettings() {
+    try {
+      const raw = localStorage.getItem(APPEARANCE_STORAGE_KEY);
+      if (!raw) return { ...DEFAULT_APPEARANCE };
+      return sanitizeAppearanceSettings(JSON.parse(raw));
+    } catch (_) {
+      return { ...DEFAULT_APPEARANCE };
+    }
+  }
+
+  function persistAppearanceSettings(settings) {
+    localStorage.setItem(APPEARANCE_STORAGE_KEY, JSON.stringify(settings));
+  }
+
+  function applyAppearanceSettings(settings) {
+    const safe = sanitizeAppearanceSettings(settings);
+    const root = document.documentElement;
+    const mainLayout = document.querySelector('.main-layout');
+
+    root.style.setProperty('--ui-zoom', String(safe.fontScale / 100));
+    root.style.setProperty('--sidebar-scale', String(safe.sidebarScale / 100));
+    root.style.setProperty('--scene-scale', String(safe.sceneScale / 100));
+    root.style.setProperty('--dashboard-row-scale', String(safe.dashboardRowScale / 100));
+    root.style.setProperty('--plugin-scale', String(safe.pluginScale / 100));
+    root.style.setProperty('--console-font-size', `${safe.consoleFontSize}px`);
+
+    if (safe.dashboardEmojis) root.removeAttribute('data-dashboard-emoji');
+    else root.setAttribute('data-dashboard-emoji', 'off');
+
+    if (safe.hideConsole) root.setAttribute('data-hide-console', 'true');
+    else root.removeAttribute('data-hide-console');
+
+    if (safe.hideStreamControls) root.setAttribute('data-hide-stream-controls', 'true');
+    else root.removeAttribute('data-hide-stream-controls');
+
+    if (safe.hideDashboard) root.setAttribute('data-hide-dashboard', 'true');
+    else root.removeAttribute('data-hide-dashboard');
+
+    if (mainLayout) {
+      if (safe.hideDashboard) {
+        mainLayout.style.gridTemplateColumns = 'var(--sidebar-width) minmax(0, 1fr)';
+      } else {
+        mainLayout.style.removeProperty('grid-template-columns');
+        if (window.resizeLogic && typeof window.resizeLogic.loadSizes === 'function') {
+          window.resizeLogic.loadSizes();
+        }
+      }
+    }
+
+    if (safe.highContrast) {
+      root.setAttribute('data-contrast', 'high');
+    } else {
+      root.removeAttribute('data-contrast');
+    }
+
+    if (safe.reducedMotion) {
+      root.setAttribute('data-motion', 'reduced');
+    } else {
+      root.removeAttribute('data-motion');
+    }
+
+    if (window.resizeLogic && typeof window.resizeLogic.updateHandlePositions === 'function') {
+      window.resizeLogic.updateHandlePositions();
+    }
+
+    return safe;
+  }
+
+  function syncAppearanceControls(settings) {
+    const safe = sanitizeAppearanceSettings(settings);
+    const scaleInput = document.getElementById('appearanceFontScale');
+    const scaleValue = document.getElementById('appearanceFontScaleValue');
+    const sidebarScaleInput = document.getElementById('appearanceSidebarScale');
+    const sidebarScaleValue = document.getElementById('appearanceSidebarScaleValue');
+    const sceneScaleInput = document.getElementById('appearanceSceneScale');
+    const sceneScaleValue = document.getElementById('appearanceSceneScaleValue');
+    const dashboardRowScaleInput = document.getElementById('appearanceDashboardRowScale');
+    const dashboardRowScaleValue = document.getElementById('appearanceDashboardRowScaleValue');
+    const pluginScaleInput = document.getElementById('appearancePluginScale');
+    const pluginScaleValue = document.getElementById('appearancePluginScaleValue');
+    const consoleFontSizeInput = document.getElementById('appearanceConsoleFontSize');
+    const consoleFontSizeValue = document.getElementById('appearanceConsoleFontSizeValue');
+    const dashboardEmojisInput = document.getElementById('appearanceDashboardEmojis');
+    const highContrastInput = document.getElementById('appearanceHighContrast');
+    const reducedMotionInput = document.getElementById('appearanceReducedMotion');
+    const hideConsoleInput = document.getElementById('appearanceHideConsole');
+    const hideStreamControlsInput = document.getElementById('appearanceHideStreamControls');
+    const hideDashboardInput = document.getElementById('appearanceHideDashboard');
+
+    if (scaleInput) scaleInput.value = String(safe.fontScale);
+    if (scaleValue) scaleValue.textContent = `${safe.fontScale}%`;
+    if (sidebarScaleInput) sidebarScaleInput.value = String(safe.sidebarScale);
+    if (sidebarScaleValue) sidebarScaleValue.textContent = `${safe.sidebarScale}%`;
+    if (sceneScaleInput) sceneScaleInput.value = String(safe.sceneScale);
+    if (sceneScaleValue) sceneScaleValue.textContent = `${safe.sceneScale}%`;
+    if (dashboardRowScaleInput) dashboardRowScaleInput.value = String(safe.dashboardRowScale);
+    if (dashboardRowScaleValue) dashboardRowScaleValue.textContent = `${safe.dashboardRowScale}%`;
+    if (pluginScaleInput) pluginScaleInput.value = String(safe.pluginScale);
+    if (pluginScaleValue) pluginScaleValue.textContent = `${safe.pluginScale}%`;
+    if (consoleFontSizeInput) consoleFontSizeInput.value = String(safe.consoleFontSize);
+    if (consoleFontSizeValue) consoleFontSizeValue.textContent = `${safe.consoleFontSize}px`;
+    if (dashboardEmojisInput) dashboardEmojisInput.checked = safe.dashboardEmojis;
+    if (highContrastInput) highContrastInput.checked = safe.highContrast;
+    if (reducedMotionInput) reducedMotionInput.checked = safe.reducedMotion;
+    if (hideConsoleInput) hideConsoleInput.checked = safe.hideConsole;
+    if (hideStreamControlsInput) hideStreamControlsInput.checked = safe.hideStreamControls;
+    if (hideDashboardInput) hideDashboardInput.checked = safe.hideDashboard;
+  }
+
+  function saveAppearanceSettings() {
+    const scaleInput = document.getElementById('appearanceFontScale');
+    const sidebarScaleInput = document.getElementById('appearanceSidebarScale');
+    const sceneScaleInput = document.getElementById('appearanceSceneScale');
+    const dashboardRowScaleInput = document.getElementById('appearanceDashboardRowScale');
+    const pluginScaleInput = document.getElementById('appearancePluginScale');
+    const consoleFontSizeInput = document.getElementById('appearanceConsoleFontSize');
+    const dashboardEmojisInput = document.getElementById('appearanceDashboardEmojis');
+    const highContrastInput = document.getElementById('appearanceHighContrast');
+    const reducedMotionInput = document.getElementById('appearanceReducedMotion');
+    const hideConsoleInput = document.getElementById('appearanceHideConsole');
+    const hideStreamControlsInput = document.getElementById('appearanceHideStreamControls');
+    const hideDashboardInput = document.getElementById('appearanceHideDashboard');
+
+    const next = sanitizeAppearanceSettings({
+      fontScale: scaleInput ? Number(scaleInput.value) : DEFAULT_APPEARANCE.fontScale,
+      sidebarScale: sidebarScaleInput ? Number(sidebarScaleInput.value) : DEFAULT_APPEARANCE.sidebarScale,
+      sceneScale: sceneScaleInput ? Number(sceneScaleInput.value) : DEFAULT_APPEARANCE.sceneScale,
+      dashboardRowScale: dashboardRowScaleInput ? Number(dashboardRowScaleInput.value) : DEFAULT_APPEARANCE.dashboardRowScale,
+      pluginScale: pluginScaleInput ? Number(pluginScaleInput.value) : DEFAULT_APPEARANCE.pluginScale,
+      consoleFontSize: consoleFontSizeInput ? Number(consoleFontSizeInput.value) : DEFAULT_APPEARANCE.consoleFontSize,
+      dashboardEmojis: dashboardEmojisInput ? dashboardEmojisInput.checked : DEFAULT_APPEARANCE.dashboardEmojis,
+      highContrast: highContrastInput ? highContrastInput.checked : DEFAULT_APPEARANCE.highContrast,
+      reducedMotion: reducedMotionInput ? reducedMotionInput.checked : DEFAULT_APPEARANCE.reducedMotion,
+      hideConsole: hideConsoleInput ? hideConsoleInput.checked : DEFAULT_APPEARANCE.hideConsole,
+      hideStreamControls: hideStreamControlsInput ? hideStreamControlsInput.checked : DEFAULT_APPEARANCE.hideStreamControls,
+      hideDashboard: hideDashboardInput ? hideDashboardInput.checked : DEFAULT_APPEARANCE.hideDashboard
+    });
+
+    applyAppearanceSettings(next);
+    syncAppearanceControls(next);
+    persistAppearanceSettings(next);
+    safeLog('🎨 Appearance settings saved');
+    return next;
+  }
+
+  function resetAppearanceSettings() {
+    const defaults = { ...DEFAULT_APPEARANCE };
+    applyAppearanceSettings(defaults);
+    syncAppearanceControls(defaults);
+    persistAppearanceSettings(defaults);
+    safeLog('🎨 Appearance reset to defaults');
+    return defaults;
   }
   
   // Profile management
@@ -162,10 +362,10 @@
     });
   }
 
-  // ── Tab switching logic ──
-  function switchModalTab(tabName) {
-    const tabs = document.querySelectorAll('.modal-tab');
-    const panels = document.querySelectorAll('.modal-tab-panel');
+  // ── Settings tab switching logic ──
+  function switchSettingsTab(tabName) {
+    const tabs = document.querySelectorAll('.settings-nav-btn');
+    const panels = document.querySelectorAll('.settings-panel');
     tabs.forEach(t => {
       const isTarget = t.dataset.tab === tabName;
       t.classList.toggle('active', isTarget);
@@ -176,9 +376,31 @@
     });
   }
 
-  function initModalTabs() {
-    document.querySelectorAll('.modal-tab').forEach(tab => {
-      tab.addEventListener('click', () => switchModalTab(tab.dataset.tab));
+  function initSettingsPage() {
+    document.querySelectorAll('.settings-nav-btn').forEach(tab => {
+      tab.addEventListener('click', () => switchSettingsTab(tab.dataset.tab));
+    });
+
+    // Load appearance prefs when settings UI initializes
+    const appearance = getAppearanceSettings();
+    applyAppearanceSettings(appearance);
+    syncAppearanceControls(appearance);
+
+    const sliderMap = [
+      ['appearanceFontScale', 'appearanceFontScaleValue', '%'],
+      ['appearanceSidebarScale', 'appearanceSidebarScaleValue', '%'],
+      ['appearanceSceneScale', 'appearanceSceneScaleValue', '%'],
+      ['appearanceDashboardRowScale', 'appearanceDashboardRowScaleValue', '%'],
+      ['appearancePluginScale', 'appearancePluginScaleValue', '%'],
+      ['appearanceConsoleFontSize', 'appearanceConsoleFontSizeValue', 'px']
+    ];
+    sliderMap.forEach(([inputId, valueId, suffix]) => {
+      const inputEl = document.getElementById(inputId);
+      const valueEl = document.getElementById(valueId);
+      if (!inputEl || !valueEl) return;
+      inputEl.addEventListener('input', () => {
+        valueEl.textContent = `${inputEl.value}${suffix}`;
+      });
     });
 
     // Password visibility toggle
@@ -193,19 +415,19 @@
     }
   }
 
-  // Initialise tabs once DOM is ready
+  // Initialise settings interactions once DOM is ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initModalTabs);
+    document.addEventListener('DOMContentLoaded', initSettingsPage);
   } else {
-    initModalTabs();
+    initSettingsPage();
   }
 
-  function showSettingsModal(tab) {
-    const modal = document.getElementById('settingsModal');
+  function showSettingsPage(tab) {
+    const page = document.getElementById('settingsPage');
     const urlInput = document.getElementById('obsUrl');
     const passwordInput = document.getElementById('obsPassword');
     
-    if (!modal || !urlInput || !passwordInput) return;
+    if (!page || !urlInput || !passwordInput) return;
     
     // Update profile list
     updateProfileList();
@@ -215,35 +437,27 @@
     urlInput.value = config.url;
     passwordInput.value = config.password;
 
+    // Keep appearance controls in sync with persisted values
+    syncAppearanceControls(getAppearanceSettings());
+
     // Reset password field to hidden
     passwordInput.type = 'password';
     
     // Switch to requested tab (default: connection)
     const tabName = (typeof tab === 'string') ? tab : 'connection';
-    switchModalTab(tabName);
+    switchSettingsTab(tabName);
     
-    modal.style.display = 'flex';
+    page.classList.remove('hidden');
+    page.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('settings-open');
   }
 
-  function hideSettingsModal() {
-    const modal = document.getElementById('settingsModal');
-    if (modal) modal.style.display = 'none';
-  }
-
-  // Close modal on backdrop click
-  function initModalBackdrop() {
-    const modal = document.getElementById('settingsModal');
-    if (modal) {
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) hideSettingsModal();
-      });
-    }
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initModalBackdrop);
-  } else {
-    initModalBackdrop();
+  function hideSettingsPage() {
+    const page = document.getElementById('settingsPage');
+    if (!page) return;
+    page.classList.add('hidden');
+    page.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('settings-open');
   }
 
   function saveSettings() {
@@ -281,7 +495,7 @@
           profileSelect.disabled = false;
         }
         
-        hideSettingsModal();
+        hideSettingsPage();
         safeLog('🔧 New profile created and activated. Reconnect to apply changes.');
       }
     } else {
@@ -289,7 +503,7 @@
       const config = { url, password };
       
       if (saveConfig(config)) {
-        hideSettingsModal();
+        hideSettingsPage();
         safeLog('🔧 Settings updated. Reconnect to apply changes.');
       }
     }
@@ -384,8 +598,15 @@
   window.configLogic = {
     getStoredConfig,
     saveConfig,
-    showSettingsModal,
-    hideSettingsModal,
+    showSettingsPage,
+    hideSettingsPage,
+    // Legacy aliases kept for compatibility with older modules
+    showSettingsModal: showSettingsPage,
+    hideSettingsModal: hideSettingsPage,
+    getAppearanceSettings,
+    applyAppearanceSettings,
+    saveAppearanceSettings,
+    resetAppearanceSettings,
     saveSettings,
     resetSettings,
     getProfiles,
