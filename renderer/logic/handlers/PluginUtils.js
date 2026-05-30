@@ -75,6 +75,176 @@
     return await res.json();
   };
 
+  const readJsonConfig = async (nameOrFile, defaults = {}, options = {}) => {
+    const fallback = (defaults && typeof defaults === 'object') ? defaults : {};
+    const api = (options && typeof options === 'object' && options.pluginAPI)
+      ? options.pluginAPI
+      : window.pluginAPI;
+    try {
+      if (!api?.readFile) return { ...fallback };
+      const rawName = String(nameOrFile || '').trim();
+      if (!rawName) return { ...fallback };
+      const fileName = rawName.toLowerCase().endsWith('.json') ? rawName : `${rawName}.json`;
+      const raw = await api.readFile(fileName);
+      const parsed = JSON.parse(String(raw || ''));
+      if (!parsed || typeof parsed !== 'object') return { ...fallback };
+      return { ...fallback, ...parsed };
+    } catch (_) {
+      return { ...fallback };
+    }
+  };
+
+  const buildUrlWithParams = (baseUrl, params = {}) => {
+    const base = String(baseUrl || '').trim();
+    if (!base) return '';
+    const p = (params && typeof params === 'object') ? params : {};
+
+    try {
+      const u = new URL(base);
+      Object.entries(p).forEach(([k, v]) => {
+        if (v === undefined || v === null || v === '') {
+          u.searchParams.delete(k);
+        } else {
+          u.searchParams.set(k, String(v));
+        }
+      });
+      return u.toString();
+    } catch (_) {
+      const parts = base.split('?');
+      const path = parts[0];
+      const query = parts.slice(1).join('?');
+      const sp = new URLSearchParams(query || '');
+      Object.entries(p).forEach(([k, v]) => {
+        if (v === undefined || v === null || v === '') {
+          sp.delete(k);
+        } else {
+          sp.set(k, String(v));
+        }
+      });
+      const qs = sp.toString();
+      return qs ? `${path}?${qs}` : path;
+    }
+  };
+
+  const setBrowserSourceUrlWithParams = async (sourceName, baseUrl, params = {}) => {
+    const src = String(sourceName || '').trim();
+    if (!src) throw new Error('Missing source name');
+    const nextUrl = buildUrlWithParams(baseUrl, params);
+    if (!nextUrl) throw new Error('Missing URL');
+    await setSourceURL(src, nextUrl);
+    return nextUrl;
+  };
+
+  const parseSimpleYaml = (yamlText) => {
+    const raw = String(yamlText || '').replace(/\r\n/g, '\n');
+    const lines = raw
+      .split('\n')
+      .map((l) => l.replace(/\t/g, '  '))
+      .filter((l) => l.trim() && !l.trim().startsWith('#'));
+
+    const out = {};
+    let currentArrayKey = '';
+    let currentArray = null;
+    let currentItem = null;
+
+    const coerce = (v) => {
+      const s = String(v ?? '').trim();
+      if (!s) return '';
+      if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+        return s.slice(1, -1);
+      }
+      if (/^-?\d+(\.\d+)?$/.test(s)) {
+        const n = Number(s);
+        if (Number.isFinite(n)) return n;
+      }
+      if (s === 'true') return true;
+      if (s === 'false') return false;
+      if (s === 'null') return null;
+      return s;
+    };
+
+    const assignKeyVal = (obj, key, val) => {
+      const k = String(key || '').trim();
+      if (!k) return;
+      obj[k] = coerce(val);
+    };
+
+    for (const line of lines) {
+      const indent = line.match(/^\s*/)?.[0]?.length || 0;
+      const trimmed = line.trim();
+
+      if (indent === 0) {
+        currentArrayKey = '';
+        currentArray = null;
+        currentItem = null;
+
+        const idx = trimmed.indexOf(':');
+        if (idx < 0) continue;
+        const key = trimmed.slice(0, idx).trim();
+        const rest = trimmed.slice(idx + 1).trim();
+
+        if (!rest) {
+          out[key] = [];
+          currentArrayKey = key;
+          currentArray = out[key];
+          continue;
+        }
+
+        assignKeyVal(out, key, rest);
+        continue;
+      }
+
+      if (indent === 2 && currentArray && trimmed.startsWith('-')) {
+        const afterDash = trimmed.slice(1).trim();
+        currentItem = {};
+        currentArray.push(currentItem);
+
+        if (afterDash) {
+          const idx = afterDash.indexOf(':');
+          if (idx >= 0) {
+            const k = afterDash.slice(0, idx).trim();
+            const v = afterDash.slice(idx + 1).trim();
+            assignKeyVal(currentItem, k, v);
+          }
+        }
+        continue;
+      }
+
+      if (indent >= 4 && currentItem) {
+        const idx = trimmed.indexOf(':');
+        if (idx < 0) continue;
+        const k = trimmed.slice(0, idx).trim();
+        const v = trimmed.slice(idx + 1).trim();
+        assignKeyVal(currentItem, k, v);
+      }
+    }
+
+    return out;
+  };
+
+  const readYamlConfig = async (defaults = {}, options = {}) => {
+    const fallback = (defaults && typeof defaults === 'object') ? defaults : {};
+    const api = (options && typeof options === 'object' && options.pluginAPI)
+      ? options.pluginAPI
+      : window.pluginAPI;
+    try {
+      let raw = '';
+      if (api?.readConfig) {
+        raw = await api.readConfig();
+      } else if (api?.readFile) {
+        raw = await api.readFile('config.yaml');
+      } else {
+        return { ...fallback };
+      }
+
+      const parsed = parseSimpleYaml(raw);
+      if (!parsed || typeof parsed !== 'object') return { ...fallback };
+      return { ...fallback, ...parsed };
+    } catch (_) {
+      return { ...fallback };
+    }
+  };
+
   let _dashboardRefreshTimer = null;
   const requestDashboardRefresh = (reason) => {
     if (_dashboardRefreshTimer) {
@@ -334,7 +504,7 @@
 
   const _sidebarRegistry = new Map();
 
-  const addControlButton = (id, label, onClick, className) => {
+  const addControlButton = (id, label, onClick, classNameOrOptions) => {
     const host = document.getElementById('pluginButtons');
     if (!host) return null;
 
@@ -344,14 +514,36 @@
     const existing = host.querySelector(`#${CSS.escape(safeId)}`);
     if (existing) return existing;
 
+    const options = (classNameOrOptions && typeof classNameOrOptions === 'object') ? classNameOrOptions : {};
+    const className = (typeof classNameOrOptions === 'string' && classNameOrOptions.trim()) ? classNameOrOptions.trim() : '';
+
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.id = safeId;
-    btn.textContent = String(label || safeId);
     btn.className = className || 'btn-plugin';
-    btn.title = btn.textContent;
+
+    const tint = String(options.tint || '').trim().toLowerCase();
+    if (tint) {
+      btn.classList.add(`btn-plugin--tint-${tint}`);
+    }
+
+    const icon = options.icon;
+    if (icon !== undefined && icon !== null && String(icon).trim()) {
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'btn-plugin-icon';
+      iconSpan.textContent = String(icon);
+      iconSpan.setAttribute('aria-hidden', 'true');
+      btn.appendChild(iconSpan);
+    }
+
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'btn-plugin-label';
+    labelSpan.textContent = String(label || safeId);
+    btn.appendChild(labelSpan);
+
+    btn.title = labelSpan.textContent;
     if (typeof onClick === 'function') {
-      btn.addEventListener('click', onClick);
+      btn.addEventListener('mousedown', onClick);
     }
     host.appendChild(btn);
     return btn;
@@ -368,7 +560,7 @@
     return true;
   };
 
-  const registerSidebarButton = (pluginName, id, label, onClick, className) => {
+  const registerSidebarButton = (pluginName, id, label, onClick, classNameOrOptions) => {
     const wrappedOnClick = async (...args) => {
       try {
         return await onClick?.(...args);
@@ -376,7 +568,7 @@
         requestDashboardRefresh('plugin-button');
       }
     };
-    const btn = addControlButton(id, label, wrappedOnClick, className);
+    const btn = addControlButton(id, label, wrappedOnClick, classNameOrOptions);
     if (!btn) return null;
 
     const p = String(pluginName || '').trim() || 'unknown';
@@ -525,11 +717,71 @@
 /*----------------------------------------------------------------------------------------
   Expose globally
   ---------------------------------------------------------------------------------------- */
+  // Store reference to plugin sandbox windows
+  const pluginSandboxWindows = new Map();
+
+  /**
+   * Register a plugin's sandbox window for script loading
+   * @param {string} pluginId - The plugin ID/folder name
+   * @param {Object} sandboxWindow - The plugin's sandboxed window object
+   */
+  const registerPluginSandbox = (pluginId, sandboxWindow) => {
+    pluginSandboxWindows.set(pluginId, sandboxWindow);
+    console.log(`[PluginUtils] Registered sandbox for ${pluginId}`);
+  };
+
+  /**
+   * Load a companion script for a plugin (e.g., create.js, config.js)
+   * @param {string} pluginId - The plugin ID/folder name
+   * @param {string} filename - The script filename to load (e.g., 'create.js')
+   * @returns {Promise<boolean>} - True if loaded successfully
+   */
+  const loadPluginScript = async (pluginId, filename) => {
+    console.log(`[PluginUtils] loadPluginScript called: pluginId=${pluginId}, filename=${filename}`);
+    try {
+      if (!window.pluginAPI?.readPackageFile) {
+        console.warn('[PluginUtils] readPackageFile not available');
+        return false;
+      }
+      console.log(`[PluginUtils] Calling readPackageFile for ${pluginId}/${filename}`);
+
+      const raw = await window.pluginAPI.readPackageFile(pluginId, filename);
+      console.log(`[PluginUtils] readPackageFile returned content length:`, raw?.length || 0);
+
+      if (!raw) {
+        console.warn(`[PluginUtils] ${filename} not found in ${pluginId}`);
+        return false;
+      }
+
+      // Get the plugin's sandbox window, fallback to main window
+      const targetWindow = pluginSandboxWindows.get(pluginId) || window;
+      console.log(`[PluginUtils] Using window for ${pluginId}:`, targetWindow === window ? 'main window' : 'sandbox window');
+
+      // Execute the script in the plugin's sandbox context
+      console.log(`[PluginUtils] Executing ${filename} in plugin context...`);
+      const scriptFunction = new Function('window', 'document', 'console', `
+        ${raw}
+      `);
+      scriptFunction(targetWindow, document, console);
+
+      console.log(`[PluginUtils] Successfully loaded ${filename} for ${pluginId}`);
+      return true;
+    } catch (err) {
+      console.error(`[PluginUtils] Failed to load ${filename} for ${pluginId}:`, err);
+      return false;
+    }
+  };
+
   window.PluginUtils = {
     createVolumeControl,
     applyRowBackground,
     applySourceIcon,
     fetchJson,
+    readJsonConfig,
+    parseSimpleYaml,
+    readYamlConfig,
+    buildUrlWithParams,
+    setBrowserSourceUrlWithParams,
     requestDashboardRefresh,
     setTextSource,
     getSourceText,
@@ -553,6 +805,8 @@
     addControlButton,
     removeControlButton,
     registerSidebarButton,
-    unregisterSidebarButtons
+    unregisterSidebarButtons,
+    loadPluginScript,
+    registerPluginSandbox
   };
 })();

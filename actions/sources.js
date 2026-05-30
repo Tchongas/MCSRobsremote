@@ -1,47 +1,47 @@
-const { obs, connect } = require('../obs/client');
+const { obs, requireConnected } = require('../obs/client');
 
 async function get() {
-  await connect();
+  requireConnected();
   return obs.call('GetInputList');
 }
 
 async function toggle(sourceName) {
-  await connect();
+  requireConnected();
   return obs.call('ToggleInputMute', { inputName: sourceName });
 }
 
 async function getMute(sourceName) {
-  await connect();
+  requireConnected();
   return obs.call('GetInputMute', { inputName: sourceName });
 }
 
 // Directly set mute state
 async function setMute(sourceName, inputMuted) {
-  await connect();
+  requireConnected();
   return obs.call('SetInputMute', { inputName: sourceName, inputMuted });
 }
 
 // Volume controls
 async function getVolume(sourceName) {
-  await connect();
+  requireConnected();
   // Returns { inputVolumeMul, inputVolumeDb }
   return obs.call('GetInputVolume', { inputName: sourceName });
 }
 
 async function setVolume(sourceName, inputVolumeMul) {
-  await connect();
+  requireConnected();
   return obs.call('SetInputVolume', { inputName: sourceName, inputVolumeMul });
 }
 
 // Get input settings (for text sources, etc.)
 async function getSettings(sourceName) {
-  await connect();
+  requireConnected();
   return obs.call('GetInputSettings', { inputName: sourceName });
 }
 
 // Set input settings (for text sources, etc.)
 async function setSettings(sourceName, inputSettings) {
-  await connect();
+  requireConnected();
   return obs.call('SetInputSettings', { inputName: sourceName, inputSettings });
 }
 

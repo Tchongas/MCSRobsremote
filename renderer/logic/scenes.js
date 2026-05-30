@@ -76,7 +76,7 @@
     `;
 
     // Click = select for preview (not live switch)
-    item.addEventListener('click', () => selectScene(scene.sceneName));
+    item.addEventListener('mousedown', () => selectScene(scene.sceneName));
     // Double-click = select AND go live immediately
     item.addEventListener('dblclick', async () => {
       await selectScene(scene.sceneName);
@@ -99,7 +99,9 @@
     const select = document.getElementById('sceneSelect');
     if (!listContainer) return;
 
-    const incomingNames = scenes.map(s => s.sceneName);
+    // Filter out CONFIG scene from display
+    const displayScenes = scenes.filter(s => s.sceneName !== 'CONFIG');
+    const incomingNames = displayScenes.map(s => s.sceneName);
     const incomingSet = new Set(incomingNames);
 
     // Remove scenes that no longer exist
@@ -122,7 +124,7 @@
 
     // Add missing scenes and ensure correct order
     let prevEl = null;
-    for (const scene of scenes) {
+    for (const scene of displayScenes) {
       let el = domMap.get(scene.sceneName);
       if (!el) {
         el = createSceneElement(scene);
@@ -163,14 +165,14 @@
         if (!incomingSet.has(name)) opt.remove();
       });
 
-      // Add missing options
-      for (const scene of scenes) {
+      // Add missing options (use displayScenes to exclude CONFIG)
+      for (const scene of displayScenes) {
         if (!existingOptions.has(scene.sceneName)) {
           select.appendChild(createOptionElement(scene));
         }
       }
 
-      select.disabled = scenes.length === 0;
+      select.disabled = displayScenes.length === 0;
       select.value = previewScene || programScene || '';
     }
   }
@@ -197,7 +199,8 @@
         // Diff-update the UI
         syncSceneListUI(sceneList.scenes);
 
-        window.uiHelpers.logSuccess(`Loaded ${sceneList.scenes.length} scenes`, 'scenes');
+        const displayedCount = sceneList.scenes.filter(s => s.sceneName !== 'CONFIG').length;
+        window.uiHelpers.logSuccess(`Loaded ${displayedCount} scenes`, 'scenes');
         window.uiHelpers.setSceneBadge(programScene);
         updateTransitionBar();
         updateDashboardSceneTag();
@@ -205,6 +208,11 @@
         // Load dashboard items for the preview scene (the one we're editing)
         if (previewScene) {
           await window.dashboardLogic.loadDashboardItems(previewScene);
+        }
+
+        // Refresh config tab to check for CONFIG scene
+        if (window.configTabLogic?.refresh) {
+          await window.configTabLogic.refresh();
         }
       } else {
         sceneCache.clear();
@@ -234,7 +242,7 @@
     }
   }
 
-  // Select a scene for preview/editing (does NOT change OBS program scene)
+  // Select a scene for preview/editing (also sets OBS preview scene in studio mode)
   async function selectScene(sceneName) {
     if (!sceneName || sceneName === previewScene) return;
 
@@ -249,19 +257,35 @@
     const select = document.getElementById('sceneSelect');
     if (select) select.value = sceneName;
 
+    // Also set the preview scene in OBS studio mode
+    try {
+      if (window.obsAPI?.scenes?.setPreviewScene) {
+        await window.obsAPI.scenes.setPreviewScene(sceneName);
+      }
+    } catch (e) {
+      // Studio mode might not be enabled, log silently
+      console.log('[Scenes] Could not set OBS preview scene:', e.message);
+    }
+
     window.uiHelpers.logInfo(`Previewing: ${sceneName}`, 'scenes');
 
     // Load dashboard items for the selected scene
     await window.dashboardLogic.loadDashboardItems(sceneName);
   }
 
-  // Transition: push preview scene to program (actually change OBS scene)
+  // Transition: trigger studio mode transition in OBS
   async function transitionScene() {
     if (!previewScene || previewScene === programScene) return;
 
     const target = previewScene;
     try {
-      await window.obsAPI.scenes.change(target);
+      // Try studio mode transition first
+      if (window.obsAPI?.scenes?.triggerStudioModeTransition) {
+        await window.obsAPI.scenes.triggerStudioModeTransition();
+      } else {
+        // Fallback to direct scene change if studio mode not available
+        await window.obsAPI.scenes.change(target);
+      }
 
       programScene = target;
 
@@ -271,7 +295,7 @@
       updateDashboardSceneTag();
 
       window.uiHelpers.setSceneBadge(target);
-      window.uiHelpers.logSuccess(`Scene changed: ${target}`, 'scenes');
+      window.uiHelpers.logSuccess(`Scene transitioned: ${target}`, 'scenes');
     } catch (e) {
       window.uiHelpers.logError('Failed to transition: ' + e.message, 'scenes');
     }

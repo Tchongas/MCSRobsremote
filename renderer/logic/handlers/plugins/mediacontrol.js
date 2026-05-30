@@ -38,7 +38,7 @@
           btn.textContent = text;
           if (className) btn.classList.add(className);
           
-          btn.addEventListener('click', async () => {
+          btn.addEventListener('mousedown', async () => {
             try {
               switch (action) {
                 case 'toggle':

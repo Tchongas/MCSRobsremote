@@ -1,7 +1,7 @@
-const { obs, connect } = require('../obs/client');
+const { obs, requireConnected } = require('../obs/client');
 
 async function getUrl(inputName) {
-  await connect();
+  requireConnected();
   const res = await obs.call('GetInputSettings', { inputName });
   // Some OBS versions return inputKind here; fallback: assume browser if url exists
   const isBrowser = res && (res.inputKind === 'browser_source' || (res.inputSettings && 'url' in res.inputSettings));
@@ -10,14 +10,14 @@ async function getUrl(inputName) {
 }
 
 async function setUrl(inputName, url) {
-  await connect();
+  requireConnected();
   // Overlay true merges with existing settings
   return obs.call('SetInputSettings', { inputName, inputSettings: { url }, overlay: true });
 }
 
 // Hard reload (refresh cache / no cache)
 async function refreshNoCache(inputName) {
-  await connect();
+  requireConnected();
   return obs.call('PressInputPropertiesButton', { inputName, propertyName: 'refreshnocache' });
 }
 

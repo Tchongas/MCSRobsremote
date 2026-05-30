@@ -10,6 +10,7 @@ const browserActions = require('../actions/browser');
 const streaming = require('../actions/streaming');
 const sceneItems = require('../actions/sceneItems');
 const media = require('../actions/media');
+const sceneCreate = require('../actions/sceneCreate');
 
 // Stub for plugin-system debug logging. Enable body to write to disk.
 function pluginLogLine(message) {}
@@ -79,6 +80,12 @@ function setupIpcHandlers() {
 
   ipcMain.handle('scenes-change', async (event, sceneName) => {
     return await scenes.change(sceneName);
+  });
+  ipcMain.handle('scenes-setPreviewScene', async (event, sceneName) => {
+    return await scenes.setPreviewScene(sceneName);
+  });
+  ipcMain.handle('scenes-triggerStudioModeTransition', async () => {
+    return await scenes.triggerStudioModeTransition();
   });
 
   // Sources
@@ -177,6 +184,29 @@ function setupIpcHandlers() {
     return await media.restartMedia(inputName);
   });
 
+  // Scene Creation
+  ipcMain.handle('scenecreate-createScene', async (event, sceneName) => {
+    return await sceneCreate.createScene(sceneName);
+  });
+  ipcMain.handle('scenecreate-createInput', async (event, sceneName, inputName, inputKind, inputSettings, sceneItemEnabled) => {
+    return await sceneCreate.createInput(sceneName, inputName, inputKind, inputSettings, sceneItemEnabled);
+  });
+  ipcMain.handle('scenecreate-createSceneItem', async (event, sceneName, sourceName, sceneItemEnabled) => {
+    return await sceneCreate.createSceneItem(sceneName, sourceName, sceneItemEnabled);
+  });
+  ipcMain.handle('scenecreate-removeScene', async (event, sceneName) => {
+    return await sceneCreate.removeScene(sceneName);
+  });
+  ipcMain.handle('scenecreate-sceneExists', async (event, sceneName) => {
+    return await sceneCreate.sceneExists(sceneName);
+  });
+  ipcMain.handle('scenecreate-getInputKindList', async () => {
+    return await sceneCreate.getInputKindList();
+  });
+  ipcMain.handle('scenecreate-getDefaultInputSettings', async (event, inputKind) => {
+    return await sceneCreate.getDefaultInputSettings(inputKind);
+  });
+
   // Debug raw request handler
   ipcMain.handle('debug-raw-request', async (event, requestName, params) => {
     await connect();
@@ -192,6 +222,152 @@ let pluginWatcher = null;
 let pluginPopupTemplateCache = null;
 const pluginPopupSessions = new Map(); // key: popup webContents.id
 const pluginPopupRpcPending = new Map(); // key: requestId
+
+function sanitizePluginId(value) {
+  return String(value || '').trim().replace(/[^a-zA-Z0-9._-]/g, '');
+}
+
+function isValidPluginChildPath(relativePath) {
+  const normalized = path.normalize(String(relativePath || '')).replace(/^([/\\])+/, '');
+  return !!normalized && !normalized.includes('..');
+}
+
+function resolvePathInside(baseDir, relativePath) {
+  const normalized = path.normalize(String(relativePath || '')).replace(/^([/\\])+/, '');
+  if (!normalized || normalized.includes('..')) {
+    throw new Error('Invalid plugin file path');
+  }
+
+  const fullPath = path.join(baseDir, normalized);
+  const resolvedDir = path.resolve(baseDir) + path.sep;
+  const resolvedFile = path.resolve(fullPath);
+  if (!resolvedFile.startsWith(resolvedDir)) {
+    throw new Error('Invalid plugin file path');
+  }
+
+  return { normalized, resolvedFile };
+}
+
+async function fileExists(targetPath) {
+  try {
+    await fs.access(targetPath);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+async function readPluginTextIfExists(targetPath) {
+  try {
+    return await fs.readFile(targetPath, 'utf8');
+  } catch (_) {
+    return '';
+  }
+}
+
+async function readPluginIconDataUrl(targetPath) {
+  try {
+    const ext = path.extname(targetPath).toLowerCase();
+    const mime = ext === '.jpg' || ext === '.jpeg'
+      ? 'image/jpeg'
+      : ext === '.svg'
+        ? 'image/svg+xml'
+        : ext === '.gif'
+          ? 'image/gif'
+          : ext === '.webp'
+            ? 'image/webp'
+            : 'image/png';
+    const data = await fs.readFile(targetPath);
+    return `data:${mime};base64,${data.toString('base64')}`;
+  } catch (_) {
+    return '';
+  }
+}
+
+async function openWithNotepadOrDefault(filePath) {
+  const { exec } = require('child_process');
+  await new Promise((resolve) => {
+    exec(`notepad.exe "${filePath}"`, (err) => {
+      if (err) {
+        pluginLogLine(`Notepad failed for ${filePath}, falling back to shell.openPath: ${err.message}`);
+        shell.openPath(filePath);
+      }
+      resolve();
+    });
+  });
+}
+
+function extractPluginMeta(content) {
+  const versionMatch = String(content || '').match(/version\s*:\s*['"]([^'"]+)['"]/);
+  const descriptionMatch = String(content || '').match(/description\s*:\s*['"]([^'"]+)['"]/);
+  return {
+    version: versionMatch ? versionMatch[1].trim() : '',
+    description: descriptionMatch ? descriptionMatch[1].trim() : ''
+  };
+}
+
+function extractReadmeSummary(readme) {
+  const text = String(readme || '')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/^#+\s+/gm, '')
+    .replace(/[*_`>#-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!text) return '';
+  return text.slice(0, 220).trim();
+}
+
+async function discoverExternalPluginPackages(pluginDir) {
+  await fs.mkdir(pluginDir, { recursive: true });
+  const dirEntries = await fs.readdir(pluginDir, { withFileTypes: true });
+  const packages = [];
+
+  for (const entry of dirEntries) {
+    if (!entry.isDirectory()) continue;
+    const packageId = sanitizePluginId(entry.name);
+    if (!packageId) continue;
+
+    const packageDir = path.join(pluginDir, entry.name);
+    const entryFile = path.join(packageDir, 'plugin.js');
+    if (!(await fileExists(entryFile))) continue;
+
+    const childEntries = await fs.readdir(packageDir, { withFileTypes: true });
+    const files = childEntries
+      .filter((child) => child.isFile())
+      .map((child) => child.name)
+      .sort((a, b) => a.localeCompare(b));
+
+    const iconFile = files.find((file) => /^icon\.(png|jpe?g|gif|webp|svg)$/i.test(file)) || '';
+    const readmeFile = files.find((file) => /^readme\.(md|txt)$/i.test(file)) || '';
+    const configFile = files.find((file) => /^config\.ya?ml$/i.test(file)) || '';
+    const content = await fs.readFile(entryFile, 'utf8');
+    const stats = await fs.stat(entryFile);
+    const readme = readmeFile ? await readPluginTextIfExists(path.join(packageDir, readmeFile)) : '';
+    const jsMeta = extractPluginMeta(content);
+
+    packages.push({
+      id: packageId,
+      folderName: entry.name,
+      packageDir,
+      entryFile,
+      entryRelativePath: path.join(entry.name, 'plugin.js'),
+      content,
+      size: stats.size,
+      lastModified: stats.mtime.toISOString(),
+      files,
+      iconFile,
+      iconDataUrl: iconFile ? await readPluginIconDataUrl(path.join(packageDir, iconFile)) : '',
+      readmeFile,
+      readme,
+      configFile,
+      displayName: String(entry.name || packageId).trim() || packageId,
+      version: jsMeta.version || '1.0.0',
+      description: jsMeta.description
+    });
+  }
+
+  return packages.sort((a, b) => a.displayName.localeCompare(b.displayName));
+}
 
 function getPluginDirectory() {
   if (app.isPackaged) {
@@ -241,6 +417,34 @@ function setupPluginHandlers() {
     return dir;
   });
 
+  ipcMain.handle('plugins-open-readme', async (event, pluginId) => {
+    const pluginDir = getPluginDirectory();
+    const safePluginId = sanitizePluginId(pluginId);
+    if (!safePluginId) throw new Error('Invalid plugin id');
+    const packages = await discoverExternalPluginPackages(pluginDir);
+    const pkg = packages.find((item) => item.id === safePluginId);
+    if (!pkg?.packageDir) throw new Error(`Plugin package not found: ${safePluginId}`);
+    if (!pkg.readmeFile) throw new Error('No README file in this plugin package');
+    const readmePath = path.join(pkg.packageDir, pkg.readmeFile);
+    pluginLogLine(`IPC plugins-open-readme -> ${readmePath}`);
+    await openWithNotepadOrDefault(readmePath);
+    return readmePath;
+  });
+
+  ipcMain.handle('plugins-open-config', async (event, pluginId) => {
+    const pluginDir = getPluginDirectory();
+    const safePluginId = sanitizePluginId(pluginId);
+    if (!safePluginId) throw new Error('Invalid plugin id');
+    const packages = await discoverExternalPluginPackages(pluginDir);
+    const pkg = packages.find((item) => item.id === safePluginId);
+    if (!pkg?.packageDir) throw new Error(`Plugin package not found: ${safePluginId}`);
+    if (!pkg.configFile) throw new Error('No config.yaml file in this plugin package');
+    const configPath = path.join(pkg.packageDir, pkg.configFile);
+    pluginLogLine(`IPC plugins-open-config -> ${configPath}`);
+    await openWithNotepadOrDefault(configPath);
+    return configPath;
+  });
+
   ipcMain.handle('plugins-open-folder', async () => {
     const dir = getPluginDirectory();
     pluginLogLine(`IPC plugins-open-folder -> ${dir}`);
@@ -259,6 +463,13 @@ function setupPluginHandlers() {
     const height = clampPopupSize(cfg.height, 420, 1200, 700);
     const html = typeof cfg.html === 'string' ? cfg.html : '';
 
+    let parentWin;
+    try {
+      parentWin = BrowserWindow.fromWebContents(event.sender) || undefined;
+    } catch (_) {
+      parentWin = undefined;
+    }
+
     const popup = new BrowserWindow({
       width,
       height,
@@ -267,7 +478,7 @@ function setupPluginHandlers() {
       show: false,
       autoHideMenuBar: true,
       backgroundColor: '#0f1013',
-      parent: BrowserWindow.fromWebContents(event.sender) || undefined,
+      parent: parentWin,
       title,
       webPreferences: {
         preload: path.join(__dirname, 'preload-popup.js'),
@@ -277,7 +488,9 @@ function setupPluginHandlers() {
       }
     });
 
-    pluginPopupSessions.set(popup.webContents.id, {
+    const popupContentsId = popup.webContents.id;
+
+    pluginPopupSessions.set(popupContentsId, {
       popupId,
       pluginName,
       openerId,
@@ -289,11 +502,13 @@ function setupPluginHandlers() {
     await popup.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(wrappedHtml)}`);
 
     popup.once('ready-to-show', () => {
-      popup.show();
+      if (!popup.isDestroyed()) {
+        popup.show();
+      }
     });
 
     popup.on('closed', () => {
-      pluginPopupSessions.delete(popup.webContents.id);
+      pluginPopupSessions.delete(popupContentsId);
     });
 
     pluginLogLine(`Opened plugin popup: popupId=${popupId} plugin=${pluginName} title=${title} width=${width} height=${height}`);
@@ -368,24 +583,52 @@ function setupPluginHandlers() {
   ipcMain.handle('plugins-read-file', async (event, relativeFile) => {
     const pluginDir = getPluginDirectory();
     const file = String(relativeFile || '');
-    const normalized = path.normalize(file).replace(/^([/\\])+/, '');
+    const { normalized, resolvedFile } = resolvePathInside(pluginDir, file);
 
     pluginLogLine(`IPC plugins-read-file requested: ${file} (normalized=${normalized})`);
 
-    if (normalized.includes('..')) {
-      throw new Error('Invalid plugin file path');
-    }
-
-    const fullPath = path.join(pluginDir, normalized);
-    const resolvedDir = path.resolve(pluginDir) + path.sep;
-    const resolvedFile = path.resolve(fullPath);
-
-    if (!resolvedFile.startsWith(resolvedDir)) {
-      throw new Error('Invalid plugin file path');
-    }
-
     pluginLogLine(`IPC plugins-read-file reading: ${resolvedFile}`);
     return await fs.readFile(resolvedFile, 'utf8');
+  });
+
+  ipcMain.handle('plugins-read-package-file', async (event, pluginId, relativeFile) => {
+    const pluginDir = getPluginDirectory();
+    const safePluginId = sanitizePluginId(pluginId);
+    if (!safePluginId) {
+      throw new Error('Invalid plugin id');
+    }
+
+    const packages = await discoverExternalPluginPackages(pluginDir);
+    const pkg = packages.find((item) => item.id === safePluginId);
+    if (!pkg?.packageDir) {
+      throw new Error(`Plugin package not found: ${safePluginId}`);
+    }
+
+    const file = String(relativeFile || '');
+    const { normalized, resolvedFile } = resolvePathInside(pkg.packageDir, file);
+    pluginLogLine(`IPC plugins-read-package-file requested: plugin=${safePluginId} file=${normalized}`);
+    return await fs.readFile(resolvedFile, 'utf8');
+  });
+
+  ipcMain.handle('plugins-list-external', async () => {
+    const pluginDir = getPluginDirectory();
+    const packages = await discoverExternalPluginPackages(pluginDir);
+    return packages.map((pkg) => ({
+      id: pkg.id,
+      folderName: pkg.folderName,
+      displayName: pkg.displayName,
+      version: pkg.version,
+      description: pkg.description,
+      entryRelativePath: pkg.entryRelativePath,
+      files: pkg.files,
+      iconFile: pkg.iconFile,
+      iconDataUrl: pkg.iconDataUrl,
+      readmeFile: pkg.readmeFile,
+      readme: pkg.readme,
+      configFile: pkg.configFile,
+      size: pkg.size,
+      lastModified: pkg.lastModified
+    }));
   });
 
   ipcMain.handle('plugins-load-external', async () => {
@@ -394,33 +637,25 @@ function setupPluginHandlers() {
     pluginLogLine(`IPC plugins-load-external from: ${pluginDir}`);
     
     try {
-      // Ensure plugins directory exists
-      await fs.mkdir(pluginDir, { recursive: true });
-      
-      // Read all JS files in plugins directory
-      const files = await fs.readdir(pluginDir);
-      const jsFiles = files.filter(file => file.endsWith('.js'));
-      console.log(`External plugin files found: ${jsFiles.length ? jsFiles.join(', ') : '(none)'}`);
-      pluginLogLine(`External plugin files found: ${jsFiles.length ? jsFiles.join(', ') : '(none)'}`);
+      const packages = await discoverExternalPluginPackages(pluginDir);
+      const found = packages.map((pkg) => pkg.folderName);
+      console.log(`External plugin packages found: ${found.length ? found.join(', ') : '(none)'}`);
+      pluginLogLine(`External plugin packages found: ${found.length ? found.join(', ') : '(none)'}`);
       
       const plugins = [];
       
-      for (const file of jsFiles) {
+      for (const pkg of packages) {
         try {
-          const filePath = path.join(pluginDir, file);
-          const content = await fs.readFile(filePath, 'utf8');
-          
-          // Validate plugin structure
-          const plugin = await validateAndLoadPlugin(content, file);
+          const plugin = await validateAndLoadPlugin(pkg);
           if (plugin) {
             plugins.push(plugin);
-            pluginLogLine(`External plugin accepted: ${file}`);
+            pluginLogLine(`External plugin accepted: ${pkg.folderName}`);
           } else {
-            pluginLogLine(`External plugin skipped by validation: ${file}`);
+            pluginLogLine(`External plugin skipped by validation: ${pkg.folderName}`);
           }
         } catch (err) {
-          console.error(`Failed to load plugin ${file}:`, err);
-          pluginLogLine(`Failed to load plugin ${file}: ${err?.message || err}`);
+          console.error(`Failed to load plugin ${pkg.folderName}:`, err);
+          pluginLogLine(`Failed to load plugin ${pkg.folderName}: ${err?.message || err}`);
         }
       }
       
@@ -479,13 +714,11 @@ function setupPluginWatcher() {
 
   pluginLogLine(`Setting up plugin watcher on: ${pluginDir}`);
   
-  pluginWatcher = chokidar.watch([
-    path.join(pluginDir, '*.js'),
-    path.join(pluginDir, '*.json')
-  ], {
+  pluginWatcher = chokidar.watch(pluginDir, {
     ignored: /^\./, // ignore dotfiles
     persistent: true,
-    ignoreInitial: true
+    ignoreInitial: true,
+    depth: 3
   });
 
   pluginWatcher
@@ -522,8 +755,10 @@ function notifyPluginChange(action, filePath) {
   });
 }
 
-async function validateAndLoadPlugin(content, filename) {
+async function validateAndLoadPlugin(contentOrPackage) {
   try {
+    const content = String(contentOrPackage?.content || '');
+    const filename = String(contentOrPackage?.entryRelativePath || contentOrPackage?.folderName || 'plugin.js');
     // Basic validation - keep this light since external plugins are executed in a sandbox.
     // We mainly want to avoid loading clearly unrelated files.
     const hasCanHandle = content.includes('canHandle');
@@ -535,10 +770,22 @@ async function validateAndLoadPlugin(content, filename) {
     
     // Create a safe plugin object
     const plugin = {
+      id: contentOrPackage.id,
+      folderName: contentOrPackage.folderName,
+      displayName: contentOrPackage.displayName,
+      version: contentOrPackage.version,
+      description: contentOrPackage.description,
       filename,
       content,
-      size: content.length,
-      lastModified: new Date().toISOString()
+      size: contentOrPackage.size || content.length,
+      lastModified: contentOrPackage.lastModified || new Date().toISOString(),
+      entryRelativePath: contentOrPackage.entryRelativePath,
+      files: Array.isArray(contentOrPackage.files) ? contentOrPackage.files : [],
+      iconFile: contentOrPackage.iconFile || '',
+      iconDataUrl: contentOrPackage.iconDataUrl || '',
+      readmeFile: contentOrPackage.readmeFile || '',
+      readme: contentOrPackage.readme || '',
+      configFile: contentOrPackage.configFile || ''
     };
     
     return plugin;

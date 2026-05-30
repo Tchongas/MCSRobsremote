@@ -457,7 +457,7 @@
     };
 
     // Make the entire row clickable (cursor set via CSS on .dash-row)
-    row.addEventListener('click', safeToggle);
+    row.addEventListener('mousedown', safeToggle);
 
     // Keep nameWrap focusable for keyboard navigation
     nameWrap.setAttribute('role', 'button');

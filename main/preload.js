@@ -6,7 +6,9 @@ contextBridge.exposeInMainWorld('obsAPI', {
   disconnect: () => ipcRenderer.invoke('obs-disconnect'),
   scenes: {
     get: () => ipcRenderer.invoke('scenes-get'),
-    change: (sceneName) => ipcRenderer.invoke('scenes-change', sceneName)
+    change: (sceneName) => ipcRenderer.invoke('scenes-change', sceneName),
+    setPreviewScene: (sceneName) => ipcRenderer.invoke('scenes-setPreviewScene', sceneName),
+    triggerStudioModeTransition: () => ipcRenderer.invoke('scenes-triggerStudioModeTransition')
   },
   sources: {
     get: () => ipcRenderer.invoke('sources-get'),
@@ -30,6 +32,17 @@ contextBridge.exposeInMainWorld('obsAPI', {
     getUrl: (inputName) => ipcRenderer.invoke('browser-getUrl', inputName),
     setUrl: (inputName, url) => ipcRenderer.invoke('browser-setUrl', inputName, url),
     refreshNoCache: (inputName) => ipcRenderer.invoke('browser-refreshNoCache', inputName),
+  },
+  sceneCreate: {
+    createScene: (sceneName) => ipcRenderer.invoke('scenecreate-createScene', sceneName),
+    createInput: (sceneName, inputName, inputKind, inputSettings, sceneItemEnabled) =>
+      ipcRenderer.invoke('scenecreate-createInput', sceneName, inputName, inputKind, inputSettings, sceneItemEnabled),
+    createSceneItem: (sceneName, sourceName, sceneItemEnabled) =>
+      ipcRenderer.invoke('scenecreate-createSceneItem', sceneName, sourceName, sceneItemEnabled),
+    removeScene: (sceneName) => ipcRenderer.invoke('scenecreate-removeScene', sceneName),
+    sceneExists: (sceneName) => ipcRenderer.invoke('scenecreate-sceneExists', sceneName),
+    getInputKindList: () => ipcRenderer.invoke('scenecreate-getInputKindList'),
+    getDefaultInputSettings: (inputKind) => ipcRenderer.invoke('scenecreate-getDefaultInputSettings', inputKind)
   },
   streaming: {
     start: () => ipcRenderer.invoke('streaming-start'),
@@ -65,9 +78,13 @@ contextBridge.exposeInMainWorld('windowControls', {
 // Plugin API
 contextBridge.exposeInMainWorld('pluginAPI', {
   loadExternalPlugins: () => ipcRenderer.invoke('plugins-load-external'),
+  listExternalPlugins: () => ipcRenderer.invoke('plugins-list-external'),
   getPluginDirectory: () => ipcRenderer.invoke('plugins-get-directory'),
   openPluginFolder: () => ipcRenderer.invoke('plugins-open-folder'),
+  openReadme: (pluginId) => ipcRenderer.invoke('plugins-open-readme', pluginId),
+  openConfig: (pluginId) => ipcRenderer.invoke('plugins-open-config', pluginId),
   readFile: (relativeFile) => ipcRenderer.invoke('plugins-read-file', relativeFile),
+  readPackageFile: (pluginId, relativeFile) => ipcRenderer.invoke('plugins-read-package-file', pluginId, relativeFile),
   openPopup: (payload) => ipcRenderer.invoke('plugins-open-popup', payload),
   onPopupRpcRequest: (callback) => {
     ipcRenderer.on('plugins-popup-rpc-request', (event, data) => callback(data));

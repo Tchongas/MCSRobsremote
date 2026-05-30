@@ -1,7 +1,7 @@
-const { obs, connect } = require('../obs/client');
+const { obs, requireConnected } = require('../obs/client');
 
 async function playMedia(inputName) {
-  await connect();
+  requireConnected();
   // Use RESTART if you want to make sure starts from beginning
   const action = 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PLAY';
   try {
@@ -21,7 +21,7 @@ async function playMedia(inputName) {
 }
 
 async function stopMedia(inputName) {
-  await connect();
+  requireConnected();
   try {
     await obs.call('TriggerMediaInputAction', { inputName, mediaAction: 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_STOP' });
     return true;
@@ -32,7 +32,7 @@ async function stopMedia(inputName) {
 }
 
 async function getMediaStatus(inputName) {
-  await connect();
+  requireConnected();
   try {
     const res = await obs.call('GetMediaInputStatus', { inputName });
     return res; // { mediaState, mediaDuration, mediaCursor }
@@ -43,7 +43,7 @@ async function getMediaStatus(inputName) {
 }
 
 async function toggleMedia(inputName) {
-  await connect();
+  requireConnected();
   const status = await getMediaStatus(inputName);
   const state = status?.mediaState;
   // States: OBS_MEDIA_STATE_NONE, STOPPED, PLAYING, PAUSED, ENDED, ERROR, OPENING, BUFFERING
@@ -66,7 +66,7 @@ async function toggleMedia(inputName) {
 }
 
 async function restartMedia(inputName) {
-  await connect();
+  requireConnected();
   try {
     await obs.call('TriggerMediaInputAction', { inputName, mediaAction: 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART' });
     return true;

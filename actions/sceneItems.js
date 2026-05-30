@@ -1,32 +1,32 @@
-const { obs, connect } = require('../obs/client');
+const { obs, requireConnected } = require('../obs/client');
 
 async function list(sceneName) {
-  await connect();
+  requireConnected();
   return obs.call('GetSceneItemList', { sceneName });
 }
 
 async function listGroup(groupName) {
-  await connect();
+  requireConnected();
   return obs.call('GetGroupSceneItemList', { sceneName: groupName });
 }
 
 async function setEnabled(sceneName, sceneItemId, sceneItemEnabled) {
-  await connect();
+  requireConnected();
   return obs.call('SetSceneItemEnabled', { sceneName, sceneItemId, sceneItemEnabled });
 }
 
 async function setGroupEnabled(groupName, sceneItemId, sceneItemEnabled) {
-  await connect();
+  requireConnected();
   return obs.call('SetSceneItemEnabled', { sceneName: groupName, sceneItemId, sceneItemEnabled });
 }
 
 async function getTransform(sceneName, sceneItemId) {
-  await connect();
+  requireConnected();
   return obs.call('GetSceneItemTransform', { sceneName, sceneItemId });
 }
 
 async function setTransform(sceneName, sceneItemId, sceneItemTransform) {
-  await connect();
+  requireConnected();
   return obs.call('SetSceneItemTransform', { sceneName, sceneItemId, sceneItemTransform });
 }
 

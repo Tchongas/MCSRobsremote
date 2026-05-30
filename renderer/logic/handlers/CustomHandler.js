@@ -2,6 +2,7 @@
 (function() {
   const plugins = new Map();
   const externalPlugins = new Map();
+  const externalPluginRuntime = new Map();
   let pluginLoadPromise = null;
   let pluginWatcherBound = false;
   let reloadTimer = null;
@@ -43,6 +44,25 @@
       priority: plugin.priority || (() => 0)
     };
 
+    if (pluginData.isExternal) {
+      const runtimeKey = String(pluginData.__runtimePluginKey || pluginData.name || '').trim();
+      const runtimeMeta = runtimeKey ? externalPluginRuntime.get(runtimeKey) : null;
+      if (runtimeMeta) {
+        pluginData.packageId = runtimeMeta.id;
+        pluginData.packageFolder = runtimeMeta.folderName;
+        pluginData.packageDisplayName = runtimeMeta.displayName;
+        pluginData.packageVersion = runtimeMeta.version;
+        pluginData.packageDescription = runtimeMeta.description;
+        pluginData.packageSummary = runtimeMeta.summary;
+        pluginData.packageFiles = runtimeMeta.files;
+        pluginData.packageIconDataUrl = runtimeMeta.iconDataUrl;
+        pluginData.packageReadme = runtimeMeta.readme;
+        pluginData.packageManifest = runtimeMeta.manifest;
+        runtimeMeta.registeredName = pluginData.name;
+        runtimeMeta.status = 'loaded';
+      }
+    }
+
     // Store in appropriate registry
     if (plugin.isExternal) {
       externalPlugins.set(plugin.name, pluginData);
@@ -80,11 +100,23 @@
         }
 
         const externalPluginData = await window.pluginAPI.loadExternalPlugins();
+        externalPluginRuntime.clear();
         
         for (const pluginFile of externalPluginData) {
           try {
+            externalPluginRuntime.set(pluginFile.id || pluginFile.folderName || pluginFile.filename, {
+              ...pluginFile,
+              status: 'loading',
+              registeredName: ''
+            });
             await loadExternalPlugin(pluginFile);
           } catch (err) {
+            const runtimeKey = pluginFile.id || pluginFile.folderName || pluginFile.filename;
+            const runtimeMeta = externalPluginRuntime.get(runtimeKey);
+            if (runtimeMeta) {
+              runtimeMeta.status = 'error';
+              runtimeMeta.error = err?.message || String(err);
+            }
             console.error(`Failed to load external plugin ${pluginFile.filename}:`, err);
           }
         }
@@ -104,7 +136,7 @@
   async function loadExternalPlugin(pluginFile) {
     try {
       // Create a sandboxed environment for the plugin
-      const pluginContext = createPluginContext();
+      const pluginContext = createPluginContext(pluginFile);
       
       // Execute plugin code in sandboxed context
       const pluginFunction = new Function('context', `
@@ -121,18 +153,69 @@
     }
   }
 
-  function createPluginContext() {
-    // Create a restricted context for external plugins
+  function createScopedPluginApi(pluginFile) {
+    const packageId = String(pluginFile?.id || pluginFile?.folderName || '').trim();
     return {
-      window: {
-        obsAPI: window.obsAPI,
-        pluginAPI: window.pluginAPI,
-        uiHelpers: window.uiHelpers,
-        PluginUtils: window.PluginUtils,
-        CustomHandlerPlugins: {
-          register: (plugin) => registerPlugin({ ...plugin, isExternal: true })
+      ...window.pluginAPI,
+      readFile: async (relativeFile) => {
+        const file = String(relativeFile || '').trim();
+        if (!file) throw new Error('Missing plugin file path');
+        if (packageId && window.pluginAPI?.readPackageFile) {
+          return await window.pluginAPI.readPackageFile(packageId, file);
         }
+        if (window.pluginAPI?.readFile) {
+          return await window.pluginAPI.readFile(file);
+        }
+        throw new Error('Plugin file API not available');
       },
+      readConfig: async () => {
+        const configFile = pluginFile?.configFile || '';
+        if (!configFile) throw new Error('No config.yaml in this plugin package');
+        if (packageId && window.pluginAPI?.readPackageFile) {
+          return await window.pluginAPI.readPackageFile(packageId, configFile);
+        }
+        throw new Error('Plugin file API not available');
+      },
+      getPluginPackage: () => ({
+        id: pluginFile?.id || '',
+        folderName: pluginFile?.folderName || '',
+        displayName: pluginFile?.displayName || pluginFile?.folderName || '',
+        version: pluginFile?.version || '1.0.0',
+        description: pluginFile?.description || '',
+        files: Array.isArray(pluginFile?.files) ? [...pluginFile.files] : [],
+        iconFile: pluginFile?.iconFile || '',
+        iconDataUrl: pluginFile?.iconDataUrl || '',
+        readmeFile: pluginFile?.readmeFile || '',
+        configFile: pluginFile?.configFile || '',
+        entryRelativePath: pluginFile?.entryRelativePath || ''
+      })
+    };
+  }
+
+  function createPluginContext(pluginFile) {
+    // Create a restricted context for external plugins
+    const runtimeKey = String(pluginFile?.id || pluginFile?.folderName || pluginFile?.filename || '').trim();
+    const scopedPluginApi = createScopedPluginApi(pluginFile);
+
+    // Create the sandbox window object
+    const sandboxWindow = {
+      obsAPI: window.obsAPI,
+      pluginAPI: scopedPluginApi,
+      uiHelpers: window.uiHelpers,
+      PluginUtils: window.PluginUtils,
+      PluginCreateUtils: window.PluginCreateUtils,
+      CustomHandlerPlugins: {
+        register: (plugin) => registerPlugin({ ...plugin, isExternal: true, __runtimePluginKey: runtimeKey })
+      }
+    };
+
+    // Register this sandbox so PluginUtils.loadPluginScript can use it
+    if (window.PluginUtils?.registerPluginSandbox) {
+      window.PluginUtils.registerPluginSandbox(runtimeKey, sandboxWindow);
+    }
+
+    return {
+      window: sandboxWindow,
       document: {
         createElement: document.createElement.bind(document),
         querySelector: document.querySelector.bind(document),
@@ -145,7 +228,7 @@
         error: console.error.bind(console)
       },
       CustomHandlerPlugins: {
-        register: (plugin) => registerPlugin({ ...plugin, isExternal: true })
+        register: (plugin) => registerPlugin({ ...plugin, isExternal: true, __runtimePluginKey: runtimeKey })
       }
     };
   }
@@ -171,6 +254,28 @@
 
   function getAllPlugins() {
     return new Map([...plugins, ...externalPlugins]);
+  }
+
+  function listExternalPluginRuntime() {
+    return Array.from(externalPluginRuntime.values()).map((item) => ({
+      id: item.id,
+      folderName: item.folderName,
+      displayName: item.displayName,
+      version: item.version,
+      description: item.description,
+      summary: item.summary,
+      files: Array.isArray(item.files) ? [...item.files] : [],
+      iconFile: item.iconFile,
+      iconDataUrl: item.iconDataUrl,
+      readmeFile: item.readmeFile,
+      readme: item.readme,
+      manifest: item.manifest,
+      filename: item.filename,
+      entryRelativePath: item.entryRelativePath,
+      status: item.status || 'idle',
+      registeredName: item.registeredName || '',
+      error: item.error || ''
+    }));
   }
 
   // Main CustomHandler implementation
@@ -269,11 +374,13 @@
     unregister: unregisterPlugin,
     list: () => Array.from(getAllPlugins().keys()),
     get: (name) => getAllPlugins().get(name),
+    listExternalRuntime: listExternalPluginRuntime,
     
     // For debugging
     _builtInPlugins: plugins,
     _externalPlugins: externalPlugins,
-    _allPlugins: getAllPlugins
+    _allPlugins: getAllPlugins,
+    _externalRuntime: externalPluginRuntime
   };
 
   // Fire event to notify plugins that CustomHandler is ready

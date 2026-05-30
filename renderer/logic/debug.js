@@ -15,11 +15,11 @@
     
     // Debug request buttons
     document.querySelectorAll('.debug-btn[data-request]').forEach(btn => {
-      btn.addEventListener('click', handleDebugRequest);
+      btn.addEventListener('mousedown', handleDebugRequest);
     });
     
     // Custom request
-    document.getElementById('sendCustomRequest').addEventListener('click', handleCustomRequest);
+    document.getElementById('sendCustomRequest').addEventListener('mousedown', handleCustomRequest);
     
     // Keyboard shortcut: Ctrl+D to toggle debug
     document.addEventListener('keydown', (e) => {

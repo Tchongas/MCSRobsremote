@@ -1,13 +1,23 @@
-const { obs, connect } = require('../obs/client');
+const { obs, requireConnected } = require('../obs/client');
 
 async function get() {
-  await connect();
+  requireConnected();
   return obs.call('GetSceneList');
 }
 
 async function change(sceneName) {
-  await connect();
+  requireConnected();
   return obs.call('SetCurrentProgramScene', { sceneName });
 }
 
-module.exports = { get, change };
+async function setPreviewScene(sceneName) {
+  requireConnected();
+  return obs.call('SetCurrentPreviewScene', { sceneName });
+}
+
+async function triggerStudioModeTransition() {
+  requireConnected();
+  return obs.call('TriggerStudioModeTransition');
+}
+
+module.exports = { get, change, setPreviewScene, triggerStudioModeTransition };

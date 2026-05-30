@@ -1,17 +1,17 @@
-const { obs, connect } = require('../obs/client');
+const { obs, requireConnected } = require('../obs/client');
 
 async function start() {
-  await connect();
+  requireConnected();
   return obs.call('StartStream');
 }
 
 async function stop() {
-  await connect();
+  requireConnected();
   return obs.call('StopStream');
 }
 
 async function status() {
-  await connect();
+  requireConnected();
   return obs.call('GetStreamStatus');
 }
 

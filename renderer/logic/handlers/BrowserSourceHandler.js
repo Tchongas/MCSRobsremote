@@ -86,7 +86,7 @@
       saveBtn.textContent = 'Save';
       saveBtn.type = 'button';
       saveBtn.setAttribute('aria-label', `Save URL for ${displayName}`);
-      saveBtn.addEventListener('click', doSaveUrl);
+      saveBtn.addEventListener('mousedown', doSaveUrl);
 
       urlInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -100,7 +100,7 @@
       openBtn.textContent = 'Open';
       openBtn.type = 'button';
       openBtn.setAttribute('aria-label', `Open URL for ${displayName}`);
-      openBtn.addEventListener('click', () => {
+      openBtn.addEventListener('mousedown', () => {
         const u = (urlInput.value || '').trim();
         if (!u) return;
         try { window.open(u, '_blank'); } catch (_) { /* ignore */ }
@@ -112,7 +112,7 @@
       hardBtn.title = 'Refresh cache (no cache)';
       hardBtn.type = 'button';
       hardBtn.setAttribute('aria-label', `Hard refresh ${displayName}`);
-      hardBtn.addEventListener('click', async () => {
+      hardBtn.addEventListener('mousedown', async () => {
         try {
           setStatus('is-saving', 'Refreshing…');
           await window.obsAPI.browser.refreshNoCache(sourceName);
@@ -266,7 +266,7 @@
       saveParamsBtn.type = 'button';
       saveParamsBtn.setAttribute('aria-label', `Apply parameters for ${displayName}`);
       
-      saveParamsBtn.addEventListener('click', async () => {
+      saveParamsBtn.addEventListener('mousedown', async () => {
         try {
           setParamsStatus('is-saving', 'Saving…');
           const final = this._rebuildUrlWithParams(urlInput.value.trim(), paramRows);
@@ -286,7 +286,7 @@
         }
       });
 
-      resetParamsBtn.addEventListener('click', () => {
+      resetParamsBtn.addEventListener('mousedown', () => {
         this._resetParams(paramsBody, paramRows, urlInput.value || '');
         setParamsStatus(null, '');
       });
@@ -295,7 +295,7 @@
       paramsBody.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && e.target?.tagName === 'INPUT') {
           e.preventDefault();
-          saveParamsBtn.click();
+          saveParamsBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
         }
       });
 

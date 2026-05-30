@@ -108,7 +108,7 @@
     const disconnectBtn = document.getElementById('disconnect');
 
     // Connect to OBS
-    connectBtn.addEventListener('click', async () => {
+    connectBtn.addEventListener('mousedown', async () => {
       window.uiHelpers.logInfo('Connecting to OBS…', 'conn');
       try {
         const config = getStoredConfig();
@@ -121,6 +121,11 @@
         // Auto-refresh scenes after successful connection
         window.uiHelpers.logInfo('Loading available scenes…', 'scenes');
         await refreshScenes();
+
+        // Check for CONFIG scene and show config button if exists
+        if (window.configTabLogic?.checkConfigScene) {
+          await window.configTabLogic.checkConfigScene();
+        }
 
       } catch (e) {
         window.uiHelpers.logError('Connection failed: ' + e.message, 'conn');
@@ -139,7 +144,7 @@
     });
 
     // Disconnect from OBS
-    disconnectBtn.addEventListener('click', async () => {
+    disconnectBtn.addEventListener('mousedown', async () => {
       window.uiHelpers.logInfo('Disconnecting from OBS…', 'conn');
       try {
         await window.obsAPI.disconnect();
@@ -190,7 +195,7 @@
     // Stream toggle button
     const streamToggle = document.getElementById('streamToggle');
     if (streamToggle) {
-      streamToggle.addEventListener('click', async () => {
+      streamToggle.addEventListener('mousedown', async () => {
         const isStreaming = streamToggle.dataset.streaming === 'true';
         try {
           if (isStreaming) {
@@ -211,7 +216,7 @@
     }
 
     // Refresh scenes button
-    document.getElementById('refreshScenes').addEventListener('click', refreshScenes);
+    document.getElementById('refreshScenes').addEventListener('mousedown', refreshScenes);
 
     // Hidden select change — select scene for preview (studio mode)
     document.getElementById('sceneSelect').addEventListener('change', async (e) => {
@@ -226,7 +231,7 @@
     // Transition button — push preview scene to program (go live)
     const transitionBtn = document.getElementById('transitionBtn');
     if (transitionBtn) {
-      transitionBtn.addEventListener('click', async () => {
+      transitionBtn.addEventListener('mousedown', async () => {
         clearSearch();
         if (window.sceneLogic?.transitionScene) {
           await window.sceneLogic.transitionScene();
@@ -316,11 +321,15 @@
     // Quick refresh button (refreshes scenes and dashboard)
     const quickRefreshBtn = document.getElementById('quickRefresh');
     if (quickRefreshBtn) {
-      quickRefreshBtn.addEventListener('click', async () => {
+      quickRefreshBtn.addEventListener('mousedown', async () => {
         window.uiHelpers.logInfo('Refreshing...', 'system');
         try {
           // refreshScenes already loads dashboard items for the current scene
           await refreshScenes();
+          // Also check for CONFIG scene updates
+          if (window.configTabLogic?.checkConfigScene) {
+            await window.configTabLogic.checkConfigScene();
+          }
           window.uiHelpers.logSuccess('Refresh complete', 'system');
         } catch (e) {
           window.uiHelpers.logError('Refresh failed: ' + e.message, 'system');

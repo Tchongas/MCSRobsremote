@@ -3,12 +3,30 @@ const obs = new OBSWebSocket();
 let connected = false;
 let eventCallbacks = new Map();
 
+function isConnected() {
+  return !!connected;
+}
+
+function requireConnected() {
+  if (!connected) {
+    const err = new Error('OBS is not connected');
+    err.code = 'OBS_NOT_CONNECTED';
+    throw err;
+  }
+}
+
 async function connect(url, password) {
   if (connected) return { connected: true };
   
   // Use provided parameters or fall back to defaults
-  const connectionUrl = url || 'ws://:4455';
+  const connectionUrl = String(url || '').trim();
   const connectionPassword = password || '';
+
+  if (!connectionUrl) {
+    const err = new Error('OBS WebSocket URL is not configured');
+    err.code = 'OBS_URL_MISSING';
+    throw err;
+  }
   
   console.log(`Attempting to connect to OBS at ${connectionUrl}...`);
   
@@ -79,4 +97,4 @@ function offEvent(eventType, callback) {
   }
 }
 
-module.exports = { obs, connect, disconnect, onEvent, offEvent };
+module.exports = { obs, connect, disconnect, onEvent, offEvent, isConnected, requireConnected };

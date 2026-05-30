@@ -264,10 +264,31 @@
     );
   };
 
+  const openWorkspacePopup = async (pluginName, options = {}) => {
+    const p = String(pluginName || '').trim() || 'unknown';
+
+    if (options.rpcHandlers && typeof options.rpcHandlers === 'object') {
+      registerPopupRpcHandlers(p, options.rpcHandlers);
+    }
+
+    const html = createPopupHtml(p, {
+      bodyHtml: options.bodyHtml,
+      script: options.script
+    });
+
+    return await openPluginPopup(p, {
+      title: options.title || p,
+      width: options.width,
+      height: options.height,
+      html
+    });
+  };
+
   const workspaceApi = {
     openPluginModal,
     closePluginModal,
     registerModalSidebarButton,
+    openWorkspacePopup,
     openPluginPopup,
     registerPopupRpcHandlers,
     unregisterPopupRpcHandlers,

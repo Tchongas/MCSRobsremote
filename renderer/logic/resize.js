@@ -73,15 +73,22 @@
     const resizeType = currentHandle.dataset.resize;
     const mainLayout = document.querySelector('.main-layout');
     const app = document.querySelector('.app');
+    const isDashboardHidden = document.documentElement.getAttribute('data-hide-dashboard') === 'true';
 
     if (resizeType === 'left') {
       const delta = e.clientX - startX;
       let newWidth = Math.max(MIN_SIDEBAR, Math.min(MAX_SIDEBAR, startWidth + delta));
       
       if (mainLayout) {
-        const rightSidebar = document.getElementById('sidebarRight');
-        const rightWidth = rightSidebar ? rightSidebar.offsetWidth : 200;
-        mainLayout.style.gridTemplateColumns = `${newWidth}px 1fr ${rightWidth}px`;
+        if (isDashboardHidden) {
+          // 2-column layout: left sidebar + right sidebar
+          mainLayout.style.gridTemplateColumns = `${newWidth}px 1fr`;
+        } else {
+          // 3-column layout: left sidebar + dashboard + right sidebar
+          const rightSidebar = document.getElementById('sidebarRight');
+          const rightWidth = rightSidebar ? rightSidebar.offsetWidth : 200;
+          mainLayout.style.gridTemplateColumns = `${newWidth}px 1fr ${rightWidth}px`;
+        }
         // Update handle position
         currentHandle.style.left = newWidth + 'px';
       }
@@ -90,9 +97,17 @@
       let newWidth = Math.max(MIN_SIDEBAR, Math.min(MAX_SIDEBAR, startWidth + delta));
       
       if (mainLayout) {
-        const leftSidebar = document.getElementById('sidebarLeft');
-        const leftWidth = leftSidebar ? leftSidebar.offsetWidth : 200;
-        mainLayout.style.gridTemplateColumns = `${leftWidth}px 1fr ${newWidth}px`;
+        if (isDashboardHidden) {
+          // 2-column layout: left sidebar + right sidebar
+          const leftSidebar = document.getElementById('sidebarLeft');
+          const leftWidth = leftSidebar ? leftSidebar.offsetWidth : 200;
+          mainLayout.style.gridTemplateColumns = `${leftWidth}px ${newWidth}px`;
+        } else {
+          // 3-column layout: left sidebar + dashboard + right sidebar
+          const leftSidebar = document.getElementById('sidebarLeft');
+          const leftWidth = leftSidebar ? leftSidebar.offsetWidth : 200;
+          mainLayout.style.gridTemplateColumns = `${leftWidth}px 1fr ${newWidth}px`;
+        }
         // Update handle position
         currentHandle.style.right = newWidth + 'px';
       }
@@ -133,11 +148,13 @@
     const leftSidebar = document.getElementById('sidebarLeft');
     const rightSidebar = document.getElementById('sidebarRight');
     const consoleArea = document.getElementById('consoleArea');
+    const isDashboardHidden = document.documentElement.getAttribute('data-hide-dashboard') === 'true';
 
     const sizes = {
       leftWidth: leftSidebar ? leftSidebar.offsetWidth : 200,
       rightWidth: rightSidebar ? rightSidebar.offsetWidth : 200,
-      consoleHeight: consoleArea ? consoleArea.offsetHeight : 90
+      consoleHeight: consoleArea ? consoleArea.offsetHeight : 90,
+      isDashboardHidden: isDashboardHidden
     };
 
     try {
@@ -155,9 +172,18 @@
       const sizes = JSON.parse(saved);
       const mainLayout = document.querySelector('.main-layout');
       const app = document.querySelector('.app');
+      const isDashboardHidden = document.documentElement.getAttribute('data-hide-dashboard') === 'true';
 
-      if (mainLayout && sizes.leftWidth && sizes.rightWidth) {
-        mainLayout.style.gridTemplateColumns = `${sizes.leftWidth}px 1fr ${sizes.rightWidth}px`;
+      if (mainLayout && sizes.leftWidth) {
+        if (isDashboardHidden || sizes.isDashboardHidden) {
+          // 2-column layout: left sidebar + right sidebar
+          mainLayout.style.gridTemplateColumns = `${sizes.leftWidth}px 1fr`;
+        } else {
+          // 3-column layout: left sidebar + dashboard + right sidebar
+          if (sizes.rightWidth) {
+            mainLayout.style.gridTemplateColumns = `${sizes.leftWidth}px 1fr ${sizes.rightWidth}px`;
+          }
+        }
       }
 
       if (sizes.consoleHeight) {
@@ -203,10 +229,55 @@
     loadSizes();
   }
 
+  function handleDashboardVisibilityChange() {
+    const mainLayout = document.querySelector('.main-layout');
+    const isDashboardHidden = document.documentElement.getAttribute('data-hide-dashboard') === 'true';
+    
+    if (mainLayout) {
+      if (isDashboardHidden) {
+        // Switch to 2-column layout
+        const leftSidebar = document.getElementById('sidebarLeft');
+        const rightSidebar = document.getElementById('sidebarRight');
+        const leftWidth = leftSidebar ? leftSidebar.offsetWidth : 220;
+        const rightWidth = rightSidebar ? rightSidebar.offsetWidth : 220;
+        
+        // Give scenes sidebar more space by default in 2-column mode
+        const adjustedLeftWidth = Math.min(leftWidth * 1.3, MAX_SIDEBAR);
+        mainLayout.style.gridTemplateColumns = `${adjustedLeftWidth}px 1fr`;
+      } else {
+        // Switch to 3-column layout
+        const leftSidebar = document.getElementById('sidebarLeft');
+        const rightSidebar = document.getElementById('sidebarRight');
+        const leftWidth = leftSidebar ? leftSidebar.offsetWidth : 220;
+        const rightWidth = rightSidebar ? rightSidebar.offsetWidth : 220;
+        mainLayout.style.gridTemplateColumns = `${leftWidth}px 1fr ${rightWidth}px`;
+      }
+      
+      // Update handle positions after layout change
+      setTimeout(updateHandlePositions, 0);
+    }
+  }
+
+  // Watch for dashboard visibility changes
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'data-hide-dashboard') {
+        handleDashboardVisibilityChange();
+      }
+    });
+  });
+
+  // Start observing the document element for attribute changes
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-hide-dashboard']
+  });
+
   // Export for external use
   window.resizeLogic = {
     saveSizes,
     loadSizes,
-    updateHandlePositions
+    updateHandlePositions,
+    handleDashboardVisibilityChange
   };
 })();

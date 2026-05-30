@@ -4,7 +4,7 @@
   function waitForModules() {
     return new Promise((resolve) => {
       const checkModules = () => {
-        if (window.uiHelpers && window.sceneLogic && window.dashboardLogic && window.configLogic) {
+        if (window.uiHelpers && window.sceneLogic && window.dashboardLogic && window.configLogic && window.pluginsLogic) {
           resolve();
         } else {
           setTimeout(checkModules, 10);
@@ -63,6 +63,10 @@
       handleProfileChange: window.configLogic.handleProfileChange,
       showNewProfileDialog: window.configLogic.showNewProfileDialog,
       handleDeleteProfile: window.configLogic.handleDeleteProfile,
+
+      // Plugin package settings
+      refreshPluginPackages: window.pluginsLogic.refreshPluginPackages,
+      getPluginPackages: window.pluginsLogic.getPluginPackages,
 
       // Audio/microphone updates (embedded in dashboard items)
       updateMicrophoneMuteState: window.dashboardLogic.updateMicrophoneMuteState

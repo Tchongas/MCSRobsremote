@@ -12,7 +12,7 @@
     dashboardEmojis: true,
     highContrast: false,
     reducedMotion: true,
-    hideConsole: true,
+    hideConsole: false,
     hideStreamControls: false,
     hideDashboard: false
   };
@@ -383,6 +383,12 @@
     panels.forEach(p => {
       p.classList.toggle('active', p.dataset.panel === tabName);
     });
+
+    if (tabName === 'plugins' && window.pluginsLogic?.refreshPluginPackages) {
+      window.pluginsLogic.refreshPluginPackages().catch((err) => {
+        safeLog('⚠️ Failed to refresh plugin packages: ' + (err?.message || err));
+      });
+    }
   }
 
   function initSettingsPage() {
@@ -449,6 +455,10 @@
 
     // Keep appearance controls in sync with persisted values
     syncAppearanceControls(getAppearanceSettings());
+
+    if (window.pluginsLogic?.refreshPluginPackages) {
+      window.pluginsLogic.refreshPluginPackages().catch(() => {});
+    }
 
     // Reset password field to hidden
     passwordInput.type = 'password';

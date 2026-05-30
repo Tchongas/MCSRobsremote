@@ -128,8 +128,26 @@
                 </svg>
                 <span>Refresh All</span>
               </button>
+              <button class="quick-action-btn" id="configToggle" title="Show Config" tabindex="-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <path d="M12 12h.01"/>
+                </svg>
+                <span>Config</span>
+              </button>
             </div>
           </div>
+
+          <!-- Config Section (hidden by default) -->
+          <div class="sidebar-section" id="configSection" style="display: none;">
+            <div class="sidebar-title-row">
+              <h3 class="sidebar-title">Config</h3>
+            </div>
+            <div id="configInputs" class="config-inputs">
+              <div class="config-empty">Add a source with _ in the CONFIG scene</div>
+            </div>
+          </div>
+
 
           <div class="sidebar-section sidebar-section-grow">
             <div class="sidebar-title-row">
@@ -212,6 +230,22 @@
               </svg>
               Appearance
             </button>
+            <button class="settings-nav-btn" data-tab="plugins" role="tab" aria-selected="false">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2l3 3-3 3-3-3 3-3z"></path>
+                <path d="M19 9l3 3-3 3-3-3 3-3z"></path>
+                <path d="M5 9l3 3-3 3-3-3 3-3z"></path>
+                <path d="M12 16l3 3-3 3-3-3 3-3z"></path>
+              </svg>
+              Plugins
+            </button>
+            <button class="settings-nav-btn" data-tab="create" role="tab" aria-selected="false">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Create
+            </button>
           </aside>
 
           <section class="settings-content" role="region" aria-label="Settings Content">
@@ -269,6 +303,54 @@
 
             <div class="settings-panel" data-panel="info" role="tabpanel">
               <div class="settings-panel-body">
+
+            <div class="info-section">
+              <h4 class="info-section-title">About</h4>
+              <div class="info-about">
+                <div class="info-about-row"><span class="info-label">Connection</span><span>Set up in OBS → Tools → WebSocket Server Settings → Enable Websocket Server</span></div>
+              </div>
+            </div>
+
+            <div class="info-section">
+              <h4 class="info-section-title">Dashboard</h4>
+              <div class="info-about">
+                <div class="info-about-row"><span class="info-label">Visibility</span><span>Only sources whose name starts with <kbd>_</kbd> appear in the dashboard</span></div>
+                <div class="info-about-row"><span class="info-label">Options panel</span><span>Click a source row to expand its controls — buttons come from built-in handlers and loaded plugins</span></div>
+                <div class="info-about-row"><span class="info-label">Visibility toggle</span><span>The checkbox on the left of each row shows or hides the source in OBS instantly</span></div>
+                <div class="info-about-row"><span class="info-label">Search</span><span>Use the search bar to filter sources by name — <kbd>Ctrl</kbd> + <kbd>F</kbd> focuses it from anywhere</span></div>
+              </div>
+            </div>
+
+            <div class="info-section">
+              <h4 class="info-section-title">Studio Mode</h4>
+              <div class="info-about">
+                <div class="info-about-row"><span class="info-label">Preview</span><span>Clicking a scene loads its sources in the dashboard without going live</span></div>
+                <div class="info-about-row"><span class="info-label">Program</span><span>The blue <em>live</em> tag shows which scene is currently on air</span></div>
+                <div class="info-about-row"><span class="info-label">Transition</span><span>Use the <strong>Change Scene</strong> bar or <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to push preview to live</span></div>
+                <div class="info-about-row"><span class="info-label">Quick cut</span><span>Double-click any scene to skip preview and go live immediately</span></div>
+              </div>
+            </div>
+
+            <div class="info-section">
+              <h4 class="info-section-title">Plugins</h4>
+              <div class="info-about">
+                <div class="info-about-row"><span class="info-label">Location</span><span>Each plugin is a folder with a <code>plugin.js</code> file, placed inside the plugins folder</span></div>
+                <div class="info-about-row"><span class="info-label">Config</span><span>Plugins can include a <code>config.yaml</code> for user-editable settings, opened via the Plugins tab</span></div>
+                <div class="info-about-row"><span class="info-label">Management</span><span>Go to Settings → Plugins to see loaded plugins, their status, and open their README or config</span></div>
+                <div class="info-about-row"><span class="info-label">Hot reload</span><span>The app watches the plugins folder — adding or changing files triggers a reload notification</span></div>
+              </div>
+            </div>
+
+            <div class="info-section">
+              <h4 class="info-section-title">Config Scene</h4>
+              <div class="info-about">
+                <div class="info-about-row"><span class="info-label"></span><span>The scene called CONFIG will act as a configuration storage for the application</span></div>
+                <div class="info-about-row"><span class="info-label">Usage</span><span>All sources starting with _ will be avaiable in the config tab in quick actions</span></div>
+                <div class="info-about-row"><span class="info-label"></span><span>The CONFIG scene wont be shown in the scene selector</span></div>
+
+              </div>
+            </div>
+
             <div class="info-section">
               <h4 class="info-section-title">Keyboard Shortcuts</h4>
               <table class="shortcut-table">
@@ -315,14 +397,6 @@
               </table>
             </div>
 
-            <div class="info-section">
-              <h4 class="info-section-title">About</h4>
-              <div class="info-about">
-                <div class="info-about-row"><span class="info-label">Application</span><span>ROBS — Remote OBS Controller</span></div>
-                <div class="info-about-row"><span class="info-label">Dashboard</span><span>Only sources prefixed with <kbd>_</kbd> appear</span></div>
-                <div class="info-about-row"><span class="info-label">Plugins</span><span>Place <code>.js</code> files in the plugins folder</span></div>
-              </div>
-            </div>
               </div>
             </div>
 
@@ -447,6 +521,47 @@
                 <button id="saveAppearance" class="btn-accent">Save Appearance</button>
               </div>
             </div>
+
+            <div class="settings-panel" data-panel="plugins" role="tabpanel">
+              <div class="settings-panel-body">
+                <div class="plugins-settings-header">
+                  <div>
+                    <h4 class="info-section-title">Plugins</h4>
+                    <p class="plugins-settings-lead">To install a plugin, place its folder in the plugins directory and refresh.</p>
+                  </div>
+                  <div class="plugins-settings-summary">
+                    <span id="pluginsSettingsCount" class="plugin-summary-badge">0 plugin packages</span>
+                  </div>
+                </div>
+
+                <div class="plugins-settings-toolbar">
+                  <button id="refreshPluginsSettings" class="btn-ghost">Refresh Plugins</button>
+                  <button id="openPluginFolderSettings" class="btn-accent">Open Plugins Folder</button>
+                </div>
+
+                <div id="pluginsSettingsEmpty" class="plugins-settings-empty hidden">
+                  <h4>No plugin packages found</h4>
+                  <p>Create a folder inside the plugins directory and add a <code>plugin.js</code> entry file to load it.</p>
+                </div>
+
+                <div id="pluginsSettingsList" class="plugins-settings-grid"></div>
+              </div>
+            </div>
+
+            <div class="settings-panel" data-panel="create" role="tabpanel">
+              <div class="settings-panel-body">
+                <div class="create-settings-header">
+                  <div>
+                    <h3 class="create-settings-title">Scene Creation</h3>
+                    <p class="create-settings-lead">Create pre-configured scenes with sources from plugins.</p>
+                  </div>
+                </div>
+
+                <div id="createSettingsContent" class="create-settings-content">
+                  <div class="create-empty">No plugins have registered scene creation handlers.</div>
+                </div>
+              </div>
+            </div>
           </section>
         </div>
       </div>
@@ -484,6 +599,9 @@
     <script src="renderer/logic/scenes.js"></script>
     <script src="renderer/logic/dashboard.js"></script>
     <script src="renderer/logic/resize.js"></script>
+    <script src="renderer/logic/plugins.js"></script>
+    <script src="renderer/logic/config-tab.js"></script>
+    <script src="renderer/logic/settings-create.js"></script>
     <script src="renderer/logic/sourceTypes.js"></script>
     <!-- Handler Registry System -->
     <script src="renderer/logic/handlers/HandlerRegistry.js"></script>
@@ -494,6 +612,7 @@
     <!-- Shared plugin utilities (must load before CustomHandler.js) -->
     <script src="renderer/logic/handlers/PluginUtils.js"></script>
     <script src="renderer/logic/handlers/PluginWorkspaceUtils.js"></script>
+    <script src="renderer/logic/handlers/PluginCreateUtils.js"></script>
     <!-- Load plugins and custom handlers -->
     <script src="renderer/logic/handlers/plugins/TwitchPlugin.js"></script>
     <script src="renderer/logic/handlers/plugins/YoutubePlugin.js"></script>
