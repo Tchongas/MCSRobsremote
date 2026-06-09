@@ -68,6 +68,7 @@ function setupEventListeners() {
   obs.on('SceneItemRemoved', (data) => notifyRenderer('scene-item-removed', data));
   obs.on('InputMuteStateChanged', (data) => notifyRenderer('input-mute-changed', data));
   obs.on('InputVolumeChanged', (data) => notifyRenderer('input-volume-changed', data));
+  obs.on('VendorEvent', (data) => notifyRenderer('vendor-event', data));
 }
 
 function notifyRenderer(eventType, data) {

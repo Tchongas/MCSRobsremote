@@ -207,6 +207,31 @@ function setupIpcHandlers() {
     return await sceneCreate.getDefaultInputSettings(inputKind);
   });
 
+  // Hotkeys
+  ipcMain.handle('hotkey-list', async () => {
+    return obs.call('GetHotkeyList');
+  });
+  ipcMain.handle('hotkey-trigger-by-name', async (event, hotkeyName, contextName) => {
+    const params = { hotkeyName: String(hotkeyName || '') };
+    if (contextName) params.contextName = String(contextName);
+    return obs.call('TriggerHotkeyByName', params);
+  });
+  ipcMain.handle('hotkey-trigger-by-sequence', async (event, keyId, keyModifiers) => {
+    const params = {};
+    if (keyId) params.keyId = String(keyId);
+    if (keyModifiers && typeof keyModifiers === 'object') params.keyModifiers = keyModifiers;
+    return obs.call('TriggerHotkeyByKeySequence', params);
+  });
+
+  // Vendor request
+  ipcMain.handle('obs-vendor-request', async (event, vendorName, requestType, requestData) => {
+    return obs.call('CallVendorRequest', {
+      vendorName: String(vendorName || ''),
+      requestType: String(requestType || ''),
+      requestData: (requestData && typeof requestData === 'object') ? requestData : {}
+    });
+  });
+
   // Debug raw request handler
   ipcMain.handle('debug-raw-request', async (event, requestName, params) => {
     await connect();
@@ -828,7 +853,10 @@ function setupEventForwarding(win) {
   onEvent('input-volume-changed', (data) => {
     win.webContents.send('obs-event', { type: 'input-volume-changed', data });
   });
-  
+
+  onEvent('vendor-event', (data) => {
+    win.webContents.send('obs-event', { type: 'vendor-event', data });
+  });
 }
 
 app.on('window-all-closed', () => {

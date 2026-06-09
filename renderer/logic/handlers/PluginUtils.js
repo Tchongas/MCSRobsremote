@@ -715,6 +715,92 @@
   };
 
 /*----------------------------------------------------------------------------------------
+  listHotkeys / triggerHotkeyByName / triggerHotkeyBySequence
+  ---------------------------------------------------------------------------------------- */
+  const listHotkeys = async () => {
+    if (!window.obsAPI?.hotkeys?.list) throw new Error('OBS hotkeys API not available');
+    const res = await window.obsAPI.hotkeys.list();
+    return res?.hotkeys ?? res ?? [];
+  };
+
+  const triggerHotkeyByName = async (hotkeyName, contextName) => {
+    const name = String(hotkeyName || '').trim();
+    if (!name) throw new Error('triggerHotkeyByName: hotkeyName is required');
+    if (!window.obsAPI?.hotkeys?.triggerByName) throw new Error('OBS hotkeys API not available');
+    return await window.obsAPI.hotkeys.triggerByName(name, contextName || undefined);
+  };
+
+  const triggerHotkeyBySequence = async (keyId, keyModifiers) => {
+    if (!window.obsAPI?.hotkeys?.triggerBySequence) throw new Error('OBS hotkeys API not available');
+    const mods = (keyModifiers && typeof keyModifiers === 'object') ? keyModifiers : undefined;
+    return await window.obsAPI.hotkeys.triggerBySequence(keyId || undefined, mods);
+  };
+
+/*----------------------------------------------------------------------------------------
+  callVendorRequest
+  Send a CallVendorRequest to OBS and return the response data.
+  vendorName  — name of the vendor (e.g. 'obs-browser')
+  requestType — the request type string the vendor registered
+  requestData — optional object payload (defaults to {})
+  Returns { vendorName, requestType, responseData }
+  ---------------------------------------------------------------------------------------- */
+  const callVendorRequest = async (vendorName, requestType, requestData) => {
+    const vn = String(vendorName || '').trim();
+    const rt = String(requestType || '').trim();
+    if (!vn) throw new Error('callVendorRequest: vendorName is required');
+    if (!rt) throw new Error('callVendorRequest: requestType is required');
+    if (!window.obsAPI?.vendor?.callRequest) throw new Error('OBS vendor API not available');
+    const rd = (requestData && typeof requestData === 'object') ? requestData : {};
+    return await window.obsAPI.vendor.callRequest(vn, rt, rd);
+  };
+
+/*----------------------------------------------------------------------------------------
+  onVendorEvent / offVendorEvent
+  Subscribe to VendorEvent emissions from OBS.
+  filter  — optional { vendorName, eventType } to narrow which events trigger the callback
+  Returns the unsubscribe function.
+  ---------------------------------------------------------------------------------------- */
+  const _vendorEventListeners = new Set();
+
+  const _handleVendorObsEvent = (evt) => {
+    if (evt?.type !== 'vendor-event') return;
+    _vendorEventListeners.forEach((entry) => {
+      const { filter, callback } = entry;
+      if (filter.vendorName && filter.vendorName !== evt.data?.vendorName) return;
+      if (filter.eventType && filter.eventType !== evt.data?.eventType) return;
+      try { callback(evt.data); } catch (_) {}
+    });
+  };
+
+  let _vendorObsEventBound = false;
+  const _ensureVendorObsBound = () => {
+    if (_vendorObsEventBound) return;
+    _vendorObsEventBound = true;
+    if (window.obsAPI?.onEvent) {
+      window.obsAPI.onEvent(_handleVendorObsEvent);
+    }
+  };
+
+  const onVendorEvent = (filter, callback) => {
+    if (typeof filter === 'function') {
+      callback = filter;
+      filter = {};
+    }
+    if (typeof callback !== 'function') throw new Error('onVendorEvent: callback must be a function');
+    const f = (filter && typeof filter === 'object') ? filter : {};
+    const entry = { filter: f, callback };
+    _vendorEventListeners.add(entry);
+    _ensureVendorObsBound();
+    return () => _vendorEventListeners.delete(entry);
+  };
+
+  const offVendorEvent = (callback) => {
+    _vendorEventListeners.forEach((entry) => {
+      if (entry.callback === callback) _vendorEventListeners.delete(entry);
+    });
+  };
+
+/*----------------------------------------------------------------------------------------
   Expose globally
   ---------------------------------------------------------------------------------------- */
   // Store reference to plugin sandbox windows
@@ -807,6 +893,12 @@
     registerSidebarButton,
     unregisterSidebarButtons,
     loadPluginScript,
-    registerPluginSandbox
+    registerPluginSandbox,
+    listHotkeys,
+    triggerHotkeyByName,
+    triggerHotkeyBySequence,
+    callVendorRequest,
+    onVendorEvent,
+    offVendorEvent
   };
 })();

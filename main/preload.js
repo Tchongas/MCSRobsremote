@@ -59,6 +59,15 @@ contextBridge.exposeInMainWorld('obsAPI', {
     restart: (inputName) => ipcRenderer.invoke('media-restart', inputName),
     toggle: (inputName) => ipcRenderer.invoke('media-toggle', inputName)
   },
+  hotkeys: {
+    list: () => ipcRenderer.invoke('hotkey-list'),
+    triggerByName: (hotkeyName, contextName) => ipcRenderer.invoke('hotkey-trigger-by-name', hotkeyName, contextName),
+    triggerBySequence: (keyId, keyModifiers) => ipcRenderer.invoke('hotkey-trigger-by-sequence', keyId, keyModifiers)
+  },
+  vendor: {
+    callRequest: (vendorName, requestType, requestData) =>
+      ipcRenderer.invoke('obs-vendor-request', vendorName, requestType, requestData)
+  },
   // Event system for real-time updates
   onEvent: (callback) => {
     ipcRenderer.on('obs-event', (event, data) => callback(data));
