@@ -1,101 +1,146 @@
-# ROBS — Remote OBS Controller
+<div align="center">
 
-A desktop app for controlling OBS Studio remotely. Built with Electron and the OBS WebSocket protocol.
+# ROBS — Remote OBS
 
-We use this for professional livestream operations — connecting to OBS instances running on other machines, switching scenes, toggling sources, adjusting audio, all from one place. Multiple operators can connect to the same OBS at the same time and everything stays in sync.
+OBS Tool, made for automation via JS plugins, Remote control via websocket and more
+Made for more professional use cases, but not that profesional that you use the actual tools
 
-## Important stuff
+[Download](#download) · [Setup](#quick-setup) · [Features](#features) · [Plugins](#plugins)
 
-- **Only sources starting with `_` show up in the dashboard.** Name your sources like `_Scoreboard`, `_Camera`, `_Overlay` to control which ones appear. This is just for organization, not security.
-- **Don't give your OBS WebSocket password to people you don't trust.** Anyone with the password can control your OBS from any app, not just this one.
-- **Don't install plugins from unknown sources.** Plugins run code in the app.
+</div>
+
+---
+
+## What is ROBS?
+
+ROBS is a desktop remote control for OBS Studio.
+
+- Run on a **different computer** from your streaming PC
+- Let **multiple operators** control the same OBS simultaneously
+- Add **custom buttons and controls** via plugins
+- Keep everything **in sync** across all connected controllers
+
+---
+
+## Download
+
+| Platform | Download |
+|----------|----------|
+| Windows | Grab the latest portable `.exe` from [Releases](../../releases) |
+
+---
+
+## Quick Setup
+
+### 1. Enable OBS WebSocket
+
+In OBS Studio:
+- Go to **Tools → WebSocket Server Settings**
+- Enable the server
+- Note the URL (usually `ws://localhost:4455`)
+- Set a password if you want one
+
+### 2. Connect ROBS
+
+- Open ROBS and click the **gear icon** (or press `F1`)
+- Enter your OBS WebSocket URL and password
+- Click **Connect to OBS**
+- Your scenes appear automatically
+
+> **Remote setup?** If OBS is on another machine, use the machine's IP (e.g., `ws://192.168.1.50:4455`). Consider [Tailscale](https://tailscale.com) or [Radmin VPN](https://www.radmin-vpn.com) for secure remote access.
+
+---
 
 ## Features
 
-- **Scene management** — preview/program workflow (studio mode). Click to preview, double-click or press the button to go live.
-- **Source controls** — toggle visibility, adjust volume with proper sliders, mute/unmute, browser source URL editing and refresh.
-- **Real-time sync** — multiple clients can connect to the same OBS. Scene changes, visibility toggles, volume changes all update instantly across everyone.
-- **Plugin system** — extend the app with custom `.js` plugins. Hot-reload on file save, no restart needed.
-- **Keyboard shortcuts** — scene navigation, search, transitions, all accessible from the keyboard. Press `F1` in the app to see the full list.
-- **Connection profiles** — save multiple OBS connection configs and switch between them.
-- **Stream control** — start/stop streaming from the sidebar.
+| Feature | Description |
+|---------|-------------|
+| **🎬 Scene Control** | Preview/program workflow with studio mode. Click to preview, double-click or `Ctrl+Enter` to go live. |
+| **🌐 Edit Sources** | Edit Text, URL and etc on the fly and force refresh without opening OBS. |
+| **👁️ Source Visibility** | Toggle overlays, cameras, and graphics with one click. |
+| **⚡ Real-time Sync** | Multiple operators can connect to the same OBS. Changes appear instantly on everyone's screen. |
+| **🔌 Plugin System** | Add custom buttons and automation with JavaScript plugins. Hot-reload on save. |
+| **⌨️ Keyboard Shortcuts** | Full keyboard control. Press `F1` for the shortcut list. |
 
-## Requirements
+---
 
-- OBS Studio 28+ with the WebSocket server enabled
-- The WebSocket address and password (if you set one)
+## Important Conventions
 
-## Setup
+### Source Naming
 
-### OBS side
+**Only sources starting with `_` appear in the dashboard.**
 
-Go to **Tools → WebSocket Server Settings** and enable the server. The default URL is `ws://localhost:4455`. Set a password if you want one.
+| In OBS | In ROBS Dashboard |
+|--------|-------------------|
+| `_Scoreboard` | ✅ Visible with controls |
+| `_Webcam` | ✅ Visible with controls |
+| `Game Capture` | ❌ Hidden (no underscore) |
+| `Desktop Audio` | ❌ Hidden (no underscore) |
 
-### App side
+This lets you control which sources need manual controls vs. which are managed automatically.
 
-1. Open Settings (gear icon in the top bar, or press `F1`)
-2. Enter the WebSocket URL and password
-3. Save, then click **Connect to OBS**
-4. Scenes load automatically
+### Config Scene
 
-If you're connecting remotely (different machine), you'll need to forward the port or use a VPN like Radmin or Tailscale.
+**The scene named `CONFIG` is used to store configuration data for plugins.**
+- This scene is hidden from the scene list.
+- The sources in this scene appear on the config menu on the right panel
+- Allows for easy editing, used mainly for plugins
 
-## Using the app
-
-- **Left sidebar** — connect/disconnect, start/stop stream, scene list
-- **Center** — dashboard with source controls for the selected scene
-- **Right sidebar** — quick actions, plugin buttons
-- **Bottom** — console log
-
-Select a scene on the left to load its sources in the dashboard. Only sources with names starting with `_` will appear. Each source row can be expanded to show controls (volume, URL editing, etc.) depending on the source type.
-
-When someone else changes something in OBS (or from another ROBS instance), your UI updates automatically. You'll see `(remote)` in the console for those changes.
-
-### Keyboard shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `F5` | Refresh scenes and sources |
-| `F1` | Open info/shortcuts panel |
-| `Ctrl+F` | Focus search bar |
-| `Ctrl+G` | Focus scene list (then arrow keys to navigate, Enter to preview, Ctrl+Enter to go live) |
-| `Ctrl+Enter` | Transition preview scene to live |
-| `Escape` | Close modal / exit focus |
+---
 
 ## Plugins
 
-Plugins let you add custom controls for specific source types. Drop a `.js` file in the `plugins/` folder and the app picks it up automatically — no restart needed.
-## Building
+Extend ROBS with custom JavaScript plugins that add buttons, automation, and integrations.
 
-Requires Node.js. Uses Electron Builder.
-
-```bash
-npm install
-
-# Run in dev mode
-npm start
-
-# Build portable executable (Windows)
-npm run build
-```
-
-## Project structure
+Plugins live in the `plugins/` folder — one folder per plugin with a `plugin.js` file inside:
 
 ```
-main/           — Electron main process (window, IPC, OBS client)
-renderer/       — Frontend (HTML, CSS, JS)
-  logic/        — App modules (scenes, dashboard, config, resize)
-    handlers/   — Source type handlers (audio, browser, mic)
-      plugins/  — Built-in plugins
-documentation/  — Plugin docs
+plugins/
+  MyPlugin/
+    plugin.js
+    config.yaml      (optional)
+    README.md        (optional)
 ```
+
+Drop your plugin folder in, and ROBS loads it automatically. Edit and save — changes apply instantly without restart.
+
+### Example: Adding Sidebar Buttons
+
+```javascript
+// plugins/Streamlink/plugin.js
+window.PluginUtils.registerSidebarButton(
+  'Streamlink',
+  'start_all',
+  'Start Streams',
+  () => window.PluginUtils.triggerHotkeyByName('streamlink.start_all'),
+  { icon: '▶', tint: 'green' }
+);
+```
+
+See [`docs/PLUGIN-UTILS-REFERENCE.md`](docs/PLUGIN-UTILS-REFERENCE.md) for the full plugin API.
+
+---
 
 ## Troubleshooting
 
-- **Can't connect?** — Make sure OBS is running, WebSocket is enabled, URL and password are correct. Check firewall if remote.
-- **Sources not showing?** — Source names need to start with `_` to appear in the dashboard.
-- **Plugin not loading?** — Check the console at the bottom for errors. Make sure `canHandle()` returns `true` for the source type you're targeting.
+| Problem | Solution |
+|---------|----------|
+| "Can't connect to OBS" | Check that OBS is running, WebSocket is enabled, and the URL/password match. Verify firewall rules for remote connections. |
+| Sources not showing | Make sure source names in OBS start with `_`. Only `_SourceName` appears in the dashboard. |
+| Plugin buttons not appearing | Check the bottom console for errors. Make sure your plugin's `canHandle` returns `true` or you're using `registerSidebarButton`. |
+| Laggy connection | For remote setups, use a VPN like Tailscale instead of port forwarding over the internet. |
+
+---
+
+## Security Notes
+
+- **WebSocket password = full control.** Anyone with your password can control OBS from any app. Don't share it publicly.
+- **Plugins run code.** Only install plugins from sources you trust. The plugins folder runs JavaScript with full app access.
+
+---
 
 ## Contact
 
-Open an issue on GitHub, or message me on Discord: **@limifaooooo**
+- **Discord:** @limifaooooo
+
+---
