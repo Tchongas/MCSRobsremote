@@ -104,11 +104,14 @@
       }
     });
 
-    const connectBtn = document.getElementById('connect');
-    const disconnectBtn = document.getElementById('disconnect');
+    // Wire both sidebar and topbar buttons to the same handlers
+    const allConnectBtns = [document.getElementById('connect'), document.getElementById('connect-sidebar')].filter(Boolean);
+    const allDisconnectBtns = [document.getElementById('disconnect'), document.getElementById('disconnect-sidebar')].filter(Boolean);
+    const connectBtn = allConnectBtns[0];
+    const disconnectBtn = allDisconnectBtns[0];
 
     // Connect to OBS
-    connectBtn.addEventListener('mousedown', async () => {
+    const doConnect = async () => {
       window.uiHelpers.logInfo('Connecting to OBS…', 'conn');
       try {
         const config = getStoredConfig();
@@ -141,10 +144,11 @@
           window.uiHelpers.logInfo('5. Verify network connectivity', 'conn');
         }
       }
-    });
+    };
+    allConnectBtns.forEach(btn => btn.addEventListener('mousedown', doConnect));
 
     // Disconnect from OBS
-    disconnectBtn.addEventListener('mousedown', async () => {
+    const doDisconnect = async () => {
       window.uiHelpers.logInfo('Disconnecting from OBS…', 'conn');
       try {
         await window.obsAPI.disconnect();
@@ -190,7 +194,8 @@
       } catch (e) {
         window.uiHelpers.logError('Failed to disconnect: ' + e.message, 'conn');
       }
-    });
+    };
+    allDisconnectBtns.forEach(btn => btn.addEventListener('mousedown', doDisconnect));
 
     // Stream toggle button
     const streamToggle = document.getElementById('streamToggle');

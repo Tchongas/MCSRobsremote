@@ -14,7 +14,10 @@
     reducedMotion: true,
     hideConsole: false,
     hideStreamControls: false,
-    hideDashboard: false
+    hideDashboard: false,
+    hideScenes: false,
+    hideQuickActions: false,
+    pluginOnlyMode: false
   };
 
   // Safe logging helper
@@ -55,7 +58,10 @@
       reducedMotion: !!input.reducedMotion,
       hideConsole: !!input.hideConsole,
       hideStreamControls: !!input.hideStreamControls,
-      hideDashboard: !!input.hideDashboard
+      hideDashboard: !!input.hideDashboard,
+      hideScenes: !!input.hideScenes,
+      hideQuickActions: !!input.hideQuickActions,
+      pluginOnlyMode: !!input.pluginOnlyMode
     };
   }
 
@@ -98,8 +104,19 @@
     if (safe.hideDashboard) root.setAttribute('data-hide-dashboard', 'true');
     else root.removeAttribute('data-hide-dashboard');
 
+    if (safe.hideScenes) root.setAttribute('data-hide-scenes', 'true');
+    else root.removeAttribute('data-hide-scenes');
+
+    if (safe.hideQuickActions) root.setAttribute('data-hide-quick-actions', 'true');
+    else root.removeAttribute('data-hide-quick-actions');
+
+    if (safe.pluginOnlyMode) root.setAttribute('data-plugin-only', 'true');
+    else root.removeAttribute('data-plugin-only');
+
     if (mainLayout) {
-      if (safe.hideDashboard) {
+      if (safe.pluginOnlyMode) {
+        mainLayout.style.removeProperty('grid-template-columns');
+      } else if (safe.hideDashboard) {
         mainLayout.style.gridTemplateColumns = 'var(--sidebar-width) minmax(0, 1fr)';
       } else {
         mainLayout.style.removeProperty('grid-template-columns');
@@ -150,6 +167,9 @@
     const hideConsoleInput = document.getElementById('appearanceHideConsole');
     const hideStreamControlsInput = document.getElementById('appearanceHideStreamControls');
     const hideDashboardInput = document.getElementById('appearanceHideDashboard');
+    const hideScenesInput = document.getElementById('appearanceHideScenes');
+    const hideQuickActionsInput = document.getElementById('appearanceHideQuickActions');
+    const pluginOnlyModeInput = document.getElementById('appearancePluginOnlyMode');
 
     if (scaleInput) scaleInput.value = String(safe.fontScale);
     if (scaleValue) scaleValue.textContent = `${safe.fontScale}%`;
@@ -171,6 +191,9 @@
     if (hideConsoleInput) hideConsoleInput.checked = safe.hideConsole;
     if (hideStreamControlsInput) hideStreamControlsInput.checked = safe.hideStreamControls;
     if (hideDashboardInput) hideDashboardInput.checked = safe.hideDashboard;
+    if (hideScenesInput) hideScenesInput.checked = safe.hideScenes;
+    if (hideQuickActionsInput) hideQuickActionsInput.checked = safe.hideQuickActions;
+    if (pluginOnlyModeInput) pluginOnlyModeInput.checked = safe.pluginOnlyMode;
   }
 
   function saveAppearanceSettings() {
@@ -187,6 +210,9 @@
     const hideConsoleInput = document.getElementById('appearanceHideConsole');
     const hideStreamControlsInput = document.getElementById('appearanceHideStreamControls');
     const hideDashboardInput = document.getElementById('appearanceHideDashboard');
+    const hideScenesInput = document.getElementById('appearanceHideScenes');
+    const hideQuickActionsInput = document.getElementById('appearanceHideQuickActions');
+    const pluginOnlyModeInput = document.getElementById('appearancePluginOnlyMode');
 
     const next = sanitizeAppearanceSettings({
       fontScale: scaleInput ? Number(scaleInput.value) : DEFAULT_APPEARANCE.fontScale,
@@ -201,7 +227,10 @@
       reducedMotion: reducedMotionInput ? reducedMotionInput.checked : DEFAULT_APPEARANCE.reducedMotion,
       hideConsole: hideConsoleInput ? hideConsoleInput.checked : DEFAULT_APPEARANCE.hideConsole,
       hideStreamControls: hideStreamControlsInput ? hideStreamControlsInput.checked : DEFAULT_APPEARANCE.hideStreamControls,
-      hideDashboard: hideDashboardInput ? hideDashboardInput.checked : DEFAULT_APPEARANCE.hideDashboard
+      hideDashboard: hideDashboardInput ? hideDashboardInput.checked : DEFAULT_APPEARANCE.hideDashboard,
+      hideScenes: hideScenesInput ? hideScenesInput.checked : DEFAULT_APPEARANCE.hideScenes,
+      hideQuickActions: hideQuickActionsInput ? hideQuickActionsInput.checked : DEFAULT_APPEARANCE.hideQuickActions,
+      pluginOnlyMode: pluginOnlyModeInput ? pluginOnlyModeInput.checked : DEFAULT_APPEARANCE.pluginOnlyMode
     });
 
     applyAppearanceSettings(next);

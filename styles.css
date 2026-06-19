@@ -861,7 +861,97 @@ html, body {
 
 :root[data-hide-dashboard='true'] .btn-plugin {
   align-self: start;
-  min-height: 56px;
+  min-height: calc(56px * var(--plugin-scale, 1) * var(--viewport-control-scale, 1));
+}
+
+/* Hide scenes panel */
+:root[data-hide-scenes='true'] #scenesSection {
+  display: none;
+}
+
+/* When both dashboard and scenes are hidden, left sidebar collapses to connection+stream only */
+:root[data-hide-dashboard='true'][data-hide-scenes='true'] .main-layout {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+/* Hide quick actions section */
+:root[data-hide-quick-actions='true'] #quickActionsSection {
+  display: none;
+}
+
+/* Topbar connection controls: hidden by default, shown in plugin-only mode */
+.topbar-connection-controls {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+}
+
+/* ── Plugin Only Mode ── */
+/* Hides everything except plugin buttons, moves connect/disconnect to top bar */
+:root[data-plugin-only='true'] #connectionSection,
+:root[data-plugin-only='true'] #streamControlsSection,
+:root[data-plugin-only='true'] #scenesSection,
+:root[data-plugin-only='true'] #dashboardArea,
+:root[data-plugin-only='true'] .resize-handle,
+:root[data-plugin-only='true'] #quickActionsSection {
+  display: none;
+}
+
+:root[data-plugin-only='true'] .topbar-connection-controls {
+  display: flex;
+}
+
+:root[data-plugin-only='true'] .main-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+:root[data-plugin-only='true'] #sidebarLeft {
+  display: none;
+}
+
+/* Right sidebar expands to fill full space */
+:root[data-plugin-only='true'] #sidebarRight {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  border-left: none;
+  padding: 16px 20px;
+  gap: 12px;
+}
+
+/* Plugin section fills remaining height and scrolls */
+:root[data-plugin-only='true'] #sidebarRight .sidebar-section-grow {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 2-column plugin grid, fills width, scrollable */
+:root[data-plugin-only='true'] .plugin-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0;
+  grid-auto-rows: min-content;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+}
+
+/* Larger buttons in plugin-only mode */
+:root[data-plugin-only='true'] .btn-plugin {
+  min-height: calc(64px * var(--plugin-scale, 1) * var(--viewport-control-scale, 1));
+  padding: 14px 16px;
+  font-size: calc(14px * var(--plugin-scale, 1));
+  align-self: start;
+}
+
+:root[data-plugin-only='true'] .btn-plugin-icon {
+  font-size: calc(20px * var(--plugin-scale, 1));
 }
 
 

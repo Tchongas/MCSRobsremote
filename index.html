@@ -18,6 +18,22 @@
             <div class="brand-icon"></div>
             <span class="brand-name">rOBSon</span>
           </div>
+          <!-- Mini connect/disconnect shown only in plugin-only mode -->
+          <div class="topbar-connection-controls" id="topbarConnectionControls">
+            <button id="connect" class="ctrl-btn ctrl-btn-primary ctrl-btn-sm" tabindex="-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+              Connect
+            </button>
+            <button id="disconnect" class="ctrl-btn ctrl-btn-danger ctrl-btn-sm" tabindex="-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              Disconnect
+            </button>
+          </div>
         </div>
         
         <div class="top-bar-center">
@@ -41,16 +57,16 @@
       <div class="main-layout">
         <!-- Left Sidebar - Controls & Scenes -->
         <aside class="sidebar sidebar-left" id="sidebarLeft">
-          <div class="sidebar-section">
+          <div class="sidebar-section" id="connectionSection">
             <h3 class="sidebar-title">Connection</h3>
             <div class="connection-controls">
-              <button id="connect" class="ctrl-btn ctrl-btn-primary ctrl-btn-sm" tabindex="-1">
+              <button id="connect-sidebar" class="ctrl-btn ctrl-btn-primary ctrl-btn-sm" tabindex="-1">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
                 Connect
               </button>
-              <button id="disconnect" class="ctrl-btn ctrl-btn-danger ctrl-btn-sm" tabindex="-1">
+              <button id="disconnect-sidebar" class="ctrl-btn ctrl-btn-danger ctrl-btn-sm" tabindex="-1">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -68,7 +84,7 @@
             </button>
           </div>
 
-          <div class="sidebar-section sidebar-section-grow">
+          <div class="sidebar-section sidebar-section-grow" id="scenesSection">
             <h3 class="sidebar-title">
               Scenes
               <button id="refreshScenes" class="sidebar-title-btn" title="Refresh scenes" aria-label="Refresh scenes" tabindex="-1">
@@ -118,7 +134,7 @@
 
         <!-- Right Sidebar - Quick Actions & Plugins -->
         <aside class="sidebar sidebar-right" id="sidebarRight">
-          <div class="sidebar-section">
+          <div class="sidebar-section" id="quickActionsSection">
             <h3 class="sidebar-title">Quick Actions</h3>
             <div class="quick-actions">
               <button class="quick-action-btn" id="quickRefresh" title="Refresh All" tabindex="-1">
@@ -513,6 +529,32 @@
                       <span>Hide Sources dashboard</span>
                     </label>
                     <small class="help-text">Plugin-only layout with focus on scenes and plugin actions.</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="toggle-row">
+                      <input id="appearanceHideScenes" type="checkbox">
+                      <span>Hide Scenes panel</span>
+                    </label>
+                    <small class="help-text">Hides the scenes list. Useful when scenes are managed from another machine or operator.</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="toggle-row">
+                      <input id="appearanceHideQuickActions" type="checkbox">
+                      <span>Hide Quick Actions</span>
+                    </label>
+                    <small class="help-text">Hides the Refresh All and Config buttons at the top of the right panel.</small>
+                  </div>
+
+                  <hr style="border-color: var(--border); margin: 8px 0;">
+
+                  <div class="form-group">
+                    <label class="toggle-row">
+                      <input id="appearancePluginOnlyMode" type="checkbox">
+                      <span><strong>Plugin Only Mode</strong></span>
+                    </label>
+                    <small class="help-text">Hides everything except plugin buttons. Connect/Disconnect moves to the top bar. Disabling restores your previous layout settings.</small>
                   </div>
                 </div>
               </div>

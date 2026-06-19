@@ -232,6 +232,13 @@
   function handleDashboardVisibilityChange() {
     const mainLayout = document.querySelector('.main-layout');
     const isDashboardHidden = document.documentElement.getAttribute('data-hide-dashboard') === 'true';
+    const isPluginOnly = document.documentElement.getAttribute('data-plugin-only') === 'true';
+
+    if (isPluginOnly) {
+      mainLayout.style.removeProperty('grid-template-columns');
+      setTimeout(updateHandlePositions, 0);
+      return;
+    }
     
     if (mainLayout) {
       if (isDashboardHidden) {
@@ -258,10 +265,13 @@
     }
   }
 
-  // Watch for dashboard visibility changes
+  // Watch for dashboard/scenes/plugin-only visibility changes
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
-      if (mutation.type === 'attributes' && mutation.attributeName === 'data-hide-dashboard') {
+      if (mutation.type === 'attributes' &&
+         (mutation.attributeName === 'data-hide-dashboard' ||
+          mutation.attributeName === 'data-hide-scenes' ||
+          mutation.attributeName === 'data-plugin-only')) {
         handleDashboardVisibilityChange();
       }
     });
@@ -270,7 +280,7 @@
   // Start observing the document element for attribute changes
   observer.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ['data-hide-dashboard']
+    attributeFilter: ['data-hide-dashboard', 'data-hide-scenes', 'data-plugin-only']
   });
 
   // Export for external use
