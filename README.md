@@ -1,9 +1,10 @@
 <div align="center">
 
-# ROBS Website
+# ROBS
 
-OBS Tool, made for automation via JS plugins, Remote control via websocket and more
-Made for more professional use cases, but not that profesional that you use the actual tools
+A desktop OBS remote controller for livestream operators. Built with Electron and JavaScript plugins.
+
+[Documentation & Demo](https://tchongas.github.io/MCSRobsremote/)
 
 </div>
 

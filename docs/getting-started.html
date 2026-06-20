@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Getting Started - ROBS</title>
+  <link rel="stylesheet" href="styles.css">
+  <meta name="description" content="Learn how to install and configure ROBS, the OBS remote controller.">
+</head>
+<body data-page="getting-started">
+  <site-header></site-header>
+
+  <div class="layout">
+    <site-nav></site-nav>
+
+    <main class="content">
+      <h1>Getting Started</h1>
+      <p>
+        ROBS runs as a desktop application built with Electron. This guide covers the prerequisites,
+        how to connect to OBS, and how to use the dashboard.
+      </p>
+
+      <h2 id="prerequisites">Prerequisites</h2>
+      <ul>
+        <li><a href="https://obsproject.com/" target="_blank" rel="noopener">OBS Studio</a> with the WebSocket Server plugin enabled (OBS 28+ includes it by default).</li>
+        <li>A local network path or localhost connection between ROBS and the OBS machine.</li>
+        <li>Node.js if you plan to run the app from source or develop plugins.</li>
+      </ul>
+
+      <h2 id="connect-to-obs">Connect to OBS</h2>
+      <p>
+        Open the OBS WebSocket server settings:
+      </p>
+      <ol>
+        <li>In OBS, go to <strong>Tools &rarr; WebSocket Server Settings</strong>.</li>
+        <li>Enable the server and set a password if required.</li>
+        <li>Note the <strong>Server Port</strong> (default is <code>4455</code>).</li>
+      </ol>
+
+      <p>Then configure ROBS:</p>
+      <ol>
+        <li>Launch ROBS and click the <strong>Config</strong> button in the bottom-left corner.</li>
+        <li>Enter the host (<code>localhost</code> or an IP address), port, and password.</li>
+        <li>Click <strong>Save</strong>. The connection status will update in the sidebar.</li>
+      </ol>
+
+      <h2 id="dashboard-overview">Dashboard Overview</h2>
+      <p>
+        The dashboard shows every scene and all sources whose names start with <code>_</code>.
+        You can click any source row to toggle its visibility or open its parameters.
+        The console at the bottom logs connection events and remote actions.
+      </p>
+
+      <h2 id="studio-mode">Studio Mode</h2>
+      <p>
+        ROBS uses Studio Mode by default:
+      </p>
+      <ul>
+        <li><strong>Preview</strong> (red indicator) is the scene you are editing.</li>
+        <li><strong>Program</strong> (blue indicator) is the live scene your viewers see.</li>
+        <li>Click a scene to set it as preview. Click the <strong>Go Live</strong> button to transition it to program.</li>
+        <li>Double-click a scene to select it and go live immediately.</li>
+      </ul>
+
+      <h2 id="keyboard-shortcuts">Keyboard Shortcuts</h2>
+      <ul>
+        <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> &mdash; Transition the current preview scene to program.</li>
+        <li>Debug menu hotkey &mdash; Configured in settings; opens the developer debug panel.</li>
+      </ul>
+
+      <page-footer></page-footer>
+    </main>
+  </div>
+
+  <script src="components.js"></script>
+  <script src="scripts.js"></script>
+</body>
+</html>
