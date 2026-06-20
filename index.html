@@ -16,43 +16,36 @@
     <main class="content">
       <hero-section
         title="ROBS"
-        subtitle="A professional OBS remote controller built with Electron and JavaScript plugins. Control scenes, sources, and automation from anywhere."
+        subtitle="A niche OBS remote controller for productions that need automation, multi-operator control, and custom plugins."
         primary-text="Get Started"
         primary-href="docs/getting-started.html"
         secondary-text="View Demo"
         secondary-href="docs/demo.html"
       ></hero-section>
 
-      <h2 id="what-is-robs">What is ROBS?</h2>
+      <h2 id="what-is-robs">ROBS is a tool for very niche cases in OBS</h2>
       <p>
-        ROBS is an OBS remote controller designed for livestream operators who need more than the default tools.
-        It connects to OBS over WebSocket and exposes a clean dashboard where you can toggle sources, switch scenes,
-        and trigger custom automation through JavaScript plugins.
+        ROBS is a controller for OBS built around the OBS WebSocket protocol. It lets you control OBS
+        from the same machine or remotely, so more than one person can operate the same OBS
+        session at the same time.
       </p>
 
-      <div class="cards">
-        <feature-card title="Remote Control">Connect to OBS instances over the network via WebSocket and control them from a single window.</feature-card>
-        <feature-card title="Source Dashboard">Only sources prefixed with <code>_</code> appear in the dashboard, keeping your workspace clean.</feature-card>
-        <feature-card title="Plugin Automation">Write JavaScript plugins to update text sources, sync runner data, or build custom workflows.</feature-card>
-        <feature-card title="Studio Mode">Separate preview and program scenes with a single "Go Live" transition.</feature-card>
-      </div>
+      <p>
+        It interacts with OBS sources whose name starts with <code>_</code>.  
+      </p>
+      <p>
+        It is most useful for mid to large productions where a lot of things need to be automated, where there isnt a lot of staff, and maybe you dont want to use actual proffesional tools. </p>
+        <p>
+        Similar system of scripts and plugins that can be found in OBS, but with the advantage of being able to use them remotely, having more freedom to create interfaces, and everything a javascript file can do.
+      </p>
 
-      <h2 id="key-features">Key Features</h2>
-      <ul>
-        <li>Real-time scene and source synchronization across multiple users.</li>
-        <li>Studio Mode with preview/program separation and a sliding transition bar.</li>
-        <li>Plugin system loaded from the <code>robs/plugins</code> folder in your Roaming directory.</li>
-        <li>Built-in console and configuration UI for quick setup.</li>
-        <li>Debug menu accessible via a configurable hotkey.</li>
-      </ul>
-
-      <h2 id="quick-start">Quick Start</h2>
-      <ol>
-        <li>Enable the OBS WebSocket server in <strong>Tools &rarr; WebSocket Server Settings</strong>.</li>
-        <li>Launch ROBS and click the <strong>Config</strong> button to set the host, port, and password.</li>
-        <li>Save the settings and watch the dashboard populate with your <code>_</code>-prefixed sources.</li>
-        <li>Drop a plugin into <code>robs/plugins</code> and hit the sidebar button to run it.</li>
-      </ol>
+        <h2 id="quick-start">Quick Start</h2>
+        <ol>
+          <li>Enable the OBS WebSocket server in <strong>Tools &rarr; WebSocket Server Settings</strong>.</li>
+          <li>Launch ROBS and open the <strong>Config</strong> panel to set the host, port, and password.</li>
+          <li>Save the settings. The dashboard lists every scene and only sources whose names start with <code>_</code>.</li>
+          Drop a plugin into the <code>plugins</code> folder and click its sidebar button to run it.
+        </ol>
 
       <page-footer></page-footer>
     </main>

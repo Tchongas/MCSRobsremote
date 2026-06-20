@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plugins - Getting Started - ROBS</title>
+  <link rel="stylesheet" href="../styles.css">
+  <meta name="description" content="Install and use plugins in ROBS.">
+</head>
+<body data-page="getting-started-plugins">
+  <site-header></site-header>
+
+  <div class="layout">
+    <site-nav></site-nav>
+
+    <main class="content">
+      <h1>Plugins</h1>
+      <p>
+        Plugins add buttons to the ROBS sidebar and automate OBS actions. This page covers how to install and run them.
+      </p>
+
+      <h2 id="plugin-folder">Plugin Folder</h2>
+      <p>
+        Plugins are loaded from the <code>plugins</code> folder inside the <code>robs</code> directory in your Roaming folder.
+        On Windows this is usually <code>%APPDATA%\robs\plugins</code>.
+      </p>
+
+      <h2 id="install-a-plugin">Install a Plugin</h2>
+      <ol>
+        <li>Download or write a plugin <code>.js</code> file.</li>
+        <li>Copy it into the <code>robs/plugins</code> folder.</li>
+        <li>Restart ROBS. The plugin button appears in the sidebar.</li>
+      </ol>
+
+      <h2 id="run-a-plugin">Run a Plugin</h2>
+      <p>
+        Click the plugin button in the sidebar. The plugin runs its function and can update OBS sources, read files,
+        or trigger any other automation.
+      </p>
+
+      <h2 id="bundled-runner-sync">Bundled RunnerSyncPlugin</h2>
+      <p>
+        ROBS ships with <code>RunnerSyncPlugin</code>, which reads runner data from a CSV and updates text sources.
+        It is a good example of what a plugin can do.
+      </p>
+
+      <page-footer></page-footer>
+    </main>
+  </div>
+
+  <script src="../components.js"></script>
+  <script src="../scripts.js"></script>
+</body>
+</html>

@@ -5,15 +5,76 @@
   const docsDir = scriptUrl.href.replace(/components\.js$/, '');
   const rootDir = docsDir.replace(/docs\/$/, '');
 
-  const pages = [
-    { id: 'index', label: 'Introduction', href: rootDir + 'index.html' },
-    { id: 'getting-started', label: 'Getting Started', href: docsDir + 'getting-started.html' },
-    { id: 'plugins', label: 'Plugins', href: docsDir + 'plugins.html' },
-    { id: 'demo', label: 'Demo', href: docsDir + 'demo.html' },
+  const pageGroups = [
+    {
+      group: 'User Guide',
+      items: [
+        { id: 'index', label: 'Introduction', href: rootDir + 'index.html' },
+        {
+          id: 'getting-started',
+          label: 'Getting Started',
+          href: docsDir + 'getting-started.html',
+          children: [
+            { id: 'getting-started-connection', label: 'Connection', href: docsDir + 'getting-started/connection.html' },
+            { id: 'getting-started-dashboard', label: 'Dashboard', href: docsDir + 'getting-started/dashboard.html' },
+            { id: 'getting-started-appearance', label: 'Appearance', href: docsDir + 'getting-started/appearance.html' },
+            { id: 'getting-started-plugins', label: 'Plugins', href: docsDir + 'getting-started/plugins.html' },
+          ],
+        },
+        { id: 'demo', label: 'Demo', href: docsDir + 'demo.html' },
+      ],
+    },
+    {
+      group: 'Developer Guide',
+      items: [
+        {
+          id: 'plugins',
+          label: 'Plugins',
+          href: docsDir + 'plugins.html',
+          children: [
+            { id: 'plugins-documentation', label: 'Documentation', href: docsDir + 'plugins/documentation.html' },
+            { id: 'plugins-example-dashboard', label: 'Example: Dashboard', href: docsDir + 'plugins/example-dashboard.html' },
+            { id: 'plugins-example-create', label: 'Example: Create', href: docsDir + 'plugins/example-create.html' },
+            { id: 'plugins-example-automation', label: 'Example: Automation', href: docsDir + 'plugins/example-automation.html' },
+            { id: 'plugins-example-workspace', label: 'Example: Workspace', href: docsDir + 'plugins/example-workspace.html' },
+          ],
+        },
+      ],
+    },
   ];
 
   function logoHref() {
     return rootDir + 'index.html';
+  }
+
+  function flattenPages() {
+    const flat = [];
+    pageGroups.forEach(g => g.items.forEach(item => {
+      flat.push(item);
+      if (item.children) {
+        item.children.forEach(child => flat.push(child));
+      }
+    }));
+    return flat;
+  }
+
+  function isActive(item, active) {
+    if (item.id === active) return true;
+    if (item.children) {
+      return item.children.some(child => child.id === active);
+    }
+    return false;
+  }
+
+  function renderLink(item, active) {
+    const activeClass = isActive(item, active) ? 'active' : '';
+    return `<a href="${item.href}" class="sidebar-link ${activeClass}" data-page="${item.id}">${item.label}</a>`;
+  }
+
+  function renderChildren(children, active) {
+    return `<div class="sidebar-children">
+      ${children.map(c => renderLink(c, active)).join('')}
+    </div>`;
   }
 
   class SiteHeader extends HTMLElement {
@@ -44,17 +105,23 @@
   class SiteNav extends HTMLElement {
     connectedCallback() {
       const active = this.getAttribute('active') || document.body.dataset.page || 'index';
-      const links = pages.map(p => {
-        const isActive = p.id === active ? 'active' : '';
-        return `<a href="${p.href}" class="sidebar-link ${isActive}" data-page="${p.id}">${p.label}</a>`;
+
+      const sections = pageGroups.map(g => {
+        const links = g.items.map(item => {
+          const link = renderLink(item, active);
+          const children = item.children ? renderChildren(item.children, active) : '';
+          return link + children;
+        }).join('');
+
+        return `<div class="sidebar-section">
+          <div class="sidebar-title">${g.group}</div>
+          ${links}
+        </div>`;
       }).join('');
 
       this.innerHTML = `
         <nav class="sidebar" id="sidebar">
-          <div class="sidebar-section">
-            <div class="sidebar-title">Guide</div>
-            ${links}
-          </div>
+          ${sections}
           <div class="sidebar-section">
             <div class="sidebar-title">Links</div>
             <a href="https://github.com/Tchongas/MCSRobsremote" class="sidebar-link" target="_blank" rel="noopener">GitHub</a>
@@ -108,8 +175,9 @@
   class PageFooter extends HTMLElement {
     connectedCallback() {
       const current = this.getAttribute('current-page') || document.body.dataset.page || 'index';
-      const currentIndex = pages.findIndex(p => p.id === current);
-      const nextPage = pages[currentIndex + 1];
+      const flat = flattenPages();
+      const currentIndex = flat.findIndex(p => p.id === current);
+      const nextPage = flat[currentIndex + 1];
       const nextLink = nextPage
         ? `<div class="footer-next"><a href="${nextPage.href}">Next: ${nextPage.label} &rarr;</a></div>`
         : '';

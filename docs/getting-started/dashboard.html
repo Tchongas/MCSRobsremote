@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Getting Started - ROBS</title>
+  <link rel="stylesheet" href="../styles.css">
+  <meta name="description" content="Use the ROBS dashboard to control scenes and sources.">
+</head>
+<body data-page="getting-started-dashboard">
+  <site-header></site-header>
+
+  <div class="layout">
+    <site-nav></site-nav>
+
+    <main class="content">
+      <h1>Dashboard</h1>
+      <p>
+        The dashboard is the main control surface in ROBS. It lists scenes and the sources you have chosen to control.
+      </p>
+
+      <h2 id="scene-list">Scene List</h2>
+      <p>
+        The scene list is on the left. Click a scene to select it, then click <strong>Go Live</strong> to make it live.
+        Double-click a scene to go live immediately.
+      </p>
+
+      <h2 id="source-dashboard">Source Dashboard</h2>
+      <p>
+        Only sources whose names start with <code>_</code> appear in the dashboard. This keeps the workspace focused
+        on the sources you want to control. Each row has a toggle to enable or disable the source.
+      </p>
+
+      <h2 id="transition-bar">Transition Bar</h2>
+      <p>
+        When a selected scene is not yet live, the <strong>Go Live</strong> bar appears. Click it to transition.
+      </p>
+
+      <page-footer></page-footer>
+    </main>
+  </div>
+
+  <script src="../components.js"></script>
+  <script src="../scripts.js"></script>
+</body>
+</html>

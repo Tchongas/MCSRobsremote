@@ -8,7 +8,7 @@ Custom HTML tags used on the ROBS documentation site.
 Renders the fixed topbar with logo, search, and theme toggle.
 
 ### `<site-nav>`
-Renders the sidebar. Active link is set from `document.body.dataset.page`.
+Renders the grouped sidebar with subpages. Active link is set from `document.body.dataset.page`.
 
 ### `<hero-section>`
 Big landing banner. Attributes:
@@ -26,31 +26,40 @@ Placeholder box for screenshots. Attributes:
 - `caption`
 
 ### `<page-footer>`
-Footer with copyright and auto-generated "Next" link. Reads `document.body.dataset.page` to find the next page.
+Footer with copyright and auto-generated "Next" link. Reads `document.body.dataset.page` to find the next page in the flattened order.
+
+## Page Structure
+
+Pages are grouped into **User Guide** and **Developer Guide**. A parent page can have child pages shown indented in the sidebar.
+
+```
+User Guide
+├── Introduction              (index.html)
+├── Getting Started           (docs/getting-started.html)
+│   ├── Connection            (docs/getting-started/connection.html)
+│   ├── Dashboard             (docs/getting-started/dashboard.html)
+│   ├── Appearance            (docs/getting-started/appearance.html)
+│   └── Plugins               (docs/getting-started/plugins.html)
+└── Demo                      (docs/demo.html)
+
+Developer Guide
+├── Plugins                   (docs/plugins.html)
+│   ├── Documentation         (docs/plugins/documentation.html)
+│   ├── Example: Dashboard    (docs/plugins/example-dashboard.html)
+│   ├── Example: Create       (docs/plugins/example-create.html)
+│   ├── Example: Automation   (docs/plugins/example-automation.html)
+│   └── Example: Workspace    (docs/plugins/example-workspace.html)
+```
 
 ## Adding a Page
 
-1. Create a new `.html` file in `docs/`.
-2. Copy the boilerplate from any existing docs page.
+1. Create a new `.html` file in `docs/` or a subfolder.
+2. Copy the boilerplate from an existing page.
 3. Set `data-page` on `<body>` to a unique ID.
 4. Add `<h2 id="section-name">` for each section you want searchable.
 5. Register the page in two places:
-   - `docs/components.js` — add to the `pages` array for navigation.
-   - `docs/scripts.js` — add to the `pages` array for search. Include `sections` with `title` and `anchor`.
-
-## File Structure
-
-```
-docs/
-  index.html              # Landing page
-  getting-started.html
-  plugins.html
-  demo.html
-  components.js           # Component definitions + nav pages
-  scripts.js              # Theme + search index
-  styles.css              # All styles
-  components.md           # This file
-```
+   - `docs/components.js` — add to `pageGroups` under the right group. Use `children` for subpages.
+   - `docs/scripts.js` — add to `pageGroups` under the right group for search. Include `sections` with `title` and `anchor`.
 
 ## Quick Page Template
 
@@ -80,3 +89,5 @@ docs/
 </body>
 </html>
 ```
+
+For subpages in a folder like `docs/getting-started/`, use `../styles.css`, `../components.js`, and `../scripts.js`.

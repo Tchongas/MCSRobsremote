@@ -16,34 +16,31 @@
     <main class="content">
       <h1>Plugins</h1>
       <p>
-        Plugins are JavaScript files that add buttons to the sidebar and automate OBS actions.
-        They are loaded from the <code>plugins</code> folder inside the <code>robs</code> directory
-        in your Roaming folder (e.g., <code>%APPDATA%\robs\plugins</code> on Windows).
+        Plugins are JavaScript files that add buttons to the ROBS sidebar and automate OBS. Drop a plugin into the
+        <code>plugins</code> folder and restart ROBS. The runtime turns exported functions into sidebar buttons.
       </p>
 
       <h2 id="plugin-structure">Plugin Structure</h2>
       <p>
-        Each plugin is a <code>.js</code> file that exports a function or object. The runtime discovers
-        functions inside the file and turns them into sidebar buttons. A simple plugin looks like this:
+        A plugin is a <code>.js</code> file that exports functions. Each exported function becomes a sidebar button.
       </p>
 
       <pre><code>function helloPlugin() {
-  console.log('Hello from my plugin!');
+  // Your plugin logic here
 }
 
 module.exports = { helloPlugin };
 </code></pre>
 
       <p>
-        Plugins can also use the shared <code>pluginutils</code> utilities to read files, call external APIs,
-        and manipulate OBS sources. Use the <code>obs</code> client and other helpers exposed by the runtime.
+        Plugins can use <code>pluginutils</code> to read files, call external APIs, and manipulate OBS sources.
+        The <code>obs</code> client and other helpers are exposed by the runtime.
       </p>
 
       <h2 id="package-plugins">Package Plugins</h2>
       <p>
-        Plugins are moving toward a folder-based package format. Each package is a folder such as
-        <code>myplugin/</code> containing a single entry point <code>plugin.js</code> plus optional resources
-        like <code>Data.csv</code>, <code>README.md</code>, <code>icon.png</code>, and configuration files.
+        A plugin can also be a folder such as <code>myplugin/</code> with a <code>plugin.js</code> entry point
+        and optional resources like <code>Data.csv</code>, <code>README.md</code>, or configuration files.
       </p>
 
       <h2 id="example-runnersyncplugin">Example: RunnerSyncPlugin</h2>

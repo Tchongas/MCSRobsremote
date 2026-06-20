@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Example: Workspace - Plugins - ROBS</title>
+  <link rel="stylesheet" href="../styles.css">
+  <meta name="description" content="Example plugin that manages workspace state.">
+</head>
+<body data-page="plugins-example-workspace">
+  <site-header></site-header>
+
+  <div class="layout">
+    <site-nav></site-nav>
+
+    <main class="content">
+      <h1>Example: Workspace</h1>
+      <p>
+        This example shows how to save and restore a workspace layout or state from a plugin.
+      </p>
+
+      <h2 id="scenario">Scenario</h2>
+      <p>
+        You run different event formats that need different source layouts. A plugin can save the current scene collection
+        name and source visibility states, then restore them later.
+      </p>
+
+      <h2 id="code">Code</h2>
+      <pre><code>const { pluginutils } = require('../../pluginutils');
+const fs = require('fs');
+const path = require('path');
+
+const workspaceFile = path.join(__dirname, 'workspace.json');
+
+function saveWorkspace() {
+  const state = {
+    collection: pluginutils.getCurrentSceneCollection(),
+    sources: pluginutils.getSources().filter(s => s.name.startsWith('_'))
+  };
+  fs.writeFileSync(workspaceFile, JSON.stringify(state, null, 2));
+}
+
+function loadWorkspace() {
+  const state = JSON.parse(fs.readFileSync(workspaceFile, 'utf8'));
+  pluginutils.setCurrentSceneCollection(state.collection);
+  state.sources.forEach(s => pluginutils.setSourceVisibility(s.name, s.enabled));
+}
+
+module.exports = { saveWorkspace, loadWorkspace };
+</code></pre>
+
+      <h2 id="result">Result</h2>
+      <p>
+        Two buttons appear in the sidebar: one saves the current workspace, the other restores it. Store any extra
+        metadata you need in the JSON file.
+      </p>
+
+      <page-footer></page-footer>
+    </main>
+  </div>
+
+  <script src="../components.js"></script>
+  <script src="../scripts.js"></script>
+</body>
+</html>

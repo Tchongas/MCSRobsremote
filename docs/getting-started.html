@@ -16,56 +16,31 @@
     <main class="content">
       <h1>Getting Started</h1>
       <p>
-        ROBS runs as a desktop application built with Electron. This guide covers the prerequisites,
-        how to connect to OBS, and how to use the dashboard.
+        This page is the starting point. The detailed steps for each part of the setup are in the subtopics below.
       </p>
 
-      <h2 id="prerequisites">Prerequisites</h2>
+      <h2 id="the-basics">The Basics</h2>
+      <p>
+        You need <a href="https://obsproject.com/" target="_blank" rel="noopener">OBS Studio</a> with the WebSocket server enabled.
+        OBS 28 and newer include it by default. If you are on an older version, install the WebSocket plugin first.
+      </p>
+      <p>
+        The app was made and tested in windows, but as it is an electron App, it shouldnt be hard to make it work on other platforms too.
+      </p>
+
+      <h2 id="subtopics">Subtopics</h2>
       <ul>
-        <li><a href="https://obsproject.com/" target="_blank" rel="noopener">OBS Studio</a> with the WebSocket Server plugin enabled (OBS 28+ includes it by default).</li>
-        <li>A local network path or localhost connection between ROBS and the OBS machine.</li>
-        <li>Node.js if you plan to run the app from source or develop plugins.</li>
+        <li><strong><a href="getting-started/connection.html">Connection</a></strong> - How to use it locally, remotely and use cases.</li>
+        <li><strong><a href="getting-started/dashboard.html">Dashboard</a></strong> - Control scenes, sources, and details on how they work.</li>
+        <li><strong><a href="getting-started/appearance.html">Appearance</a></strong> - Making the app more suitable for your needs, disable things you wont use etc.</li>
+        <li><strong><a href="getting-started/plugins.html">Plugins</a></strong> - How plugins work and how to use them  .</li>
       </ul>
 
-      <h2 id="connect-to-obs">Connect to OBS</h2>
-      <p>
-        Open the OBS WebSocket server settings:
-      </p>
-      <ol>
-        <li>In OBS, go to <strong>Tools &rarr; WebSocket Server Settings</strong>.</li>
-        <li>Enable the server and set a password if required.</li>
-        <li>Note the <strong>Server Port</strong> (default is <code>4455</code>).</li>
-      </ol>
-
-      <p>Then configure ROBS:</p>
-      <ol>
-        <li>Launch ROBS and click the <strong>Config</strong> button in the bottom-left corner.</li>
-        <li>Enter the host (<code>localhost</code> or an IP address), port, and password.</li>
-        <li>Click <strong>Save</strong>. The connection status will update in the sidebar.</li>
-      </ol>
-
-      <h2 id="dashboard-overview">Dashboard Overview</h2>
-      <p>
-        The dashboard shows every scene and all sources whose names start with <code>_</code>.
-        You can click any source row to toggle its visibility or open its parameters.
-        The console at the bottom logs connection events and remote actions.
-      </p>
-
-      <h2 id="studio-mode">Studio Mode</h2>
-      <p>
-        ROBS uses Studio Mode by default:
-      </p>
+      <h2 id="troubleshooting">Troubleshooting</h2>
       <ul>
-        <li><strong>Preview</strong> (red indicator) is the scene you are editing.</li>
-        <li><strong>Program</strong> (blue indicator) is the live scene your viewers see.</li>
-        <li>Click a scene to set it as preview. Click the <strong>Go Live</strong> button to transition it to program.</li>
-        <li>Double-click a scene to select it and go live immediately.</li>
-      </ul>
-
-      <h2 id="keyboard-shortcuts">Keyboard Shortcuts</h2>
-      <ul>
-        <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> &mdash; Transition the current preview scene to program.</li>
-        <li>Debug menu hotkey &mdash; Configured in settings; opens the developer debug panel.</li>
+        <li>Make sure OBS is running before ROBS connects.</li>
+        <li>Check that the firewall is not blocking the WebSocket port.</li>
+        <li>For remote connections, confirm both devices are on the same network or the port is routed correctly.</li>
       </ul>
 
       <page-footer></page-footer>

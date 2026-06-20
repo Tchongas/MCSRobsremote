@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation - Plugins - ROBS</title>
+  <link rel="stylesheet" href="../styles.css">
+  <meta name="description" content="Plugin API reference for ROBS.">
+</head>
+<body data-page="plugins-documentation">
+  <site-header></site-header>
+
+  <div class="layout">
+    <site-nav></site-nav>
+
+    <main class="content">
+      <h1>Plugin Documentation</h1>
+      <p>
+        Plugins are JavaScript files that export functions. The runtime turns each exported function into a sidebar button.
+      </p>
+
+      <h2 id="basic-plugin">Basic Plugin</h2>
+      <p>A minimal plugin exports a function and optionally uses <code>pluginutils</code> helpers.</p>
+      <pre><code>function helloPlugin() {
+  // Your plugin logic here
+}
+
+module.exports = { helloPlugin };
+</code></pre>
+
+      <h2 id="pluginutils">pluginutils</h2>
+      <p>Common helpers available to plugins:</p>
+      <ul>
+        <li><code>pluginutils.readFile(path)</code> — read a file from the plugin directory.</li>
+        <li><code>pluginutils.fetchJSON(url)</code> — fetch and parse JSON.</li>
+        <li><code>pluginutils.setTextSource(name, value)</code> — update a text source in OBS.</li>
+        <li><code>pluginutils.setBrowserSourceURL(name, url)</code> — update a browser source URL.</li>
+        <li><code>pluginutils.getSources()</code> — access the current OBS sources list.</li>
+      </ul>
+
+      <h2 id="folder-packages">Folder Packages</h2>
+      <p>
+        Advanced plugins can be packaged as folders with a <code>plugin.js</code> entry point plus resources like
+        <code>Data.csv</code>, <code>README.md</code>, and configuration files.
+      </p>
+
+      <page-footer></page-footer>
+    </main>
+  </div>
+
+  <script src="../components.js"></script>
+  <script src="../scripts.js"></script>
+</body>
+</html>

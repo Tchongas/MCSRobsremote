@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Example: Create - Plugins - ROBS</title>
+  <link rel="stylesheet" href="../styles.css">
+  <meta name="description" content="Example plugin that creates OBS sources.">
+</head>
+<body data-page="plugins-example-create">
+  <site-header></site-header>
+
+  <div class="layout">
+    <site-nav></site-nav>
+
+    <main class="content">
+      <h1>Example: Create</h1>
+      <p>
+        This example shows how to create and update OBS sources from a plugin.
+      </p>
+
+      <h2 id="scenario">Scenario</h2>
+      <p>
+        You want a button that creates a new text source for each runner in a list. The plugin reads a CSV,
+        creates the sources if they do not exist, and sets their text.
+      </p>
+
+      <h2 id="code">Code</h2>
+      <pre><code>const { pluginutils } = require('../../pluginutils');
+
+function createRunnerSources() {
+  const runners = pluginutils.readFile('runners.csv').split('\n');
+  runners.forEach((runner, index) => {
+    const sourceName = `_runner_${index + 1}`;
+    pluginutils.createTextSource(sourceName, runner);
+  });
+}
+
+module.exports = { createRunnerSources };
+</code></pre>
+
+      <h2 id="result">Result</h2>
+      <p>
+        Clicking the button creates missing text sources and updates them. You can then use these sources in your scenes.
+      </p>
+
+      <page-footer></page-footer>
+    </main>
+  </div>
+
+  <script src="../components.js"></script>
+  <script src="../scripts.js"></script>
+</body>
+</html>

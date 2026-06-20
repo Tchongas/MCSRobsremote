@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Example: Automation - Plugins - ROBS</title>
+  <link rel="stylesheet" href="../styles.css">
+  <meta name="description" content="Example plugin that automates OBS workflows.">
+</head>
+<body data-page="plugins-example-automation">
+  <site-header></site-header>
+
+  <div class="layout">
+    <site-nav></site-nav>
+
+    <main class="content">
+      <h1>Example: Automation</h1>
+      <p>
+        This example shows how to automate a sequence of OBS actions with a single plugin button.
+      </p>
+
+      <h2 id="scenario">Scenario</h2>
+      <p>
+        You want to run a commercial break: mute the microphone, show a "BRB" scene, and start a timer.
+        One plugin can do all three in order.
+      </p>
+
+      <h2 id="code">Code</h2>
+      <pre><code>const { pluginutils } = require('../../pluginutils');
+
+function startCommercialBreak() {
+  pluginutils.setInputMute('Microphone', true);
+  pluginutils.setCurrentProgramScene('BRB');
+  setTimeout(() => {
+    pluginutils.setInputMute('Microphone', false);
+    pluginutils.setCurrentProgramScene('Live');
+  }, 120000);
+}
+
+module.exports = { startCommercialBreak };
+</code></pre>
+
+      <h2 id="result">Result</h2>
+      <p>
+        Clicking the button mutes the mic, switches to the BRB scene, and returns after two minutes.
+        Adjust the timing and scene names to match your setup.
+      </p>
+
+      <page-footer></page-footer>
+    </main>
+  </div>
+
+  <script src="../components.js"></script>
+  <script src="../scripts.js"></script>
+</body>
+</html>

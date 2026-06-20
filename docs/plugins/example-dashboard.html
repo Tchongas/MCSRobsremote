@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Example: Dashboard - Plugins - ROBS</title>
+  <link rel="stylesheet" href="../styles.css">
+  <meta name="description" content="Example plugin that controls the dashboard.">
+</head>
+<body data-page="plugins-example-dashboard">
+  <site-header></site-header>
+
+  <div class="layout">
+    <site-nav></site-nav>
+
+    <main class="content">
+      <h1>Example: Dashboard</h1>
+      <p>
+        This example shows how to build a plugin that reacts to the current dashboard state and updates OBS sources.
+      </p>
+
+      <h2 id="scenario">Scenario</h2>
+      <p>
+        You want a button that toggles a lower-third graphic for the current runner. The plugin reads the active scene,
+        finds the lower-third source, and toggles its visibility.
+      </p>
+
+      <h2 id="code">Code</h2>
+      <pre><code>const { getCurrentScene } = require('../../renderer/logic/scenes');
+const { pluginutils } = require('../../pluginutils');
+
+function toggleLowerThird() {
+  const scene = getCurrentScene();
+  const sourceName = '_lower_third_' + scene;
+  pluginutils.setSourceVisibility(sourceName, true);
+}
+
+module.exports = { toggleLowerThird };
+</code></pre>
+
+      <h2 id="result">Result</h2>
+      <p>
+        Clicking the sidebar button shows the lower-third for the current scene. Adapt the source name pattern
+        to match your own naming convention.
+      </p>
+
+      <page-footer></page-footer>
+    </main>
+  </div>
+
+  <script src="../components.js"></script>
+  <script src="../scripts.js"></script>
+</body>
+</html>

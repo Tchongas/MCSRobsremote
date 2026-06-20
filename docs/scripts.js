@@ -7,57 +7,135 @@
   const docsDir = scriptUrl.href.replace(/scripts\.js$/, '');
   const rootDir = docsDir.replace(/docs\/$/, '');
 
-  const pages = [
+  const pageGroups = [
     {
-      id: 'index',
-      title: 'Introduction',
-      path: rootDir + 'index.html',
-      keywords: 'robs obs remote controller introduction overview',
-      sections: [
-        { title: 'What is ROBS?', anchor: 'what-is-robs' },
-        { title: 'Key Features', anchor: 'key-features' },
-        { title: 'Quick Start', anchor: 'quick-start' },
+      group: 'User Guide',
+      items: [
+        {
+          id: 'index',
+          title: 'Introduction',
+          path: rootDir + 'index.html',
+          keywords: 'robs obs remote controller introduction overview',
+          sections: [
+            { title: 'What is ROBS?', anchor: 'what-is-robs' },
+            { title: 'Quick Start', anchor: 'quick-start' },
+          ],
+        },
+        {
+          id: 'getting-started',
+          title: 'Getting Started',
+          path: docsDir + 'getting-started.html',
+          keywords: 'install setup connection configure obs websocket',
+          sections: [
+            { title: 'The Basics', anchor: 'the-basics' },
+            { title: 'Subtopics', anchor: 'subtopics' },
+            { title: 'Quick Start', anchor: 'quick-start' },
+            { title: 'Troubleshooting', anchor: 'troubleshooting' },
+          ],
+        },
+        {
+          id: 'getting-started-connection',
+          title: 'Connection',
+          path: docsDir + 'getting-started/connection.html',
+          keywords: 'obs websocket host port password connect',
+          sections: [],
+        },
+        {
+          id: 'getting-started-dashboard',
+          title: 'Dashboard',
+          path: docsDir + 'getting-started/dashboard.html',
+          keywords: 'dashboard sources scenes toggle visibility',
+          sections: [],
+        },
+        {
+          id: 'getting-started-appearance',
+          title: 'Appearance',
+          path: docsDir + 'getting-started/appearance.html',
+          keywords: 'theme dark mode layout style',
+          sections: [],
+        },
+        {
+          id: 'getting-started-plugins',
+          title: 'Plugins',
+          path: docsDir + 'getting-started/plugins.html',
+          keywords: 'install plugins robs plugins folder runner sync',
+          sections: [],
+        },
+        {
+          id: 'demo',
+          title: 'Demo',
+          path: docsDir + 'demo.html',
+          keywords: 'demo screenshot preview ui dashboard',
+          sections: [
+            { title: 'Dashboard & Scene Control', anchor: 'dashboard-scene-control' },
+            { title: 'Plugin Workflow', anchor: 'plugin-workflow' },
+            { title: 'Video Demo', anchor: 'video-demo' },
+          ],
+        },
       ],
     },
     {
-      id: 'getting-started',
-      title: 'Getting Started',
-      path: docsDir + 'getting-started.html',
-      keywords: 'install setup connection configure obs websocket',
-      sections: [
-        { title: 'Prerequisites', anchor: 'prerequisites' },
-        { title: 'Connect to OBS', anchor: 'connect-to-obs' },
-        { title: 'Dashboard Overview', anchor: 'dashboard-overview' },
-        { title: 'Studio Mode', anchor: 'studio-mode' },
-        { title: 'Keyboard Shortcuts', anchor: 'keyboard-shortcuts' },
-      ],
-    },
-    {
-      id: 'plugins',
-      title: 'Plugins',
-      path: docsDir + 'plugins.html',
-      keywords: 'plugins automation javascript api pluginutils sidebar',
-      sections: [
-        { title: 'Plugin Structure', anchor: 'plugin-structure' },
-        { title: 'Package Plugins', anchor: 'package-plugins' },
-        { title: 'Example: RunnerSyncPlugin', anchor: 'example-runnersyncplugin' },
-        { title: 'Best Practices', anchor: 'best-practices' },
-        { title: 'Plugin API', anchor: 'plugin-api' },
-      ],
-    },
-    {
-      id: 'demo',
-      title: 'Demo',
-      path: docsDir + 'demo.html',
-      keywords: 'demo screenshot preview ui dashboard',
-      sections: [
-        { title: 'Dashboard & Scene Control', anchor: 'dashboard-scene-control' },
-        { title: 'Studio Mode Transition', anchor: 'studio-mode-transition' },
-        { title: 'Plugin Workflow', anchor: 'plugin-workflow' },
-        { title: 'Video Demo', anchor: 'video-demo' },
+      group: 'Developer Guide',
+      items: [
+        {
+          id: 'plugins',
+          title: 'Plugins',
+          path: docsDir + 'plugins.html',
+          keywords: 'plugins automation javascript api pluginutils sidebar',
+          sections: [
+            { title: 'Plugin Structure', anchor: 'plugin-structure' },
+            { title: 'Package Plugins', anchor: 'package-plugins' },
+            { title: 'Example: RunnerSyncPlugin', anchor: 'example-runnersyncplugin' },
+            { title: 'Best Practices', anchor: 'best-practices' },
+            { title: 'Plugin API', anchor: 'plugin-api' },
+          ],
+        },
+        {
+          id: 'plugins-documentation',
+          title: 'Documentation',
+          path: docsDir + 'plugins/documentation.html',
+          keywords: 'plugin api reference pluginutils functions',
+          sections: [],
+        },
+        {
+          id: 'plugins-example-dashboard',
+          title: 'Example: Dashboard',
+          path: docsDir + 'plugins/example-dashboard.html',
+          keywords: 'plugin example dashboard sources obs',
+          sections: [],
+        },
+        {
+          id: 'plugins-example-create',
+          title: 'Example: Create',
+          path: docsDir + 'plugins/example-create.html',
+          keywords: 'plugin example create source scene',
+          sections: [],
+        },
+        {
+          id: 'plugins-example-automation',
+          title: 'Example: Automation',
+          path: docsDir + 'plugins/example-automation.html',
+          keywords: 'plugin example automation timer schedule',
+          sections: [],
+        },
+        {
+          id: 'plugins-example-workspace',
+          title: 'Example: Workspace',
+          path: docsDir + 'plugins/example-workspace.html',
+          keywords: 'plugin example workspace layout configuration',
+          sections: [],
+        },
       ],
     },
   ];
+
+  function flattenPages() {
+    const flat = [];
+    pageGroups.forEach(g => g.items.forEach(item => flat.push(item)));
+    return flat;
+  }
+
+  const pages = flattenPages();
 
   function initTheme() {
     const saved = localStorage.getItem(STORAGE_KEY);
