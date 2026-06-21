@@ -14,34 +14,50 @@
     <site-nav></site-nav>
 
     <main class="content">
-      <h1>Example: Create</h1>
+      <h1>Example: Syncing Text Sources from a File</h1>
       <p>
-        This example shows how to create and update OBS sources from a plugin.
+        A common pattern: read a CSV, parse the data, and push values into OBS text sources. This is what the bundled RunnerSyncPlugin does.
       </p>
 
       <h2 id="scenario">Scenario</h2>
       <p>
-        You want a button that creates a new text source for each runner in a list. The plugin reads a CSV,
-        creates the sources if they do not exist, and sets their text.
+        You have a <code>runners.csv</code> file in your plugin folder with runner names and times. You want a button that reads the file and updates the corresponding OBS text sources.
       </p>
 
       <h2 id="code">Code</h2>
-      <pre><code>const { pluginutils } = require('../../pluginutils');
+      <pre><code>// plugin.js
+(function() {
+  window.PluginUtils.registerSidebarButton(
+    'RunnerSync',
+    'sync-runners',
+    'Sync Runners',
+    async () => {
+      const csv = await window.pluginAPI.readFile('runners.csv');
+      const lines = csv.trim().split('\n');
+      const headers = lines[0].split(',').map(h => h.trim());
 
-function createRunnerSources() {
-  const runners = pluginutils.readFile('runners.csv').split('\n');
-  runners.forEach((runner, index) => {
-    const sourceName = `_runner_${index + 1}`;
-    pluginutils.createTextSource(sourceName, runner);
-  });
-}
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        const row = Object.fromEntries(headers.map((h, j) => [h, values[j] || '']));
+        const slot = i; // 1-based
 
-module.exports = { createRunnerSources };
+        await window.PluginUtils.setTextSource(`_Runner${slot}Name`, row.name || '');
+        await window.PluginUtils.setTextSource(`_Runner${slot}Time`, row.time || '');
+      }
+
+      window.uiHelpers.logSuccess('Runners synced', 'RunnerSync');
+    }
+  );
+})();
 </code></pre>
 
-      <h2 id="result">Result</h2>
+      <h2 id="csv-format">CSV Format</h2>
+      <pre><code>name,time
+PlayerOne,1:23:45
+PlayerTwo,1:31:00
+</code></pre>
       <p>
-        Clicking the button creates missing text sources and updates them. You can then use these sources in your scenes.
+        The source names need to exist in OBS and start with <code>_</code>. The plugin does not create them, it just sets their text.
       </p>
 
       <page-footer></page-footer>

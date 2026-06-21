@@ -14,34 +14,70 @@
     <site-nav></site-nav>
 
     <main class="content">
-      <h1>Example: Dashboard</h1>
+      <h1>Example: Dashboard Handler</h1>
       <p>
-        This example shows how to build a plugin that reacts to the current dashboard state and updates OBS sources.
+        A dashboard handler adds a custom controls panel that appears inside a source row when the user expands it.
+        This is useful when the built-in controls are not enough for a specific source.
       </p>
 
       <h2 id="scenario">Scenario</h2>
       <p>
-        You want a button that toggles a lower-third graphic for the current runner. The plugin reads the active scene,
-        finds the lower-third source, and toggles its visibility.
+        You have a browser source called <code>_Scoreboard</code> that takes a <code>score</code> URL parameter.
+        Instead of editing the URL manually each time, you want +/- buttons directly in the dashboard row.
       </p>
 
       <h2 id="code">Code</h2>
-      <pre><code>const { getCurrentScene } = require('../../renderer/logic/scenes');
-const { pluginutils } = require('../../pluginutils');
+      <pre><code>// plugin.js
+(function() {
+  let score = 0;
 
-function toggleLowerThird() {
-  const scene = getCurrentScene();
-  const sourceName = '_lower_third_' + scene;
-  pluginutils.setSourceVisibility(sourceName, true);
-}
+  CustomHandlerPlugins.register({
+    name: 'ScoreboardPlugin',
+    isExternal: true,
 
-module.exports = { toggleLowerThird };
+    canHandle(sourceKind, sourceName) {
+      return sourceName === '_Scoreboard';
+    },
+
+    async execute(options, sourceName, displayName) {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.gap = '8px';
+      row.style.alignItems = 'center';
+
+      const label = document.createElement('span');
+      label.textContent = `Score: ${score}`;
+
+      const minus = document.createElement('button');
+      minus.textContent = '−';
+
+      const plus = document.createElement('button');
+      plus.textContent = '+';
+
+      async function updateScore() {
+        label.textContent = `Score: ${score}`;
+        await window.PluginUtils.setBrowserSourceUrlWithParams(
+          sourceName,
+          await window.PluginUtils.getSourceURL(sourceName),
+          { score: String(score) }
+        );
+      }
+
+      minus.addEventListener('click', () => { score = Math.max(0, score - 1); updateScore(); });
+      plus.addEventListener('click', () => { score++; updateScore(); });
+
+      row.appendChild(minus);
+      row.appendChild(label);
+      row.appendChild(plus);
+      options.appendChild(row);
+    }
+  });
+})();
 </code></pre>
 
       <h2 id="result">Result</h2>
       <p>
-        Clicking the sidebar button shows the lower-third for the current scene. Adapt the source name pattern
-        to match your own naming convention.
+        Expand the <code>_Scoreboard</code> source row and you get + and − buttons. Each click updates the <code>score</code> query parameter in the browser source URL.
       </p>
 
       <page-footer></page-footer>

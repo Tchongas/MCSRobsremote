@@ -16,26 +16,34 @@
     <main class="content">
       <h1>Examples</h1>
       <p>
-        Real use cases and workflows that show what ROBS can do. These are practical starting points you can adapt to your own production.
+        A few real use cases. All of these are actual workflows that ROBS was built for.
       </p>
 
-      <h2 id="dashboard-scene-control">Dashboard & Scene Control</h2>
-      <demo-frame caption="Dashboard screenshot placeholder"></demo-frame>
+      <h2 id="marathon-layout">Marathon / Multi-Runner Layout</h2>
+      <div class="demo-frame">Screenshot: ROBS with marathon scene open, showing runner sources in dashboard</div>
       <p>
-        The main window shows the scene list on the left, the source dashboard in the center, and the sidebar
-        with plugin buttons on the right. The bottom panel has the config controls.
+        The most common use case. You have multiple runner cameras and text overlays. Each source is named with <code>_</code> so it shows up in the dashboard. You can toggle visibility and edit browser source parameters without touching OBS directly.
+      </p>
+      <p>
+        A plugin reads a CSV with runner metadata and pushes names, times, and pronouns into text sources with one button click.
       </p>
 
-      <h2 id="plugin-workflow">Plugin Workflow</h2>
-      <demo-frame caption="Plugin workflow screenshot placeholder"></demo-frame>
+      <h2 id="remote-operator">Remote Operator</h2>
+      <div class="demo-frame">Screenshot: ROBS running on a laptop, connected to OBS on a different machine</div>
       <p>
-        Plugins appear as buttons in the sidebar. The bundled <code>RunnerSyncPlugin</code> reads a CSV,
-        fetches runner data, and updates text sources in one click.
+        The point of ROBS is that it does not have to be on the same machine as OBS. One person runs OBS in the venue, another controls it remotely over the local network. They see the same scenes, the same sources, and changes from either side show up in real time.
       </p>
 
-      <h2 id="video-demo">Video Demo</h2>
+      <h2 id="plugin-buttons">Plugin Sidebar in Action</h2>
+      <div class="demo-frame">Screenshot: ROBS sidebar with several plugin buttons</div>
       <p>
-        A full video walkthrough will be added later. For now, clone the repository and run the app to see the interface in action.
+        Plugins add buttons to the right panel. In this example: one button syncs runner data from a spreadsheet, one swaps camera layouts between two runners, and one triggers an intermission sequence. Each of these is a single JavaScript file in the plugins folder.
+      </p>
+
+      <h2 id="browser-source-params">Browser Source Parameter Editing</h2>
+      <div class="demo-frame">Screenshot: expanded browser source row showing URL and query parameters</div>
+      <p>
+        Browser sources that have query parameters get an editable parameters panel. You can change individual values and hit Apply without touching the full URL. Useful for overlays that take config via URL — theme, colors, player names, etc.
       </p>
 
       <page-footer></page-footer>

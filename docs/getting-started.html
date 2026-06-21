@@ -16,31 +16,23 @@
     <main class="content">
       <h1>Getting Started</h1>
       <p>
-        This page is the starting point. The detailed steps for each part of the setup are in the subtopics below.
+        You need <a href="https://obsproject.com/" target="_blank" rel="noopener">OBS Studio</a> 28 or newer with the WebSocket server turned on.
+        That is it for prerequisites. The rest is just pointing ROBS at the right address.
       </p>
 
-      <h2 id="the-basics">The Basics</h2>
-      <p>
-        You need <a href="https://obsproject.com/" target="_blank" rel="noopener">OBS Studio</a> with the WebSocket server enabled.
-        OBS 28 and newer include it by default. If you are on an older version, install the WebSocket plugin first.
-      </p>
-      <p>
-        The app was made and tested in windows, but as it is an electron App, it shouldnt be hard to make it work on other platforms too.
-      </p>
-
-      <h2 id="subtopics">Subtopics</h2>
+      <h2 id="topics">Topics</h2>
       <ul>
-        <li><strong><a href="getting-started/connection.html">Connection</a></strong> - How to use it locally, remotely and use cases.</li>
-        <li><strong><a href="getting-started/dashboard.html">Dashboard</a></strong> - Control scenes, sources, and details on how they work.</li>
-        <li><strong><a href="getting-started/appearance.html">Appearance</a></strong> - Making the app more suitable for your needs, disable things you wont use etc.</li>
-        <li><strong><a href="getting-started/plugins.html">Plugins</a></strong> - How plugins work and how to use them  .</li>
+        <li><strong><a href="getting-started/connection.html">Connection</a></strong> — local setup, remote setup, profiles.</li>
+        <li><strong><a href="getting-started/dashboard.html">Dashboard</a></strong> — how scenes and sources work in ROBS.</li>
+        <li><strong><a href="getting-started/appearance.html">Appearance</a></strong> — scaling, hiding panels, plugin-only mode.</li>
+        <li><strong><a href="getting-started/plugins.html">Plugins</a></strong> — how to install and run plugins.</li>
       </ul>
 
       <h2 id="troubleshooting">Troubleshooting</h2>
       <ul>
-        <li>Make sure OBS is running before ROBS connects.</li>
-        <li>Check that the firewall is not blocking the WebSocket port.</li>
-        <li>For remote connections, confirm both devices are on the same network or the port is routed correctly.</li>
+        <li>OBS needs to be running before ROBS tries to connect.</li>
+        <li>If you are on OBS older than 28, you need to install the <a href="https://github.com/obsproject/obs-websocket" target="_blank" rel="noopener">obs-websocket plugin</a> manually.</li>
+        <li>For remote connections, check that your firewall is not blocking the WebSocket port.</li>
       </ul>
 
       <page-footer></page-footer>

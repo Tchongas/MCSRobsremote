@@ -16,35 +16,47 @@
     <main class="content">
       <h1>Example: Automation</h1>
       <p>
-        This example shows how to automate a sequence of OBS actions with a single plugin button.
+        A sidebar button that runs a sequence of OBS actions in order. No user interaction needed beyond clicking the button.
       </p>
 
       <h2 id="scenario">Scenario</h2>
       <p>
-        You want to run a commercial break: mute the microphone, show a "BRB" scene, and start a timer.
-        One plugin can do all three in order.
+        You are between races and want a single button that: mutes the microphone, swaps two camera sources, and then switches the scene to an intermission layout.
       </p>
 
       <h2 id="code">Code</h2>
-      <pre><code>const { pluginutils } = require('../../pluginutils');
+      <pre><code>// plugin.js
+(function() {
+  window.PluginUtils.registerSidebarButton(
+    'IntermissionPlugin',
+    'start-intermission',
+    'Intermission',
+    async () => {
+      const SCENE = 'Intermission';
 
-function startCommercialBreak() {
-  pluginutils.setInputMute('Microphone', true);
-  pluginutils.setCurrentProgramScene('BRB');
-  setTimeout(() => {
-    pluginutils.setInputMute('Microphone', false);
-    pluginutils.setCurrentProgramScene('Live');
-  }, 120000);
-}
+      // Mute the mic
+      await window.obsAPI.sources.setMute('_Microphone', true);
 
-module.exports = { startCommercialBreak };
+      // Swap camera positions in the current scene
+      await window.PluginUtils.swapSourcePositions('_CamA', '_CamB', SCENE);
+
+      // Switch to intermission scene
+      await window.obsAPI.scenes.change(SCENE);
+
+      window.uiHelpers.logSuccess('Intermission started', 'IntermissionPlugin');
+    }
+  );
+})();
 </code></pre>
 
-      <h2 id="result">Result</h2>
+      <h2 id="csv">Reading a CSV for Data-Driven Automation</h2>
       <p>
-        Clicking the button mutes the mic, switches to the BRB scene, and returns after two minutes.
-        Adjust the timing and scene names to match your setup.
+        If you need to drive the automation from a file (like runner data), read it with <code>pluginAPI.readFile</code>:
       </p>
+      <pre><code>const csv = await window.pluginAPI.readFile('runners.csv');
+const rows = csv.trim().split('\n').map(l => l.split(','));
+// rows[0] = headers, rows[1..] = data
+</code></pre>
 
       <page-footer></page-footer>
     </main>

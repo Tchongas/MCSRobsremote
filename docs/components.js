@@ -185,7 +185,7 @@
       this.innerHTML = `
         <div class="footer">
           ${nextLink}
-          <p>&copy; ROBS Project. Built for livestream operators.</p>
+          <p></p>
         </div>
       `;
     }

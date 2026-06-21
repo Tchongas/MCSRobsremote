@@ -16,25 +16,68 @@
     <main class="content">
       <h1>Dashboard</h1>
       <p>
-        The dashboard is the main control surface in ROBS. It lists scenes and the sources you have chosen to control.
+        The dashboard is the main window. Scenes on the left, sources in the center, plugin buttons and config on the right sidebar.
       </p>
 
-      <h2 id="scene-list">Scene List</h2>
+      <div class="demo-frame">Screenshot: full ROBS dashboard</div>
+
+      <h2 id="source-naming">Source Naming</h2>
       <p>
-        The scene list is on the left. Click a scene to select it, then click <strong>Go Live</strong> to make it live.
-        Double-click a scene to go live immediately.
+        Only sources whose name starts with <code>_</code> show up in the dashboard. Everything else is ignored.
+        This way you can mark only the sources that will be changing during the stream, and keep other sources hidden from the dashboard.
+        <p>
+        The underscore is stripped from the display name, so <code>_Camera 1</code> shows as <strong>Camera 1</strong>.
+        </p>
       </p>
 
-      <h2 id="source-dashboard">Source Dashboard</h2>
+      <h2 id="config-scene">CONFIG scene</h2>
       <p>
-        Only sources whose names start with <code>_</code> appear in the dashboard. This keeps the workspace focused
-        on the sources you want to control. Each row has a toggle to enable or disable the source.
+        A scene called CONFIG can be used to store configuration sources that are used for plugins or in the overlay several times.
+      </p>
+      <p>
+        The config scene wont show up in the scene list. but all its sources will be available in the right sidebar, under the config button.
+      </p>
+      <p>
+        This is mostly used to store text that is used in multiple places, and constantly changing, such as a name or a count, or also store Plugin configuration, such IDs or URLs for fetching data.
       </p>
 
-      <h2 id="transition-bar">Transition Bar</h2>
+      <div class="demo-frame">Screenshot: config scene in right sidebar</div>
+
+      <h2 id="scene-list">Scenes</h2>
       <p>
-        When a selected scene is not yet live, the <strong>Go Live</strong> bar appears. Click it to transition.
+        Clicking a scene loads its sources into the dashboard. but in preview mode, like in Studio Mode on normal OBS, allows you to change sources data before making the transition. 
       </p>
+      <p>
+        If you have studio mode enabled, this preview scene in Robs will show up as the preview scene in OBS, if not, you just wont have that visual.
+      </p>
+      <p>
+        To make the scene change go live, you can click the red button, or press CTRL + Enter to transition. You can also double click the scene in the selector to do a direct transition.
+      </p>
+
+      <div class="demo-frame">Screenshot: scene list with transition bar visible</div>
+
+      <h2 id="source-controls">Source Controls</h2>
+      <p>
+        Each source row has a toggle switch on the right to show or hide the source in OBS. Click anywhere else
+        on the row to open the source options panel.
+      </p>
+      <p>
+        What appears in the options panel depends on the source type, URL, Volume sliders, etc.
+      </p>
+
+      <div class="demo-frame">Screenshot: browser source row expanded with URL and params</div>
+
+      <h2 id="keyboard">Keyboard Shortcuts</h2>
+      <p>There is a page in the Settings tab that shows all available keyboard shortcuts.</p>
+      <p>Here are some of the ones for Sources:</p>
+      <ul>
+        <li><kbd>Enter</kbd> / <kbd>Space</kbd> — toggle the options panel open or closed.</li>
+        <li><kbd>E</kbd> — open options and jump focus into the first control.</li>
+        <li><kbd>V</kbd> — toggle source visibility.</li>
+        <li><kbd>↑</kbd> / <kbd>↓</kbd> — move between sources.</li>
+        <li><kbd>Escape</kbd> — close the options panel.</li>
+        <li><kbd>Ctrl+Enter</kbd> — transition the preview scene to program (global).</li>
+      </ul>
 
       <page-footer></page-footer>
     </main>

@@ -16,33 +16,37 @@
     <main class="content">
       <h1>Plugins</h1>
       <p>
-        Plugins add buttons to the ROBS sidebar and automate OBS actions. This page covers how to install and run them.
+        Plugins are JavaScript files that add functionality to ROBS. They can add buttons to the sidebar, add options for sources, fetch data, run automations, similar to how OBS scripts work.
       </p>
 
       <h2 id="plugin-folder">Plugin Folder</h2>
       <p>
-        Plugins are loaded from the <code>plugins</code> folder inside the <code>robs</code> directory in your Roaming folder.
-        On Windows this is usually <code>%APPDATA%\robs\plugins</code>.
+        Plugins live in <code>%APPDATA%\robs\plugins</code>. You can open this folder from <strong>Settings &rarr; Plugins</strong>.
+        Each plugin is a folder containing a <code>plugin.js</code> file and any data files it needs.
       </p>
 
-      <h2 id="install-a-plugin">Install a Plugin</h2>
+      <div class="demo-frame">Screenshot: Plugins tab in settings showing loaded plugins</div>
+
+      <h2 id="install-a-plugin">Installing a Plugin</h2>
       <ol>
-        <li>Download or write a plugin <code>.js</code> file.</li>
-        <li>Copy it into the <code>robs/plugins</code> folder.</li>
-        <li>Restart ROBS. The plugin button appears in the sidebar.</li>
+        <li>Drop the plugin folder into <code>%APPDATA%\robs\plugins</code>.</li>
+        <li>ROBS detects the change and reloads automatically.</li>
+        <li>In certain cases you might need to restart ROBS for the plugin to start working.</li>
       </ol>
 
-      <h2 id="run-a-plugin">Run a Plugin</h2>
+      <h2 id="run-a-plugin">Using a Plugin</h2>
       <p>
-        Click the plugin button in the sidebar. The plugin runs its function and can update OBS sources, read files,
-        or trigger any other automation.
+        Plugins can have multiple functions:
+        <ul>
+          <li><strong>Function buttons in the sidebar</strong> - You can click them to trigger the actions.</li>
+          <li><strong>Create.js Plugins BETA</strong> - You can go in the Create tab in settings, and run their function to add the plugins sources in your OBS, usually in a new scene for you to copy and paste</li>
+          <li><strong>Plugins Config and README</strong> - They exist in the plugin tab in the settings page, you can click the buttons to edit them, if there are no buttons it means the file doesnt exist, as its not necessary.</li>
+          <li><strong>Dashboard Plugins</strong> - They can add something for a source handler, like a text formatter button for all text sources.</li>
+          <li><strong>Workspace Plugins BETA</strong> - Workspaces are popout screens that you can add your own HTML and CSS to create custom interfaces for controling OBS from within ROBS.</li>
+        </ul>
       </p>
 
-      <h2 id="bundled-runner-sync">Bundled RunnerSyncPlugin</h2>
-      <p>
-        ROBS ships with <code>RunnerSyncPlugin</code>, which reads runner data from a CSV and updates text sources.
-        It is a good example of what a plugin can do.
-      </p>
+      <div class="demo-frame">Screenshot: plugin button in the ROBS sidebar</div>
 
       <page-footer></page-footer>
     </main>

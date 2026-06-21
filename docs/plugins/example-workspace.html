@@ -14,46 +14,88 @@
     <site-nav></site-nav>
 
     <main class="content">
-      <h1>Example: Workspace</h1>
+      <h1>Example: Modal Workspace</h1>
       <p>
-        This example shows how to save and restore a workspace layout or state from a plugin.
+        Plugins can open a panel inside the ROBS window (modal) or a separate window (popup). This is for plugins that need more UI than a single button click.
       </p>
 
       <h2 id="scenario">Scenario</h2>
       <p>
-        You run different event formats that need different source layouts. A plugin can save the current scene collection
-        name and source visibility states, then restore them later.
+        You want a plugin button that opens a panel with a form — for example, a list of runners where you can edit names and click "Sync" without going back to a file.
       </p>
 
-      <h2 id="code">Code</h2>
-      <pre><code>const { pluginutils } = require('../../pluginutils');
-const fs = require('fs');
-const path = require('path');
+      <h2 id="modal">In-App Modal</h2>
+      <pre><code>// plugin.js
+(function() {
+  window.PluginUtils.registerModalSidebarButton(
+    'RunnerEditor',
+    'runner-editor-btn',
+    'Edit Runners',
+    async ({ mount, close }) => {
+      // Build your UI inside `mount`
+      const form = document.createElement('div');
+      form.style.padding = '16px';
 
-const workspaceFile = path.join(__dirname, 'workspace.json');
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = 'Runner name';
 
-function saveWorkspace() {
-  const state = {
-    collection: pluginutils.getCurrentSceneCollection(),
-    sources: pluginutils.getSources().filter(s => s.name.startsWith('_'))
-  };
-  fs.writeFileSync(workspaceFile, JSON.stringify(state, null, 2));
-}
+      const saveBtn = document.createElement('button');
+      saveBtn.textContent = 'Save';
+      saveBtn.addEventListener('click', async () => {
+        await window.PluginUtils.setTextSource('_Runner1Name', input.value);
+        window.uiHelpers.logSuccess('Runner name updated', 'RunnerEditor');
+        close();
+      });
 
-function loadWorkspace() {
-  const state = JSON.parse(fs.readFileSync(workspaceFile, 'utf8'));
-  pluginutils.setCurrentSceneCollection(state.collection);
-  state.sources.forEach(s => pluginutils.setSourceVisibility(s.name, s.enabled));
-}
-
-module.exports = { saveWorkspace, loadWorkspace };
+      form.appendChild(input);
+      form.appendChild(saveBtn);
+      mount.appendChild(form);
+    },
+    { title: 'Edit Runners' }
+  );
+})();
 </code></pre>
 
-      <h2 id="result">Result</h2>
+      <h2 id="popup">Separate Popup Window</h2>
       <p>
-        Two buttons appear in the sidebar: one saves the current workspace, the other restores it. Store any extra
-        metadata you need in the JSON file.
+        For more complex UIs, open a real Electron window. The popup can call back into the host via RPC.
       </p>
+      <pre><code>// plugin.js
+(function() {
+  window.PluginUtils.registerSidebarButton(
+    'RunnerEditor',
+    'runner-editor-popup',
+    'Editor Window',
+    async () => {
+      await window.PluginUtils.openWorkspacePopup('RunnerEditor', {
+        title: 'Runner Editor',
+        width: 800,
+        height: 500,
+        bodyHtml: '<input id="nameInput" /><button id="save">Save</button>',
+        script: `
+          document.getElementById('save').addEventListener('click', async () => {
+            const name = document.getElementById('nameInput').value;
+            await popupHost.call('setName', name);
+          });
+        `,
+        rpcHandlers: {
+          async setName(name) {
+            await window.PluginUtils.setTextSource('_Runner1Name', name);
+          }
+        }
+      });
+    }
+  );
+})();
+</code></pre>
+
+      <h2 id="notes">Notes</h2>
+      <ul>
+        <li>In modals, build DOM directly into the <code>mount</code> element.</li>
+        <li>In popups, the <code>script</code> string runs inside the popup window. Use <code>pluginPopupHost.call(method, ...args)</code> to call the <code>rpcHandlers</code> defined in the host plugin.</li>
+        <li>Only one modal can be open at a time. Opening a second one closes the first.</li>
+      </ul>
 
       <page-footer></page-footer>
     </main>

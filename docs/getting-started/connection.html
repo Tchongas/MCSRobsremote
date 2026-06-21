@@ -16,37 +16,48 @@
     <main class="content">
       <h1>Connection</h1>
       <p>
-        ROBS connects to OBS through the OBS WebSocket server. Multiple users can connect to the same OBS session
-        locally or over the network.
+        ROBS connects to OBS over WebSocket. It can run on the same machine as OBS or on a different one entirely.
+        Multiple people can connect to the same OBS session at the same time.
       </p>
 
-      <h2 id="enable-websocket">Enable the WebSocket Server</h2>
+      <h2 id="enable-websocket">Enable the WebSocket Server in OBS</h2>
       <p>
-        OBS 28 and newer include the WebSocket server by default. To enable it:
+        Go to <strong>Tools &rarr; WebSocket Server Settings</strong>, check <strong>Enable WebSocket server</strong>, and note the port. Default is <code>4455</code>. Set a password if you want one.
       </p>
-      <ol>
-        <li>In OBS, open <strong>Tools &rarr; WebSocket Server Settings</strong>.</li>
-        <li>Check <strong>Enable WebSocket server</strong>.</li>
-        <li>Set a password if you want one.</li>
-        <li>Note the <strong>Server Port</strong> (default is <code>4455</code>).</li>
-      </ol>
 
-      <h2 id="configure-robs">Configure ROBS</h2>
+      <div class="demo-frame">Screenshot: OBS WebSocket Server Settings panel</div>
+
+      <h2 id="configure-robs">Set Up the Connection in ROBS</h2>
       <p>
-        Launch ROBS and open the config panel:
+        Open the Config panel in ROBS. Enter the host, port, and password, then save. ROBS will connect immediately.
       </p>
-      <ol>
-        <li>Enter the <strong>Host</strong> — <code>localhost</code> if OBS is on the same machine, or an IP address for a remote PC.</li>
-        <li>Enter the <strong>Port</strong> from the OBS settings.</li>
-        <li>Enter the <strong>Password</strong> if you set one.</li>
-        <li>Click <strong>Save</strong>. The connection status appears in the sidebar.</li>
-      </ol>
-
-      <h2 id="connection-troubleshooting">Troubleshooting</h2>
       <ul>
-        <li>Make sure OBS is running before ROBS tries to connect.</li>
-        <li>Check that the firewall allows the chosen port.</li>
-        <li>For remote connections, confirm both devices are on the same network or route the port correctly.</li>
+        <li><strong>Host</strong> — <code>localhost</code> if OBS is on the same machine, or the IP of the OBS machine if remote.</li>
+        <li><strong>Port</strong> — whatever you set in OBS, default <code>4455</code>.</li>
+        <li><strong>Password</strong> — leave empty if you did not set one.</li>
+      </ul>
+
+      <div class="demo-frame">Screenshot: ROBS connection config panel</div>
+
+      <h2 id="profiles">Profiles</h2>
+      <p>
+        You can save multiple connection profiles. Useful if you connect to different OBS machines. Switch between them in Settings. The Default profile cannot be deleted.
+      </p>
+
+      <h2 id="remote">Remote Use</h2>
+      <p>
+        For remote connections, both machines need to be on the same network, or the WebSocket port needs to be accessible from outside. ROBS is just a client, so it does not need to be on the same machine as OBS at all. This is the main reason it exists — you can control a show from a different room or building.
+      </p>
+      <p>
+        If you are connecting to a remote machine, make sure to use the IP address of the OBS machine instead of <code>localhost</code>.
+        You can either port forward the WebSocket port on the OBS machine, or use a VPN such as Radmin to connect to the same network.
+      </p>
+
+      <h2 id="troubleshooting">Troubleshooting</h2>
+      <ul>
+        <li>OBS needs to be running before ROBS connects.</li>
+        <li>Check that the firewall is not blocking the port on the OBS machine.</li>
+        <li>If you changed the port in OBS, make sure ROBS is using the same one.</li>
       </ul>
 
       <page-footer></page-footer>

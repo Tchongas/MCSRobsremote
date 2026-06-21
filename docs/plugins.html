@@ -16,62 +16,96 @@
     <main class="content">
       <h1>Plugins</h1>
       <p>
-        Plugins are JavaScript files that add buttons to the ROBS sidebar and automate OBS. Drop a plugin into the
-        <code>plugins</code> folder and restart ROBS. The runtime turns exported functions into sidebar buttons.
+        This is the developer section. It covers how to write a plugin from scratch. If you just want to install one, see <a href="getting-started/plugins.html">Getting Started &rarr; Plugins</a>.
       </p>
 
       <h2 id="plugin-structure">Plugin Structure</h2>
       <p>
-        A plugin is a <code>.js</code> file that exports functions. Each exported function becomes a sidebar button.
+        Each plugin is a <strong>folder</strong> inside <code>%APPDATA%\robs\plugins</code>. The folder name is the plugin ID.
+        Inside it you need at minimum a <code>plugin.js</code> file. Everything else is optional.
       </p>
 
-      <pre><code>function helloPlugin() {
-  // Your plugin logic here
-}
-
-module.exports = { helloPlugin };
+      <pre><code>%APPDATA%\robs\plugins\
+└── MyPlugin\
+    ├── plugin.js        ← required
+    ├── manifest.json    ← optional metadata (name, version, description)
+    ├── config.yaml      ← optional settings file
+    ├── README.md        ← shown in the Plugins settings tab
+    ├── icon.png         ← shown in the Plugins settings tab
+    └── data.csv         ← any data files your plugin needs
 </code></pre>
 
-      <p>
-        Plugins can use <code>pluginutils</code> to read files, call external APIs, and manipulate OBS sources.
-        The <code>obs</code> client and other helpers are exposed by the runtime.
-      </p>
+      <h2 id="two-types">Two Types of Plugin</h2>
+      <p>There are two things a plugin can do, and they are not mutually exclusive:</p>
+      <ul>
+        <li><strong>Sidebar button</strong> — a button in the right panel that runs a function when clicked.</li>
+        <li><strong>Dashboard handler</strong> — adds controls to a specific source row in the dashboard, matched by source name or type.</li>
+      </ul>
+      <p>Most plugins are sidebar-only. Dashboard handlers are for when you want custom controls that show up inline next to a source.</p>
 
-      <h2 id="package-plugins">Package Plugins</h2>
+      <h2 id="plugin-context">What the Plugin Gets</h2>
       <p>
-        A plugin can also be a folder such as <code>myplugin/</code> with a <code>plugin.js</code> entry point
-        and optional resources like <code>Data.csv</code>, <code>README.md</code>, or configuration files.
-      </p>
-
-      <h2 id="example-runnersyncplugin">Example: RunnerSyncPlugin</h2>
-      <p>
-        The bundled <code>RunnerSyncPlugin</code> syncs two runner slots by reading metadata from a CSV
-        and updating OBS text sources. It demonstrates how to:
+        When ROBS loads your <code>plugin.js</code>, it runs it in a sandboxed context. The following globals are available inside the plugin:
       </p>
       <ul>
-        <li>Read local CSV files from the plugin folder.</li>
-        <li>Fetch external data (MCSR PB/ELO) as fallback.</li>
-        <li>Update text sources and browser URLs in OBS.</li>
-        <li>Add a single sidebar button that runs the full workflow.</li>
+        <li><code>window.obsAPI</code> — the full OBS WebSocket API (scenes, sources, browser, hotkeys, streaming, etc).</li>
+        <li><code>window.PluginUtils</code> — helper functions so you do not have to call the raw API for common things.</li>
+        <li><code>window.pluginAPI</code> — file access scoped to your plugin folder, and popup/modal helpers.</li>
+        <li><code>window.uiHelpers</code> — log to the ROBS console.</li>
+        <li><code>CustomHandlerPlugins.register()</code> — register a dashboard handler.</li>
       </ul>
 
-      <h2 id="best-practices">Best Practices</h2>
-      <ul>
-        <li>Keep plugin names descriptive and avoid special characters.</li>
-        <li>Load external resources asynchronously and handle failures gracefully.</li>
-        <li>Update sources efficiently to avoid flooding the OBS WebSocket connection.</li>
-        <li>Store configuration files next to the plugin for easy editing.</li>
-      </ul>
+      <p>See <a href="plugins/documentation.html">Plugin Documentation</a> for the full API reference.</p>
 
-      <h2 id="plugin-api">Plugin API</h2>
+      <h2 id="sidebar-button">Adding a Sidebar Button</h2>
+      <pre><code>window.PluginUtils.registerSidebarButton(
+  'MyPlugin',   // plugin name
+  'my-btn',     // unique button id
+  'Do Thing',   // label shown on the button
+  async () => {
+    await window.PluginUtils.setTextSource('_MyText', 'Hello');
+  }
+);
+</code></pre>
+
+      <h2 id="dashboard-handler">Adding a Dashboard Handler</h2>
+      <p>This adds a custom controls panel to any source row matching your <code>canHandle</code> condition.</p>
+      <pre><code>CustomHandlerPlugins.register({
+  name: 'MyPlugin',
+  isExternal: true,
+  canHandle(sourceKind, sourceName) {
+    return sourceName === '_MySpecialSource';
+  },
+  async execute(options, sourceName, displayName) {
+    const btn = document.createElement('button');
+    btn.textContent = 'Reset';
+    btn.addEventListener('click', async () => {
+      await window.PluginUtils.setTextSource(sourceName, '—');
+    });
+    options.appendChild(btn);
+  }
+});
+</code></pre>
+
+      <h2 id="config">Reading Config Files</h2>
       <p>
-        The runtime exposes a controlled interface to plugins. Common helpers include:
+        Put a <code>config.yaml</code> in your plugin folder. Read it with:
       </p>
+      <pre><code>const config = await window.PluginUtils.readYamlConfig({
+  myOption: 'default value'
+});
+</code></pre>
+      <p>Or for a JSON file:</p>
+      <pre><code>const config = await window.PluginUtils.readJsonConfig('config.json', {
+  myOption: 'default value'
+});
+</code></pre>
+
+      <h2 id="examples">Examples</h2>
       <ul>
-        <li><code>pluginutils.readFile(path)</code> &mdash; read a file from the plugin directory.</li>
-        <li><code>pluginutils.fetchJSON(url)</code> &mdash; fetch and parse JSON data.</li>
-        <li><code>pluginutils.setTextSource(name, value)</code> &mdash; update a text source in OBS.</li>
-        <li><code>pluginutils.setBrowserSourceURL(name, url)</code> &mdash; update a browser source URL.</li>
+        <li><a href="plugins/example-dashboard.html">Example: Dashboard handler</a></li>
+        <li><a href="plugins/example-automation.html">Example: Automation sequence</a></li>
+        <li><a href="plugins/example-workspace.html">Example: Modal workspace</a></li>
       </ul>
 
       <page-footer></page-footer>
