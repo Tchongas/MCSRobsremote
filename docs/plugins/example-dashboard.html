@@ -16,69 +16,53 @@
     <main class="content">
       <h1>Example: Dashboard Handler</h1>
       <p>
-        A dashboard handler adds a custom controls panel that appears inside a source row when the user expands it.
-        This is useful when the built-in controls are not enough for a specific source.
+        A dashboard handler adds more controls to the sources options in the dashboard, it can be used to add custom controls to specific source types, like all texts, or more specific source like all browser sources that are youtube links.
       </p>
 
-      <h2 id="scenario">Scenario</h2>
+      <h2 id="scenario">Example</h2>
       <p>
-        You have a browser source called <code>_Scoreboard</code> that takes a <code>score</code> URL parameter.
-        Instead of editing the URL manually each time, you want +/- buttons directly in the dashboard row.
+        This plugin makes every Text source in the dashboard have a button to convert the text to lowercase.
       </p>
 
       <h2 id="code">Code</h2>
       <pre><code>// plugin.js
-(function() {
-  let score = 0;
-
+(function () {
   CustomHandlerPlugins.register({
-    name: 'ScoreboardPlugin',
-    isExternal: true,
-
-    canHandle(sourceKind, sourceName) {
-      return sourceName === '_Scoreboard';
-    },
-
+    name: 'TextFormatter',
+    version: '1.0.0',
+    canHandle: (kind) => kind === 'text_gdiplus_v3',
     async execute(options, sourceName, displayName) {
       const row = document.createElement('div');
-      row.style.display = 'flex';
-      row.style.gap = '8px';
-      row.style.alignItems = 'center';
-
-      const label = document.createElement('span');
-      label.textContent = `Score: ${score}`;
-
-      const minus = document.createElement('button');
-      minus.textContent = '−';
-
-      const plus = document.createElement('button');
-      plus.textContent = '+';
-
-      async function updateScore() {
-        label.textContent = `Score: ${score}`;
-        await window.PluginUtils.setBrowserSourceUrlWithParams(
-          sourceName,
-          await window.PluginUtils.getSourceURL(sourceName),
-          { score: String(score) }
-        );
-      }
-
-      minus.addEventListener('click', () => { score = Math.max(0, score - 1); updateScore(); });
-      plus.addEventListener('click', () => { score++; updateScore(); });
-
-      row.appendChild(minus);
-      row.appendChild(label);
-      row.appendChild(plus);
+      row.className = 'dash-option-row';
+      const btn = document.createElement('button');
+      btn.textContent = 'aa Lowercase';
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        try {
+          const current = await window.PluginUtils.getSourceText(sourceName);
+          const lower = current.toLowerCase();
+          if (lower === current) {
+            window.uiHelpers?.logInfo('Already lowercase.', 'TextFormatter');
+          } else {
+            await window.PluginUtils.setTextSource(sourceName, lower);
+            window.uiHelpers?.logSuccess(`"${displayName}" → lowercase`, 'TextFormatter');
+            const ta = options.querySelector('textarea.text-input');
+            if (ta) ta.value = lower;
+          }
+        } catch (err) {
+          window.uiHelpers?.logError(String(err), 'TextFormatter');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+      row.appendChild(btn);
       options.appendChild(row);
-    }
+    },
+    priority: () => 0,
+    cleanup() {}
   });
 })();
 </code></pre>
-
-      <h2 id="result">Result</h2>
-      <p>
-        Expand the <code>_Scoreboard</code> source row and you get + and − buttons. Each click updates the <code>score</code> query parameter in the browser source URL.
-      </p>
 
       <page-footer></page-footer>
     </main>

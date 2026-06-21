@@ -34,9 +34,9 @@
           children: [
             { id: 'plugins-documentation', label: 'Documentation', href: docsDir + 'plugins/documentation.html' },
             { id: 'plugins-example-dashboard', label: 'Example: Dashboard', href: docsDir + 'plugins/example-dashboard.html' },
-            { id: 'plugins-example-create', label: 'Example: Create', href: docsDir + 'plugins/example-create.html' },
-            { id: 'plugins-example-automation', label: 'Example: Buttons', href: docsDir + 'plugins/example-automation.html' },
-            { id: 'plugins-example-workspace', label: 'Example: Workspace', href: docsDir + 'plugins/example-workspace.html' },
+            //{ id: 'plugins-example-create', label: 'Example: Create', href: docsDir + 'plugins/example-create.html' },
+            //{ id: 'plugins-example-automation', label: 'Example: Buttons', href: docsDir + 'plugins/example-automation.html' },
+            //{ id: 'plugins-example-workspace', label: 'Example: Workspace', href: docsDir + 'plugins/example-workspace.html' },
           ],
         },
       ],
