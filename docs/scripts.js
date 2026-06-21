@@ -51,8 +51,14 @@
           id: 'getting-started-appearance',
           title: 'Appearance',
           path: docsDir + 'getting-started/appearance.html',
-          keywords: 'theme dark mode layout style',
-          sections: [],
+          keywords: 'scaling high contrast reduced motion hide dashboard plugin only mode',
+          sections: [
+            { title: 'Scaling', anchor: 'scaling' },
+            { title: 'Visibility', anchor: 'visibility' },
+            { title: 'High Contrast', anchor: 'high-contrast' },
+            { title: 'Reduced Motion', anchor: 'reduced-motion' },
+            { title: 'Dashboard Emojis', anchor: 'dashboard-emojis' },
+          ],
         },
         {
           id: 'getting-started-plugins',
@@ -62,10 +68,10 @@
           sections: [],
         },
         {
-          id: 'demo',
-          title: 'Demo',
+          id: 'examples',
+          title: 'Examples',
           path: docsDir + 'demo.html',
-          keywords: 'demo screenshot preview ui dashboard',
+          keywords: 'examples use cases workflows production',
           sections: [
             { title: 'Dashboard & Scene Control', anchor: 'dashboard-scene-control' },
             { title: 'Plugin Workflow', anchor: 'plugin-workflow' },

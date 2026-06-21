@@ -40,7 +40,7 @@ User Guide
 │   ├── Dashboard             (docs/getting-started/dashboard.html)
 │   ├── Appearance            (docs/getting-started/appearance.html)
 │   └── Plugins               (docs/getting-started/plugins.html)
-└── Demo                      (docs/demo.html)
+└── Examples                  (docs/demo.html)
 
 Developer Guide
 ├── Plugins                   (docs/plugins.html)

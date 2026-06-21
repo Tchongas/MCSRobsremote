@@ -21,7 +21,7 @@
             { id: 'getting-started-plugins', label: 'Plugins', href: docsDir + 'getting-started/plugins.html' },
           ],
         },
-        { id: 'demo', label: 'Demo', href: docsDir + 'demo.html' },
+        { id: 'examples', label: 'Examples', href: docsDir + 'demo.html' },
       ],
     },
     {
