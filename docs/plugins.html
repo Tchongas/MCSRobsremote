@@ -14,99 +14,38 @@
     <site-nav></site-nav>
 
     <main class="content">
-      <h1>Plugins</h1>
+      <h1>Writing a Plugin</h1>
       <p>
-        This is the developer section. It covers how to write a plugin from scratch. If you just want to install one, see <a href="getting-started/plugins.html">Getting Started &rarr; Plugins</a>.
+        Plugins are JavaScript files that run inside ROBS and can control OBS, add sidebar buttons, attach controls to source rows, read local files, and open custom UI panels. If you just want to install a plugin someone else made, see <a href="getting-started/plugins.html">Getting Started &rarr; Plugins</a>.
       </p>
 
-      <h2 id="plugin-structure">Plugin Structure</h2>
+      <h2 id="folder">Plugin Folder</h2>
       <p>
-        Each plugin is a <strong>folder</strong> inside <code>%APPDATA%\robs\plugins</code>. The folder name is the plugin ID.
-        Inside it you need at minimum a <code>plugin.js</code> file. Everything else is optional.
+        Create a folder with your plugin name inside <code>%APPDATA%\robs\plugins</code>. The only required file is <code>plugin.js</code>. Everything else is optional.
       </p>
-
       <pre><code>%APPDATA%\robs\plugins\
 └── MyPlugin\
     ├── plugin.js        ← required
-    ├── manifest.json    ← optional metadata (name, version, description)
     ├── config.yaml      ← optional settings file
-    ├── README.md        ← shown in the Plugins settings tab
-    ├── icon.png         ← shown in the Plugins settings tab
-    └── data.csv         ← any data files your plugin needs
+    ├── README.md        ← shown in Settings → Plugins
+    ├── icon.png         ← shown in Settings → Plugins
+    └── data.csv         ← any other files your plugin needs
 </code></pre>
 
-      <h2 id="two-types">Two Types of Plugin</h2>
-      <p>There are two things a plugin can do, and they are not mutually exclusive:</p>
+      <h2 id="what-you-can-do">What you can do</h2>
+      <p>Plugins can do more than one of these at the same time:</p>
       <ul>
-        <li><strong>Sidebar button</strong> — a button in the right panel that runs a function when clicked.</li>
-        <li><strong>Dashboard handler</strong> — adds controls to a specific source row in the dashboard, matched by source name or type.</li>
+        <li><strong>Sidebar buttons</strong> — add clickable buttons to the right panel that trigger any code you want.</li>
+        <li><strong>Dashboard handlers</strong> — attach extra controls to a specific source row when it is expanded.</li>
+        <li><strong>Automation</strong> — run sequences of OBS actions in order.</li>
+        <li><strong>Workspaces (BETA)</strong> — open a modal or a separate window with a custom HTML interface.</li>
+        <li><strong>Create (BETA)</strong> — register a function in Settings → Create to scaffold OBS scenes and sources.</li>
       </ul>
-      <p>Most plugins are sidebar-only. Dashboard handlers are for when you want custom controls that show up inline next to a source.</p>
 
-      <h2 id="plugin-context">What the Plugin Gets</h2>
       <p>
-        When ROBS loads your <code>plugin.js</code>, it runs it in a sandboxed context. The following globals are available inside the plugin:
+        When ROBS loads your plugin, a set of globals are injected into it. You do not import anything. The full reference is in
+        <a href="plugins/documentation.html">Documentation</a>.
       </p>
-      <ul>
-        <li><code>window.obsAPI</code> — the full OBS WebSocket API (scenes, sources, browser, hotkeys, streaming, etc).</li>
-        <li><code>window.PluginUtils</code> — helper functions so you do not have to call the raw API for common things.</li>
-        <li><code>window.pluginAPI</code> — file access scoped to your plugin folder, and popup/modal helpers.</li>
-        <li><code>window.uiHelpers</code> — log to the ROBS console.</li>
-        <li><code>CustomHandlerPlugins.register()</code> — register a dashboard handler.</li>
-      </ul>
-
-      <p>See <a href="plugins/documentation.html">Plugin Documentation</a> for the full API reference.</p>
-
-      <h2 id="sidebar-button">Adding a Sidebar Button</h2>
-      <pre><code>window.PluginUtils.registerSidebarButton(
-  'MyPlugin',   // plugin name
-  'my-btn',     // unique button id
-  'Do Thing',   // label shown on the button
-  async () => {
-    await window.PluginUtils.setTextSource('_MyText', 'Hello');
-  }
-);
-</code></pre>
-
-      <h2 id="dashboard-handler">Adding a Dashboard Handler</h2>
-      <p>This adds a custom controls panel to any source row matching your <code>canHandle</code> condition.</p>
-      <pre><code>CustomHandlerPlugins.register({
-  name: 'MyPlugin',
-  isExternal: true,
-  canHandle(sourceKind, sourceName) {
-    return sourceName === '_MySpecialSource';
-  },
-  async execute(options, sourceName, displayName) {
-    const btn = document.createElement('button');
-    btn.textContent = 'Reset';
-    btn.addEventListener('click', async () => {
-      await window.PluginUtils.setTextSource(sourceName, '—');
-    });
-    options.appendChild(btn);
-  }
-});
-</code></pre>
-
-      <h2 id="config">Reading Config Files</h2>
-      <p>
-        Put a <code>config.yaml</code> in your plugin folder. Read it with:
-      </p>
-      <pre><code>const config = await window.PluginUtils.readYamlConfig({
-  myOption: 'default value'
-});
-</code></pre>
-      <p>Or for a JSON file:</p>
-      <pre><code>const config = await window.PluginUtils.readJsonConfig('config.json', {
-  myOption: 'default value'
-});
-</code></pre>
-
-      <h2 id="examples">Examples</h2>
-      <ul>
-        <li><a href="plugins/example-dashboard.html">Example: Dashboard handler</a></li>
-        <li><a href="plugins/example-automation.html">Example: Automation sequence</a></li>
-        <li><a href="plugins/example-workspace.html">Example: Modal workspace</a></li>
-      </ul>
 
       <page-footer></page-footer>
     </main>
