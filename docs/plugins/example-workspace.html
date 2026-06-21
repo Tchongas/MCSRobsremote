@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Example: Workspace - Plugins - ROBS</title>
   <link rel="stylesheet" href="../styles.css">
-  <meta name="description" content="Example plugin that manages workspace state.">
+  <meta name="description" content="Example workspace plugin: OverlayEditor, a popup window for editing OBS text sources in place.">
 </head>
 <body data-page="plugins-example-workspace">
   <site-header></site-header>
@@ -14,87 +14,143 @@
     <site-nav></site-nav>
 
     <main class="content">
-      <h1>Example: Modal Workspace</h1>
+      <h1>Example: Workspace Popup — OverlayEditor</h1>
       <p>
-        Plugins can open a panel inside the ROBS window (modal) or a separate window (popup). This is for plugins that need more UI than a single button click.
+        A workspace popup opens a real Electron window with custom HTML. It can call back into the host plugin via RPC to read and write OBS data. This example is a popup that shows all text sources in the current scene as editable inputs, positioned where they appear on the OBS canvas.
       </p>
 
-      <h2 id="scenario">Scenario</h2>
-      <p>
-        You want a plugin button that opens a panel with a form — for example, a list of runners where you can edit names and click "Sync" without going back to a file.
-      </p>
-
-      <h2 id="modal">In-App Modal</h2>
-      <pre><code>// plugin.js
-(function() {
-  window.PluginUtils.registerModalSidebarButton(
-    'RunnerEditor',
-    'runner-editor-btn',
-    'Edit Runners',
-    async ({ mount, close }) => {
-      // Build your UI inside `mount`
-      const form = document.createElement('div');
-      form.style.padding = '16px';
-
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.placeholder = 'Runner name';
-
-      const saveBtn = document.createElement('button');
-      saveBtn.textContent = 'Save';
-      saveBtn.addEventListener('click', async () => {
-        await window.PluginUtils.setTextSource('_Runner1Name', input.value);
-        window.uiHelpers.logSuccess('Runner name updated', 'RunnerEditor');
-        close();
-      });
-
-      form.appendChild(input);
-      form.appendChild(saveBtn);
-      mount.appendChild(form);
-    },
-    { title: 'Edit Runners' }
-  );
-})();
-</code></pre>
-
-      <h2 id="popup">Separate Popup Window</h2>
-      <p>
-        For more complex UIs, open a real Electron window. The popup can call back into the host via RPC.
-      </p>
-      <pre><code>// plugin.js
-(function() {
-  window.PluginUtils.registerSidebarButton(
-    'RunnerEditor',
-    'runner-editor-popup',
-    'Editor Window',
-    async () => {
-      await window.PluginUtils.openWorkspacePopup('RunnerEditor', {
-        title: 'Runner Editor',
-        width: 800,
-        height: 500,
-        bodyHtml: '<input id="nameInput" /><button id="save">Save</button>',
-        script: `
-          document.getElementById('save').addEventListener('click', async () => {
-            const name = document.getElementById('nameInput').value;
-            await popupHost.call('setName', name);
-          });
-        `,
-        rpcHandlers: {
-          async setName(name) {
-            await window.PluginUtils.setTextSource('_Runner1Name', name);
-          }
-        }
-      });
-    }
-  );
-})();
-</code></pre>
-
-      <h2 id="notes">Notes</h2>
+      <h2 id="how-it-works">How it works</h2>
       <ul>
-        <li>In modals, build DOM directly into the <code>mount</code> element.</li>
-        <li>In popups, the <code>script</code> string runs inside the popup window. Use <code>pluginPopupHost.call(method, ...args)</code> to call the <code>rpcHandlers</code> defined in the host plugin.</li>
-        <li>Only one modal can be open at a time. Opening a second one closes the first.</li>
+        <li>The sidebar button reads the current scene name and opens a popup window.</li>
+        <li>The popup script calls <code>getSources</code> via RPC to fetch all text sources and their OBS transforms.</li>
+        <li>Each source is rendered as a transparent <code>&lt;input&gt;</code> positioned at its scaled OBS coordinates over a black canvas.</li>
+        <li>Editing a field and pressing Enter (or clicking away) calls <code>setText</code> via RPC to update the source in OBS. The border flashes green on success.</li>
+      </ul>
+
+      <h2 id="rpc">RPC Handlers</h2>
+      <p>
+        RPC handlers are registered in the host plugin with <code>registerPopupRpcHandlers</code>. They run in the main renderer context and have full access to <code>PluginUtils</code> and <code>obsAPI</code>. The popup calls them with <code>window.pluginPopupHost.call(method, ...args)</code>.
+      </p>
+
+      <h2 id="code">Full Plugin Code</h2>
+      <pre><code>// plugin.js
+(function () {
+  const PLUGIN = 'OverlayEditor';
+  const CANVAS_W = 960;
+  const CANVAS_H = 540;
+  const OBS_W = 1920;
+  const OBS_H = 1080;
+
+  CustomHandlerPlugins.register({
+    name: PLUGIN, version: '1.0.0', isExternal: true,
+    canHandle: () => false, execute: async () => {}
+  });
+
+  // RPC handlers — run in the main window, called from the popup
+  window.PluginUtils.registerPopupRpcHandlers(PLUGIN, {
+    async getSources(sceneName) {
+      const items = await window.PluginUtils.listSceneItems(sceneName);
+      const textItems = items.filter(i => i.inputKind === 'text_gdiplus_v3');
+      const results = await Promise.all(textItems.map(async (item) => {
+        try {
+          const [trRes, text] = await Promise.all([
+            window.obsAPI.sceneItems.getTransform(sceneName, item.sceneItemId),
+            window.PluginUtils.getSourceText(item.sourceName)
+          ]);
+          const tr = trRes?.sceneItemTransform || trRes;
+          return {
+            name: item.sourceName,
+            display: item.sourceName.replace(/^_/, ''),
+            sceneItemId: item.sceneItemId,
+            x: Number(tr?.positionX ?? 0), y: Number(tr?.positionY ?? 0),
+            w: Number(tr?.width ?? 200), h: Number(tr?.height ?? 40),
+            text
+          };
+        } catch (_) { return null; }
+      }));
+      return results.filter(Boolean);
+    },
+    async setText(name, text) {
+      await window.PluginUtils.setTextSource(name, text);
+    }
+  });
+
+  // Sidebar button — opens the popup window
+  window.PluginUtils.registerSidebarButton(PLUGIN, 'overlay-editor-open', 'Overlay Editor', (() => {
+    let busy = false;
+    return async () => {
+      if (busy) return;
+      busy = true;
+      const sceneName = document.getElementById('sceneSelect')?.value || '';
+      try {
+        await window.PluginUtils.openWorkspacePopup(PLUGIN, {
+          title: 'Overlay Editor',
+          width: CANVAS_W + 40,
+          height: CANVAS_H + 60,
+          // Minimal bodyHtml — window shows instantly, content loads via RPC
+          bodyHtml: '&lt;div id="st" style="padding:12px;color:#aaa;font-family:sans-serif"&gt;Loading...&lt;/div&gt;&lt;div id="cv" style="position:relative;background:#000;display:none"&gt;&lt;/div&gt;',
+          // script runs inside the popup window
+          script: `
+            const host = window.pluginPopupHost;
+            const scene = '/* scene name injected at open time */';
+            const W = 960, H = 540, SX = W / 1920, SY = H / 1080;
+            const st = document.getElementById('st');
+            const cv = document.getElementById('cv');
+
+            host.call('getSources', scene).then(srcs => {
+              st.style.display = 'none';
+              cv.style.display = 'block';
+              cv.style.width = W + 'px';
+              cv.style.height = H + 'px';
+
+              srcs.forEach(s => {
+                const wrap = document.createElement('div');
+                wrap.style.cssText = 'position:absolute;display:flex;flex-direction:column';
+                wrap.style.left = (s.x * SX) + 'px';
+                wrap.style.top  = (s.y * SY) + 'px';
+                wrap.style.width = Math.max(s.w * SX, 120) + 'px';
+
+                const inp = document.createElement('input');
+                inp.type = 'text';
+                inp.value = s.text;
+                inp.style.cssText = 'width:100%;font-size:16px;background:transparent;border:1px solid transparent;color:#eee;outline:none';
+
+                inp.onfocus = () => inp.style.borderColor = '#555';
+                inp.onblur = async () => {
+                  try {
+                    await host.call('setText', s.name, inp.value);
+                    inp.style.borderColor = '#4a4';
+                    setTimeout(() => inp.style.borderColor = 'transparent', 800);
+                  } catch(e) { inp.style.borderColor = '#a44'; }
+                };
+                inp.onkeydown = e => { if (e.key === 'Enter') inp.blur(); };
+
+                wrap.appendChild(inp);
+                cv.appendChild(wrap);
+              });
+
+              if (!srcs.length) {
+                st.style.display = 'block';
+                st.textContent = 'No text sources found in this scene.';
+              }
+            }).catch(e => { st.textContent = 'Error: ' + e.message; });
+          `
+        });
+      } catch(e) {
+        window.uiHelpers?.logError('Failed to open: ' + e, PLUGIN);
+      } finally {
+        busy = false;
+      }
+    };
+  })(), { icon: '🗺' });
+})();
+</code></pre>
+
+      <ul>
+        <li><strong>The popup is a separate process</strong> - it has no direct access to OBS, <code>PluginUtils</code>, or the DOM of the main window. Everything goes through RPC.</li>
+        <li><strong>RPC handlers run in the main window</strong> - they have full access to <code>PluginUtils</code>, <code>obsAPI</code>, and the rest of the plugin environment. The popup only receives serializable return values (plain objects, arrays, strings, numbers).</li>
+        <li><strong>The <code>script</code> string runs inside the popup</strong> - it is injected as a <code>&lt;script&gt;</code> tag. You can interpolate values from the host context at open time using template literals, which is how the scene name gets passed in.</li>
+        <li>the popup window is shown as soon as it renders. Put a loading state in <code>bodyHtml</code> and populate the real content once your first RPC call resolves.</li>
       </ul>
 
       <page-footer></page-footer>
