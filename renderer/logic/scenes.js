@@ -273,17 +273,16 @@
     await window.dashboardLogic.loadDashboardItems(sceneName);
   }
 
-  // Transition: trigger studio mode transition in OBS
+  // Transition: trigger studio mode transition in OBS, or direct change if studio mode is off
   async function transitionScene() {
     if (!previewScene || previewScene === programScene) return;
 
     const target = previewScene;
     try {
-      // Try studio mode transition first
-      if (window.obsAPI?.scenes?.triggerStudioModeTransition) {
+      const studioMode = await window.obsAPI.scenes.getStudioModeEnabled();
+      if (studioMode?.studioModeEnabled) {
         await window.obsAPI.scenes.triggerStudioModeTransition();
       } else {
-        // Fallback to direct scene change if studio mode not available
         await window.obsAPI.scenes.change(target);
       }
 
@@ -295,9 +294,9 @@
       updateDashboardSceneTag();
 
       window.uiHelpers.setSceneBadge(target);
-      window.uiHelpers.logSuccess(`Scene transitioned: ${target}`, 'scenes');
+      window.uiHelpers.logSuccess(`Scene changed: ${target}`, 'scenes');
     } catch (e) {
-      window.uiHelpers.logError('Failed to transition: ' + e.message, 'scenes');
+      window.uiHelpers.logError('Failed to change scene: ' + e.message, 'scenes');
     }
   }
 

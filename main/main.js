@@ -87,6 +87,9 @@ function setupIpcHandlers() {
   ipcMain.handle('scenes-triggerStudioModeTransition', async () => {
     return await scenes.triggerStudioModeTransition();
   });
+  ipcMain.handle('scenes-getStudioModeEnabled', async () => {
+    return await scenes.getStudioModeEnabled();
+  });
 
   // Sources
   ipcMain.handle('sources-get', async () => {

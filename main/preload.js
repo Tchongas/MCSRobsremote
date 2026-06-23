@@ -8,7 +8,8 @@ contextBridge.exposeInMainWorld('obsAPI', {
     get: () => ipcRenderer.invoke('scenes-get'),
     change: (sceneName) => ipcRenderer.invoke('scenes-change', sceneName),
     setPreviewScene: (sceneName) => ipcRenderer.invoke('scenes-setPreviewScene', sceneName),
-    triggerStudioModeTransition: () => ipcRenderer.invoke('scenes-triggerStudioModeTransition')
+    triggerStudioModeTransition: () => ipcRenderer.invoke('scenes-triggerStudioModeTransition'),
+    getStudioModeEnabled: () => ipcRenderer.invoke('scenes-getStudioModeEnabled')
   },
   sources: {
     get: () => ipcRenderer.invoke('sources-get'),

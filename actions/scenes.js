@@ -20,4 +20,9 @@ async function triggerStudioModeTransition() {
   return obs.call('TriggerStudioModeTransition');
 }
 
-module.exports = { get, change, setPreviewScene, triggerStudioModeTransition };
+async function getStudioModeEnabled() {
+  requireConnected();
+  return obs.call('GetStudioModeEnabled');
+}
+
+module.exports = { get, change, setPreviewScene, triggerStudioModeTransition, getStudioModeEnabled };
