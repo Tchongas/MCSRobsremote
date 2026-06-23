@@ -67,7 +67,7 @@
           keywords: 'install plugins robs plugins folder runner sync',
           sections: [],
         },
-        {
+        /*{
           id: 'examples',
           title: 'Examples',
           path: docsDir + 'demo.html',
@@ -77,7 +77,7 @@
             { title: 'Plugin Workflow', anchor: 'plugin-workflow' },
             { title: 'Video Demo', anchor: 'video-demo' },
           ],
-        },
+        },*/
       ],
     },
     {
